@@ -54,7 +54,7 @@ body {
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -70,6 +70,8 @@ body {
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
+  overflow: hidden;
+  min-width: 0;
   transition: transform 120ms ease, opacity 200ms ease;
 }
 .card:active { transform: scale(0.97); }
@@ -83,6 +85,11 @@ body {
   line-height: 1.25;
   letter-spacing: -0.01em;
   word-break: break-word;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .card.removing { opacity: 0; transform: scale(0.9); }
 

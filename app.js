@@ -475,6 +475,11 @@ function openSheet({ task }) {
   textInput.rows = 2;
   textInput.value = draft.text;
   textInput.autocapitalize = 'sentences';
+  // iOS Safari otherwise shows a URL-autofill pill (site domain) in the
+  // keyboard accessory bar — kill all autofill/autocorrect hints on this field.
+  textInput.autocomplete = 'off';
+  textInput.setAttribute('autocorrect', 'off');
+  textInput.spellcheck = false;
   textInput.addEventListener('input', () => { draft.text = textInput.value; });
   sheet.appendChild(textInput);
 
@@ -539,6 +544,7 @@ function openSheet({ task }) {
   const dlInput = document.createElement('input');
   dlInput.type = 'date';
   dlInput.className = 'sheet-deadline';
+  dlInput.autocomplete = 'off';
   if (draft.deadline) dlInput.value = draft.deadline;
   dlInput.addEventListener('change', () => {
     draft.deadline = dlInput.value || null;
