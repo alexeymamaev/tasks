@@ -1,0 +1,202 @@
+:root {
+  --bg-top: #4D3A31;
+  --bg-mid: #2A2018;
+  --bg-bot: #0D0A08;
+  --card: #2A211C;
+  --text: #FFFFFF;
+  --text-dim: #8B847B;
+  --text-muted: #6A635A;
+  --accent: #FF9478;
+  --divider: #3A2E26;
+  --input-bg: #2A211C;
+  --snackbar: #0F0A07;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  color: var(--text);
+  background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 55%, var(--bg-bot) 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  min-height: 100svh;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+#app { min-height: 100vh; min-height: 100svh; }
+
+.screen {
+  padding: 24px 16px 120px 16px;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+/* ---------- header ---------- */
+
+.header {
+  padding: 12px 4px 20px 4px;
+}
+.header h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.header .sub {
+  margin-top: 4px;
+  font-size: 15px;
+  color: var(--text-dim);
+}
+
+/* ---------- grid ---------- */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.card {
+  aspect-ratio: 1 / 1;
+  background: var(--card);
+  border-radius: 18px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform 120ms ease, opacity 200ms ease;
+}
+.card:active { transform: scale(0.97); }
+.card .icon {
+  font-size: 22px;
+  line-height: 1;
+}
+.card .text {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  word-break: break-word;
+}
+.card.removing { opacity: 0; transform: scale(0.9); }
+
+.check-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  margin-left: -22px;
+  margin-top: -22px;
+  border-radius: 10px;
+  background: #111111;
+  color: #FFFFFF;
+  display: grid;
+  place-items: center;
+  transform: rotate(var(--rot, 0deg));
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+  pointer-events: none;
+}
+.check-badge svg {
+  width: 26px;
+  height: 26px;
+}
+
+/* ---------- journal divider ---------- */
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 28px 4px 14px 4px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+.divider-label { margin-right: 10px; }
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--divider);
+}
+
+/* ---------- empty ---------- */
+
+.empty {
+  padding: 60px 24px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 15px;
+}
+
+/* ---------- input-bar ---------- */
+
+.input-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0)) 16px;
+  background: linear-gradient(180deg, rgba(13,10,8,0) 0%, rgba(13,10,8,0.9) 40%, rgba(13,10,8,1) 100%);
+}
+.input-bar .wrap {
+  max-width: 560px;
+  margin: 0 auto;
+  background: var(--input-bg);
+  border-radius: 999px;
+  padding: 4px 4px 4px 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.input-bar input {
+  flex: 1;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  color: var(--text);
+  font: 16px -apple-system, system-ui, sans-serif;
+  padding: 12px 0;
+  min-width: 0;
+}
+.input-bar input::placeholder { color: var(--text-dim); }
+.input-bar button {
+  border: 0;
+  background: var(--accent);
+  color: #0D0A08;
+  font-weight: 700;
+  font-size: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.input-bar button:disabled {
+  background: var(--text-muted);
+  color: var(--bg-bot);
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ---------- status banner (IDB reconnect etc) ---------- */
+
+#err-bar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  padding: 10px 14px;
+  font: 13px/1.4 -apple-system, sans-serif;
+  color: #fff;
+  z-index: 9999;
+  white-space: pre-wrap;
+  max-height: 40vh;
+  overflow: auto;
+}
