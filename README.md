@@ -10,8 +10,10 @@ Vanilla HTML/CSS/JS + Dexie + PWA. Деплой — GitHub Pages.
 - [x] 4. Bottom-sheet создания/редактирования (long-press активной / тап input-bar / тап journal).
 - [x] 5. Иконки: keyword-подсказки (~120 RU/EN пар), full picker (150 Lucide + search).
 - [x] 6. Дедлайн pill — «сегодня»/«вчера»/дата ru-RU с coral/dim окраской.
-- [ ] 7. Undo-снекбар.
-- [ ] 8. Empty state.
+- [x] 7. Undo-снекбар (4с auto-hide, «Отменить» возвращает в активные).
+- [x] 8. Empty state (input-bar с coral stroke + центральная подсказка).
+
+**Фаза 1 закрыта.** Живёт на https://alexeymamaev.github.io/tasks/.
 
 ## IndexedDB recovery (заложено сразу)
 

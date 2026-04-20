@@ -273,6 +273,7 @@ function activeCardNode(task) {
       el.classList.add('removing');
       try {
         await markDone(task.id);
+        showUndoSnackbar(task.id);
         setTimeout(() => { renderMain().catch(showError); }, 200);
       } catch (e) {
         el.classList.remove('removing');
@@ -283,6 +284,50 @@ function activeCardNode(task) {
     onLongPress: () => openSheet({ task }),
   });
   return el;
+}
+
+// ---------- undo snackbar ----------
+
+let snackbarTimer = null;
+
+function showUndoSnackbar(taskId) {
+  if (snackbarTimer) { clearTimeout(snackbarTimer); snackbarTimer = null; }
+  document.querySelectorAll('.snackbar').forEach(el => el.remove());
+
+  const sb = document.createElement('div');
+  sb.className = 'snackbar';
+
+  const label = document.createElement('span');
+  label.className = 'snackbar-label';
+  label.textContent = 'Задача выполнена';
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'snackbar-action';
+  btn.textContent = 'Отменить';
+  btn.addEventListener('click', async () => {
+    if (snackbarTimer) { clearTimeout(snackbarTimer); snackbarTimer = null; }
+    sb.classList.remove('open');
+    try {
+      await undoDone(taskId);
+      await renderMain();
+    } catch (e) {
+      if (isIdbDisconnectError(e)) { await recoverDb(); return; }
+      showError(e);
+    } finally {
+      setTimeout(() => sb.remove(), 200);
+    }
+  });
+
+  sb.append(label, btn);
+  document.body.appendChild(sb);
+  requestAnimationFrame(() => sb.classList.add('open'));
+
+  snackbarTimer = setTimeout(() => {
+    sb.classList.remove('open');
+    setTimeout(() => sb.remove(), 220);
+    snackbarTimer = null;
+  }, 4000);
 }
 
 function checkBadgeSvg() {
@@ -373,15 +418,15 @@ async function renderMain() {
   }
 
   root.appendChild(screen);
-  root.appendChild(inputBarNode());
+  root.appendChild(inputBarNode({ highlighted: active.length === 0 }));
   renderLucide();
 }
 
-function inputBarNode() {
+function inputBarNode({ highlighted = false } = {}) {
   const wrapOuter = document.createElement('div');
   wrapOuter.className = 'input-bar';
   const wrap = document.createElement('button');
-  wrap.className = 'wrap';
+  wrap.className = 'wrap' + (highlighted ? ' highlighted' : '');
   wrap.type = 'button';
   const hint = document.createElement('span');
   hint.className = 'hint';
