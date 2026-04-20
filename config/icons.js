@@ -76,7 +76,7 @@ const ICON_KEYWORDS = {
   'продукт': 'shopping-cart',
 
   // home
-  'дом': 'home', 'home': 'home',
+  'дом': 'home', 'home': 'home', 'house': 'home', 'квартир': 'home', 'жиль': 'home',
   'уборк': 'sparkles', 'убрать': 'sparkles', 'clean': 'sparkles',
   'стирк': 'washing-machine', 'постирать': 'washing-machine', 'laundry': 'washing-machine',
   'гладить': 'shirt',

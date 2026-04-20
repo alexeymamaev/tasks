@@ -161,7 +161,7 @@ function matchIcons(text, limit = 5) {
     if (ICON_KEYWORDS[word]) { add(ICON_KEYWORDS[word]); continue; }
     for (const kw in ICON_KEYWORDS) {
       if (word === kw) continue;
-      if (word.startsWith(kw) || (kw.length >= 3 && kw.startsWith(word) && word.length >= 3)) {
+      if (word.startsWith(kw) || (kw.length >= 3 && kw.startsWith(word) && word.length >= 2)) {
         add(ICON_KEYWORDS[kw]);
         if (out.length >= limit) break;
       }
@@ -170,16 +170,18 @@ function matchIcons(text, limit = 5) {
   return out;
 }
 
-// Suggestions row: selected icon first (so user sees their pick), then keyword
-// matches, then defaults from the curated list. Always exactly 5 slots.
+// Suggestions row: keyword matches first (so typing feels responsive), then
+// the user's current pick (if they actually picked one — not the default),
+// then defaults from the curated list. Always exactly 5 slots.
 function suggestionIcons(text, selected) {
   const defaults = (typeof CURATED_FULL !== 'undefined' ? CURATED_FULL : ['circle-dashed']);
   const matched = matchIcons(text, 5);
   const out = [];
   const seen = new Set();
   const push = (n) => { if (n && !seen.has(n)) { seen.add(n); out.push(n); } };
-  push(selected || DEFAULT_ICON);
   matched.forEach(push);
+  if (selected && selected !== DEFAULT_ICON) push(selected);
+  if (out.length === 0) push(DEFAULT_ICON);
   for (const n of defaults) {
     if (out.length >= 5) break;
     push(n);
@@ -541,7 +543,7 @@ function openSheet({ task }) {
   let suggTimer = null;
   textInput.addEventListener('input', () => {
     if (suggTimer) clearTimeout(suggTimer);
-    suggTimer = setTimeout(renderSuggestions, 300);
+    suggTimer = setTimeout(renderSuggestions, 120);
   });
 
   // deadline
