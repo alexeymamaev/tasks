@@ -378,6 +378,13 @@ async function renderMain() {
   const screen = document.createElement('div');
   screen.className = 'screen';
 
+  // top-region keeps header + active grid inside one flex column that is at
+  // least viewport-height minus input-bar reserve; margin-top: auto on the
+  // active grid pins it to the bottom of the region (above the input bar).
+  // Journal lives outside top-region so it scrolls in from below.
+  const topRegion = document.createElement('div');
+  topRegion.className = 'top-region';
+
   const header = document.createElement('div');
   header.className = 'header';
   const h1 = document.createElement('h1');
@@ -386,7 +393,7 @@ async function renderMain() {
   sub.className = 'sub';
   sub.textContent = 'вот твои задачи на сегодня.';
   header.append(h1, sub);
-  screen.appendChild(header);
+  topRegion.appendChild(header);
 
   const [active, journal] = await Promise.all([listActive(), listJournal()]);
 
@@ -394,13 +401,15 @@ async function renderMain() {
     const empty = document.createElement('div');
     empty.className = 'empty';
     empty.textContent = 'Пока пусто. Добавь первую задачу снизу.';
-    screen.appendChild(empty);
+    topRegion.appendChild(empty);
   } else {
     const grid = document.createElement('div');
-    grid.className = 'grid';
+    grid.className = 'grid active-grid';
     active.forEach(t => grid.appendChild(activeCardNode(t)));
-    screen.appendChild(grid);
+    topRegion.appendChild(grid);
   }
+
+  screen.appendChild(topRegion);
 
   if (journal.length > 0) {
     const divider = document.createElement('div');
