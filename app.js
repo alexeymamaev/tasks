@@ -141,13 +141,51 @@ function greeting() {
 }
 
 const DEFAULT_ICON = 'circle-dashed';
-const CURATED_ICONS = [
-  'circle-dashed',
-  'shopping-bag', 'home', 'briefcase', 'phone',
-  'mail', 'calendar', 'book-open', 'pencil', 'target',
-  'dumbbell', 'pill', 'heart', 'coffee', 'apple',
-  'utensils', 'car', 'wallet', 'music', 'star',
-];
+
+// Match task text against config/icons.js ICON_KEYWORDS. Returns up to `limit`
+// unique icon names. Matching: per-word (min length 2), exact first, then
+// prefix either way (word starts with keyword, or keyword starts with word)
+// so simple stems work without listing every inflection.
+function matchIcons(text, limit = 5) {
+  if (!text || typeof ICON_KEYWORDS === 'undefined') return [];
+  const words = (text.toLowerCase().match(/\p{L}+/gu) || []).filter(w => w.length >= 2);
+  const out = [];
+  const seen = new Set();
+  const add = (icon) => {
+    if (!icon || seen.has(icon)) return;
+    seen.add(icon);
+    out.push(icon);
+  };
+  for (const word of words) {
+    if (out.length >= limit) break;
+    if (ICON_KEYWORDS[word]) { add(ICON_KEYWORDS[word]); continue; }
+    for (const kw in ICON_KEYWORDS) {
+      if (word === kw) continue;
+      if (word.startsWith(kw) || (kw.length >= 3 && kw.startsWith(word) && word.length >= 3)) {
+        add(ICON_KEYWORDS[kw]);
+        if (out.length >= limit) break;
+      }
+    }
+  }
+  return out;
+}
+
+// Suggestions row: selected icon first (so user sees their pick), then keyword
+// matches, then defaults from the curated list. Always exactly 5 slots.
+function suggestionIcons(text, selected) {
+  const defaults = (typeof CURATED_FULL !== 'undefined' ? CURATED_FULL : ['circle-dashed']);
+  const matched = matchIcons(text, 5);
+  const out = [];
+  const seen = new Set();
+  const push = (n) => { if (n && !seen.has(n)) { seen.add(n); out.push(n); } };
+  push(selected || DEFAULT_ICON);
+  matched.forEach(push);
+  for (const n of defaults) {
+    if (out.length >= 5) break;
+    push(n);
+  }
+  return out.slice(0, 5);
+}
 
 function iconNode(name) {
   const el = document.createElement('i');
@@ -373,32 +411,57 @@ function openSheet({ task }) {
   textInput.addEventListener('input', () => { draft.text = textInput.value; });
   sheet.appendChild(textInput);
 
-  // icons section
+  // icons section — suggestions row + "Все иконки" button
   const iconSection = document.createElement('div');
   iconSection.className = 'sheet-section';
   const iconLabel = document.createElement('div');
   iconLabel.className = 'sheet-label';
   iconLabel.textContent = 'ИКОНКА';
-  const iconGrid = document.createElement('div');
-  iconGrid.className = 'sheet-icons';
+  const iconRow = document.createElement('div');
+  iconRow.className = 'sheet-icon-row';
 
-  const iconButtons = [];
-  CURATED_ICONS.forEach(name => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'sheet-icon';
-    b.setAttribute('data-icon-name', name);
-    if (name === draft.icon) b.classList.add('selected');
-    b.appendChild(iconNode(name));
-    b.addEventListener('click', () => {
-      draft.icon = name;
-      iconButtons.forEach(btn => btn.classList.toggle('selected', btn.getAttribute('data-icon-name') === name));
+  const renderSuggestions = () => {
+    iconRow.replaceChildren();
+    const names = suggestionIcons(draft.text, draft.icon);
+    names.forEach(name => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'sheet-icon';
+      if (name === draft.icon) b.classList.add('selected');
+      b.appendChild(iconNode(name));
+      b.addEventListener('click', () => {
+        draft.icon = name;
+        renderSuggestions();
+      });
+      iconRow.appendChild(b);
     });
-    iconButtons.push(b);
-    iconGrid.appendChild(b);
+    renderLucide();
+  };
+
+  const allBtn = document.createElement('button');
+  allBtn.type = 'button';
+  allBtn.className = 'sheet-icons-all';
+  allBtn.textContent = 'Все иконки';
+  allBtn.addEventListener('click', () => {
+    openIconPicker({
+      current: draft.icon,
+      onSelect: (name) => {
+        draft.icon = name;
+        renderSuggestions();
+      },
+    });
   });
-  iconSection.append(iconLabel, iconGrid);
+
+  iconSection.append(iconLabel, iconRow, allBtn);
   sheet.appendChild(iconSection);
+  renderSuggestions();
+
+  // Debounced re-render of suggestions on text input.
+  let suggTimer = null;
+  textInput.addEventListener('input', () => {
+    if (suggTimer) clearTimeout(suggTimer);
+    suggTimer = setTimeout(renderSuggestions, 300);
+  });
 
   // deadline
   const dlSection = document.createElement('div');
@@ -477,6 +540,85 @@ function openSheet({ task }) {
   if (!isEdit) {
     setTimeout(() => textInput.focus(), 50);
   }
+}
+
+// ---------- full icon picker (stacked above edit sheet) ----------
+
+function openIconPicker({ current, onSelect }) {
+  const all = (typeof CURATED_FULL !== 'undefined' ? CURATED_FULL : ['circle-dashed']);
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'picker-backdrop';
+
+  const sheet = document.createElement('div');
+  sheet.className = 'picker-sheet';
+  backdrop.appendChild(sheet);
+
+  const handle = document.createElement('div');
+  handle.className = 'sheet-handle';
+  sheet.appendChild(handle);
+
+  const search = document.createElement('input');
+  search.type = 'search';
+  search.className = 'picker-search';
+  search.placeholder = 'Поиск (по англ. имени Lucide)';
+  search.autocomplete = 'off';
+  sheet.appendChild(search);
+
+  const grid = document.createElement('div');
+  grid.className = 'picker-grid';
+  sheet.appendChild(grid);
+
+  const renderGrid = (filter) => {
+    grid.replaceChildren();
+    const q = (filter || '').trim().toLowerCase();
+    const list = q ? all.filter(n => n.includes(q)) : all;
+    if (list.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'picker-empty';
+      empty.textContent = 'Нет совпадений. Можно задать иконку, введя точное Lucide-имя в поиск и нажав Enter.';
+      grid.appendChild(empty);
+    } else {
+      list.forEach(name => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'sheet-icon';
+        if (name === current) b.classList.add('selected');
+        b.appendChild(iconNode(name));
+        b.addEventListener('click', () => {
+          onSelect?.(name);
+          close();
+        });
+        grid.appendChild(b);
+      });
+    }
+    renderLucide();
+  };
+
+  const close = () => {
+    backdrop.classList.remove('open');
+    setTimeout(() => backdrop.remove(), 200);
+  };
+
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
+
+  search.addEventListener('input', () => renderGrid(search.value));
+  search.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const q = search.value.trim().toLowerCase();
+      if (q) {
+        // Accept any Lucide name from the full set or the query itself as a
+        // fallback — user can always type a name we didn't curate.
+        onSelect?.(q);
+        close();
+      }
+    }
+  });
+
+  document.body.appendChild(backdrop);
+  renderGrid();
+  requestAnimationFrame(() => backdrop.classList.add('open'));
 }
 
 async function closeSheet(backdrop, { commit, skipCommit } = {}) {

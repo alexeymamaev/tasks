@@ -1,9 +1,10 @@
-const CACHE = 'tasks-v1-3';
+const CACHE = 'tasks-v1-4';
 const ASSETS = [
   './',
   'index.html',
   'style.css',
   'app.js',
+  'config/icons.js',
   'manifest.json',
   'https://unpkg.com/dexie@4.0.8/dist/dexie.min.js',
   'https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js',
