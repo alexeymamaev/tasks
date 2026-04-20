@@ -140,12 +140,26 @@ function greeting() {
   return 'Доброй ночи!';
 }
 
+const DEFAULT_ICON = 'circle-dashed';
+const CURATED_ICONS = [
+  'circle-dashed',
+  'shopping-bag', 'home', 'briefcase', 'phone',
+  'mail', 'calendar', 'book-open', 'pencil', 'target',
+  'dumbbell', 'pill', 'heart', 'coffee', 'apple',
+  'utensils', 'car', 'wallet', 'music', 'star',
+];
+
 function iconNode(name) {
-  // placeholder: plain dot until Lucide hook is in
-  const span = document.createElement('span');
-  span.className = 'icon';
-  span.textContent = '•';
-  return span;
+  const el = document.createElement('i');
+  el.className = 'icon';
+  el.setAttribute('data-lucide', name || DEFAULT_ICON);
+  return el;
+}
+
+function renderLucide() {
+  if (typeof lucide !== 'undefined' && lucide.createIcons) {
+    lucide.createIcons();
+  }
 }
 
 function attachLongPress(el, { onLongPress, onTap, ms = 500 }) {
@@ -206,6 +220,7 @@ function activeCardNode(task) {
         showError(e);
       }
     },
+    onLongPress: () => openSheet({ task }),
   });
   return el;
 }
@@ -234,6 +249,7 @@ function journalCardNode(task) {
   badge.appendChild(checkBadgeSvg());
   el.appendChild(badge);
   attachLongPress(el, {
+    onTap: () => openSheet({ task }),
     onLongPress: async () => {
       if (el.classList.contains('removing')) return;
       el.classList.add('removing');
@@ -298,49 +314,180 @@ async function renderMain() {
 
   root.appendChild(screen);
   root.appendChild(inputBarNode());
+  renderLucide();
 }
 
 function inputBarNode() {
   const wrapOuter = document.createElement('div');
   wrapOuter.className = 'input-bar';
-  const wrap = document.createElement('div');
+  const wrap = document.createElement('button');
   wrap.className = 'wrap';
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.placeholder = 'Новая задача';
-  input.autocomplete = 'off';
-  input.autocapitalize = 'sentences';
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.textContent = '+';
-  btn.disabled = true;
+  wrap.type = 'button';
+  const hint = document.createElement('span');
+  hint.className = 'hint';
+  hint.textContent = 'Новая задача';
+  const plus = document.createElement('span');
+  plus.className = 'plus';
+  plus.textContent = '+';
+  wrap.append(hint, plus);
+  wrap.addEventListener('click', () => openSheet({ task: null }));
+  wrapOuter.appendChild(wrap);
+  return wrapOuter;
+}
 
-  const sync = () => { btn.disabled = input.value.trim().length === 0; };
-  input.addEventListener('input', sync);
+// ---------- bottom sheet (create / edit) ----------
 
-  const submit = async () => {
-    const text = input.value.trim();
-    if (!text) return;
-    input.value = '';
-    sync();
+let sheetOpen = false;
+
+function openSheet({ task }) {
+  if (sheetOpen) return;
+  sheetOpen = true;
+  const isEdit = !!task;
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'sheet-backdrop';
+
+  const sheet = document.createElement('div');
+  sheet.className = 'sheet';
+  backdrop.appendChild(sheet);
+
+  // draft state — all edits accumulate here, committed on close
+  const draft = {
+    text: task?.text || '',
+    icon: task?.icon || DEFAULT_ICON,
+    deadline: task?.deadline || null,
+  };
+
+  // handle
+  const handle = document.createElement('div');
+  handle.className = 'sheet-handle';
+  sheet.appendChild(handle);
+
+  // text
+  const textInput = document.createElement('textarea');
+  textInput.className = 'sheet-text';
+  textInput.placeholder = 'Задача';
+  textInput.rows = 2;
+  textInput.value = draft.text;
+  textInput.autocapitalize = 'sentences';
+  textInput.addEventListener('input', () => { draft.text = textInput.value; });
+  sheet.appendChild(textInput);
+
+  // icons section
+  const iconSection = document.createElement('div');
+  iconSection.className = 'sheet-section';
+  const iconLabel = document.createElement('div');
+  iconLabel.className = 'sheet-label';
+  iconLabel.textContent = 'ИКОНКА';
+  const iconGrid = document.createElement('div');
+  iconGrid.className = 'sheet-icons';
+
+  const iconButtons = [];
+  CURATED_ICONS.forEach(name => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'sheet-icon';
+    b.setAttribute('data-icon-name', name);
+    if (name === draft.icon) b.classList.add('selected');
+    b.appendChild(iconNode(name));
+    b.addEventListener('click', () => {
+      draft.icon = name;
+      iconButtons.forEach(btn => btn.classList.toggle('selected', btn.getAttribute('data-icon-name') === name));
+    });
+    iconButtons.push(b);
+    iconGrid.appendChild(b);
+  });
+  iconSection.append(iconLabel, iconGrid);
+  sheet.appendChild(iconSection);
+
+  // deadline
+  const dlSection = document.createElement('div');
+  dlSection.className = 'sheet-section';
+  const dlLabel = document.createElement('div');
+  dlLabel.className = 'sheet-label';
+  dlLabel.textContent = 'ДЕДЛАЙН';
+  const dlInput = document.createElement('input');
+  dlInput.type = 'date';
+  dlInput.className = 'sheet-deadline';
+  if (draft.deadline) dlInput.value = draft.deadline;
+  dlInput.addEventListener('change', () => {
+    draft.deadline = dlInput.value || null;
+  });
+  dlSection.append(dlLabel, dlInput);
+  sheet.appendChild(dlSection);
+
+  // delete (edit mode only)
+  if (isEdit) {
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'sheet-delete';
+    del.textContent = 'Удалить';
+    del.addEventListener('click', async () => {
+      sheetOpen = false;
+      try { await db.tasks.delete(task.id); } catch (e) {
+        if (isIdbDisconnectError(e)) await recoverDb();
+        else showError(e);
+      }
+      closeSheet(backdrop, { skipCommit: true });
+    });
+    sheet.appendChild(del);
+  }
+
+  const commit = async () => {
+    const text = draft.text.trim();
     try {
-      await addTask(text);
-      await renderMain();
-      // re-focus? deliberately skipping so keyboard doesn't stay open after add
+      if (isEdit) {
+        // empty text on existing task = no-op (keep original). Only the Delete
+        // button deletes, to keep close-as-autosave non-destructive.
+        if (text) {
+          await db.tasks.update(task.id, {
+            text,
+            icon: draft.icon || DEFAULT_ICON,
+            deadline: draft.deadline || null,
+          });
+        }
+      } else if (text) {
+        await db.tasks.add({
+          icon: draft.icon || DEFAULT_ICON,
+          text,
+          deadline: draft.deadline || null,
+          created_at: Date.now(),
+          done_at: 0,
+        });
+      }
     } catch (e) {
-      if (isIdbDisconnectError(e)) { await recoverDb(); return; }
-      showError(e);
+      if (isIdbDisconnectError(e)) await recoverDb();
+      else showError(e);
     }
   };
 
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); submit(); }
+  backdrop.addEventListener('click', (e) => {
+    if (e.target === backdrop) {
+      closeSheet(backdrop, { commit });
+    }
   });
-  btn.addEventListener('click', submit);
 
-  wrap.append(input, btn);
-  wrapOuter.appendChild(wrap);
-  return wrapOuter;
+  document.body.appendChild(backdrop);
+  renderLucide();
+
+  // animate in
+  requestAnimationFrame(() => backdrop.classList.add('open'));
+
+  // focus text field for new tasks
+  if (!isEdit) {
+    setTimeout(() => textInput.focus(), 50);
+  }
+}
+
+async function closeSheet(backdrop, { commit, skipCommit } = {}) {
+  if (!sheetOpen && !skipCommit) return;
+  sheetOpen = false;
+  backdrop.classList.remove('open');
+  if (commit) await commit();
+  setTimeout(() => {
+    backdrop.remove();
+    renderMain().catch(showError);
+  }, 200);
 }
 
 // ---------- boot ----------

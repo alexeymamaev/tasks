@@ -145,46 +145,153 @@ body {
   bottom: 0;
   padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0)) 16px;
   background: linear-gradient(180deg, rgba(13,10,8,0) 0%, rgba(13,10,8,0.9) 40%, rgba(13,10,8,1) 100%);
+  z-index: 10;
 }
 .input-bar .wrap {
   max-width: 560px;
   margin: 0 auto;
   background: var(--input-bg);
   border-radius: 999px;
-  padding: 4px 4px 4px 18px;
+  padding: 14px 6px 14px 20px;
   display: flex;
   align-items: center;
   gap: 8px;
+  border: 0;
+  width: 100%;
+  color: var(--text-dim);
+  font: 16px -apple-system, system-ui, sans-serif;
+  text-align: left;
+  cursor: pointer;
 }
-.input-bar input {
-  flex: 1;
+.input-bar .hint { flex: 1; }
+.input-bar .plus {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #0D0A08;
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1;
+}
+
+/* ---------- bottom sheet ---------- */
+
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 100;
+  transition: background 200ms ease;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.sheet-backdrop.open { background: rgba(0, 0, 0, 0.33); }
+
+.sheet {
+  width: 100%;
+  max-width: 560px;
+  background: #1C1510;
+  border-radius: 28px 28px 0 0;
+  padding: 14px 18px calc(24px + env(safe-area-inset-bottom, 0)) 18px;
+  transform: translateY(100%);
+  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  max-height: 92vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.sheet-backdrop.open .sheet { transform: translateY(0); }
+
+.sheet-handle {
+  width: 42px;
+  height: 4px;
+  background: var(--divider);
+  border-radius: 999px;
+  margin: 0 auto 14px auto;
+}
+
+.sheet-text {
+  width: 100%;
   background: transparent;
+  border: 0;
+  outline: 0;
+  resize: none;
+  color: var(--text);
+  font: 500 20px/1.3 -apple-system, system-ui, sans-serif;
+  padding: 10px 2px 14px 2px;
+  border-bottom: 1px solid var(--divider);
+}
+.sheet-text::placeholder { color: var(--text-muted); }
+
+.sheet-section { padding: 18px 0 4px 0; }
+.sheet-label {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+.sheet-icons {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+.sheet-icon {
+  border: 0;
+  background: var(--card);
+  color: var(--text);
+  border-radius: 12px;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 120ms ease, transform 120ms ease;
+}
+.sheet-icon:active { transform: scale(0.94); }
+.sheet-icon.selected {
+  background: var(--accent);
+  color: #0D0A08;
+}
+.sheet-icon .icon,
+.sheet-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.sheet-deadline {
+  width: 100%;
+  background: var(--card);
   border: 0;
   outline: 0;
   color: var(--text);
   font: 16px -apple-system, system-ui, sans-serif;
-  padding: 12px 0;
-  min-width: 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  color-scheme: dark;
 }
-.input-bar input::placeholder { color: var(--text-dim); }
-.input-bar button {
+
+.sheet-delete {
+  width: 100%;
+  margin-top: 22px;
+  padding: 14px 16px;
+  background: transparent;
   border: 0;
-  background: var(--accent);
-  color: #0D0A08;
-  font-weight: 700;
-  font-size: 20px;
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
+  color: #FF7A6B;
+  font: 600 16px -apple-system, system-ui, sans-serif;
   cursor: pointer;
-  display: grid;
-  place-items: center;
+  border-radius: 12px;
 }
-.input-bar button:disabled {
-  background: var(--text-muted);
-  color: var(--bg-bot);
-  opacity: 0.6;
-  cursor: default;
+.sheet-delete:active { background: rgba(255, 122, 107, 0.1); }
+
+/* Lucide icons on cards */
+.card > .icon,
+.card > svg {
+  width: 22px;
+  height: 22px;
 }
 
 /* ---------- status banner (IDB reconnect etc) ---------- */

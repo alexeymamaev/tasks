@@ -1,4 +1,4 @@
-const CACHE = 'tasks-v1-2';
+const CACHE = 'tasks-v1-3';
 const ASSETS = [
   './',
   'index.html',
@@ -6,6 +6,7 @@ const ASSETS = [
   'app.js',
   'manifest.json',
   'https://unpkg.com/dexie@4.0.8/dist/dexie.min.js',
+  'https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js',
 ];
 
 self.addEventListener('install', (e) => {

@@ -6,9 +6,9 @@ Vanilla HTML/CSS/JS + Dexie + PWA. Деплой — GitHub Pages.
 
 - [x] 1. Скелет PWA (5 файлов, Dexie через CDN, SW).
 - [x] 2. Главный экран: header, 3-колоночная сетка активных, input-bar, добавление, тап=done.
-- [ ] 3. Чек-бейдж + журнал (закрытые сегодня).
-- [ ] 4. Bottom-sheet редактирования (long-press).
-- [ ] 5. Иконки (Lucide + keyword-подсказки + picker).
+- [x] 3. Чек-бейдж + журнал (закрытые сегодня).
+- [x] 4. Bottom-sheet создания/редактирования (long-press активной / тап input-bar / тап journal). 20 curated Lucide в sheet.
+- [ ] 5. Иконки: keyword-подсказки + полный picker.
 - [ ] 6. Дедлайн pill.
 - [ ] 7. Undo-снекбар.
 - [ ] 8. Empty state.
