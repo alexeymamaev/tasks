@@ -438,23 +438,20 @@ async function renderMain() {
   }
 
   root.appendChild(screen);
-  root.appendChild(inputBarNode({ highlighted: active.length === 0 }));
+  root.appendChild(inputBarNode());
   renderLucide();
 }
 
-function inputBarNode({ highlighted = false } = {}) {
+function inputBarNode() {
   const wrapOuter = document.createElement('div');
   wrapOuter.className = 'input-bar';
   const wrap = document.createElement('button');
-  wrap.className = 'wrap' + (highlighted ? ' highlighted' : '');
+  wrap.className = 'wrap';
   wrap.type = 'button';
-  const hint = document.createElement('span');
-  hint.className = 'hint';
-  hint.textContent = 'Новая задача';
-  const plus = document.createElement('span');
-  plus.className = 'plus';
-  plus.textContent = '+';
-  wrap.append(hint, plus);
+  wrap.append(iconNode('plus'));
+  const label = document.createElement('span');
+  label.textContent = 'Добавить задачу';
+  wrap.append(label);
   wrap.addEventListener('click', () => openSheet({ task: null }));
   wrapOuter.appendChild(wrap);
   return wrapOuter;
