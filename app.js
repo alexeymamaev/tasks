@@ -171,22 +171,31 @@ function matchIcons(text, limit = 5) {
 }
 
 // Suggestions row: keyword matches first (so typing feels responsive), then
-// the user's current pick (if they actually picked one — not the default),
-// then defaults from the curated list. Always exactly 5 slots.
-function suggestionIcons(text, selected) {
+// defaults from the curated list. Always exactly 5 slots. The user's current
+// pick is NOT baked into ordering — selection only toggles the highlight in
+// place, so tapping an icon doesn't move it between slots. The current pick
+// gets its own surface (the icon-box next to the input).
+function suggestionIcons(text) {
   const defaults = (typeof CURATED_FULL !== 'undefined' ? CURATED_FULL : ['circle-dashed']);
   const matched = matchIcons(text, 5);
   const out = [];
   const seen = new Set();
   const push = (n) => { if (n && !seen.has(n)) { seen.add(n); out.push(n); } };
   matched.forEach(push);
-  if (selected && selected !== DEFAULT_ICON) push(selected);
   if (out.length === 0) push(DEFAULT_ICON);
   for (const n of defaults) {
     if (out.length >= 5) break;
     push(n);
   }
   return out.slice(0, 5);
+}
+
+function todayISO() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 function iconNode(name) {
@@ -471,7 +480,7 @@ function openSheet({ task }) {
   const draft = {
     text: task?.text || '',
     icon: task?.icon || DEFAULT_ICON,
-    deadline: task?.deadline || null,
+    deadline: isEdit ? (task?.deadline || null) : todayISO(),
   };
 
   // handle
@@ -541,7 +550,7 @@ function openSheet({ task }) {
 
   const renderSuggestions = () => {
     iconRow.replaceChildren();
-    const names = suggestionIcons(draft.text, draft.icon);
+    const names = suggestionIcons(draft.text);
     names.forEach(name => {
       const b = document.createElement('button');
       b.type = 'button';
@@ -550,7 +559,10 @@ function openSheet({ task }) {
       b.appendChild(iconNode(name));
       b.addEventListener('click', () => {
         draft.icon = name;
-        renderSuggestions();
+        // Toggle selected class in place — do NOT re-render the row, which
+        // would shuffle positions. Icon-box shows the pick separately.
+        iconRow.querySelectorAll('.sheet-icon').forEach(el => el.classList.remove('selected'));
+        b.classList.add('selected');
         renderIconBox();
       });
       iconRow.appendChild(b);
@@ -665,16 +677,18 @@ function openSheet({ task }) {
   document.body.appendChild(backdrop);
   renderLucide();
 
+  // Focus synchronously while still inside the click gesture chain — iOS
+  // Safari won't raise the keyboard if focus() runs from a setTimeout/rAF
+  // after the gesture. Transform-off-screen doesn't prevent focus.
+  if (!isEdit) {
+    textInput.focus();
+  }
+
   // animate in + size the textarea for any pre-filled content
   requestAnimationFrame(() => {
     backdrop.classList.add('open');
     autoResize();
   });
-
-  // focus text field for new tasks
-  if (!isEdit) {
-    setTimeout(() => textInput.focus(), 50);
-  }
 }
 
 // ---------- full icon picker (stacked above edit sheet) ----------
