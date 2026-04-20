@@ -479,11 +479,38 @@ function openSheet({ task }) {
   handle.className = 'sheet-handle';
   sheet.appendChild(handle);
 
-  // text
+  // header: title + Готово
+  const header = document.createElement('div');
+  header.className = 'sheet-header';
+  const title = document.createElement('div');
+  title.className = 'sheet-title';
+  title.textContent = isEdit ? 'Редактирование' : 'Новая задача';
+  const doneBtn = document.createElement('button');
+  doneBtn.type = 'button';
+  doneBtn.className = 'sheet-done';
+  doneBtn.textContent = 'Готово';
+  header.append(title, doneBtn);
+  sheet.appendChild(header);
+
+  // input row: icon box + input container with textarea
+  const inputRow = document.createElement('div');
+  inputRow.className = 'sheet-input-row';
+
+  const iconBox = document.createElement('button');
+  iconBox.type = 'button';
+  iconBox.className = 'sheet-iconbox';
+  const renderIconBox = () => {
+    iconBox.replaceChildren(iconNode(draft.icon || DEFAULT_ICON));
+    renderLucide();
+  };
+  renderIconBox();
+
+  const inputWrap = document.createElement('div');
+  inputWrap.className = 'sheet-input-wrap';
   const textInput = document.createElement('textarea');
   textInput.className = 'sheet-text';
   textInput.placeholder = 'Задача';
-  textInput.rows = 2;
+  textInput.rows = 1;
   textInput.value = draft.text;
   textInput.autocapitalize = 'sentences';
   // iOS Safari otherwise shows a URL-autofill pill (site domain) in the
@@ -492,14 +519,23 @@ function openSheet({ task }) {
   textInput.setAttribute('autocorrect', 'off');
   textInput.spellcheck = false;
   textInput.addEventListener('input', () => { draft.text = textInput.value; });
-  sheet.appendChild(textInput);
+  // auto-grow up to max-height (CSS clamps, JS sets precise height)
+  const autoResize = () => {
+    textInput.style.height = 'auto';
+    textInput.style.height = Math.min(textInput.scrollHeight, 94) + 'px';
+  };
+  textInput.addEventListener('input', autoResize);
+  inputWrap.appendChild(textInput);
 
-  // icons section — suggestions row + "Все иконки" button
+  inputRow.append(iconBox, inputWrap);
+  sheet.appendChild(inputRow);
+
+  // icons section — suggestions row + "Все иконки" link
   const iconSection = document.createElement('div');
   iconSection.className = 'sheet-section';
   const iconLabel = document.createElement('div');
   iconLabel.className = 'sheet-label';
-  iconLabel.textContent = 'ИКОНКА';
+  iconLabel.textContent = 'ПРЕДЛОЖЕНИЯ';
   const iconRow = document.createElement('div');
   iconRow.className = 'sheet-icon-row';
 
@@ -515,6 +551,7 @@ function openSheet({ task }) {
       b.addEventListener('click', () => {
         draft.icon = name;
         renderSuggestions();
+        renderIconBox();
       });
       iconRow.appendChild(b);
     });
@@ -525,15 +562,18 @@ function openSheet({ task }) {
   allBtn.type = 'button';
   allBtn.className = 'sheet-icons-all';
   allBtn.textContent = 'Все иконки';
-  allBtn.addEventListener('click', () => {
+  const openPicker = () => {
     openIconPicker({
       current: draft.icon,
       onSelect: (name) => {
         draft.icon = name;
         renderSuggestions();
+        renderIconBox();
       },
     });
-  });
+  };
+  allBtn.addEventListener('click', openPicker);
+  iconBox.addEventListener('click', openPicker);
 
   iconSection.append(iconLabel, iconRow, allBtn);
   sheet.appendChild(iconSection);
@@ -546,12 +586,12 @@ function openSheet({ task }) {
     suggTimer = setTimeout(renderSuggestions, 120);
   });
 
-  // deadline
-  const dlSection = document.createElement('div');
-  dlSection.className = 'sheet-section';
+  // deadline row: "Дедлайн" label on the left, small date-input pill on the right
+  const dlRow = document.createElement('div');
+  dlRow.className = 'sheet-dl-row';
   const dlLabel = document.createElement('div');
-  dlLabel.className = 'sheet-label';
-  dlLabel.textContent = 'ДЕДЛАЙН';
+  dlLabel.className = 'label';
+  dlLabel.textContent = 'Дедлайн';
   const dlInput = document.createElement('input');
   dlInput.type = 'date';
   dlInput.className = 'sheet-deadline';
@@ -560,15 +600,19 @@ function openSheet({ task }) {
   dlInput.addEventListener('change', () => {
     draft.deadline = dlInput.value || null;
   });
-  dlSection.append(dlLabel, dlInput);
-  sheet.appendChild(dlSection);
+  dlRow.append(dlLabel, dlInput);
+  sheet.appendChild(dlRow);
 
-  // delete (edit mode only)
+  // delete (edit mode only) — divider above for clear separation
   if (isEdit) {
+    const dvd = document.createElement('hr');
+    dvd.className = 'sheet-divider';
+    sheet.appendChild(dvd);
+
     const del = document.createElement('button');
     del.type = 'button';
     del.className = 'sheet-delete';
-    del.textContent = 'Удалить';
+    del.textContent = 'Удалить задачу';
     del.addEventListener('click', async () => {
       sheetOpen = false;
       try { await db.tasks.delete(task.id); } catch (e) {
@@ -608,6 +652,10 @@ function openSheet({ task }) {
     }
   };
 
+  doneBtn.addEventListener('click', () => {
+    closeSheet(backdrop, { commit });
+  });
+
   backdrop.addEventListener('click', (e) => {
     if (e.target === backdrop) {
       closeSheet(backdrop, { commit });
@@ -617,8 +665,11 @@ function openSheet({ task }) {
   document.body.appendChild(backdrop);
   renderLucide();
 
-  // animate in
-  requestAnimationFrame(() => backdrop.classList.add('open'));
+  // animate in + size the textarea for any pre-filled content
+  requestAnimationFrame(() => {
+    backdrop.classList.add('open');
+    autoResize();
+  });
 
   // focus text field for new tasks
   if (!isEdit) {
