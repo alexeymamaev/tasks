@@ -231,11 +231,33 @@ function attachLongPress(el, { onLongPress, onTap, ms = 500 }) {
   el.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
+function formatDeadline(isoDate) {
+  if (!isoDate) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const d = new Date(isoDate + 'T00:00:00');
+  if (isNaN(d)) return null;
+  const diffDays = Math.round((d - today) / 86400000);
+  if (diffDays === 0) return { text: 'сегодня', kind: 'today' };
+  if (diffDays === -1) return { text: 'вчера', kind: 'overdue' };
+  const short = d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }).replace('.', '');
+  return { text: short, kind: diffDays < 0 ? 'overdue' : 'future' };
+}
+
 function cardBase(task) {
   const el = document.createElement('div');
   el.className = 'card';
   el.dataset.id = String(task.id);
   el.appendChild(iconNode(task.icon));
+
+  const fmt = formatDeadline(task.deadline);
+  if (fmt) {
+    const dl = document.createElement('div');
+    dl.className = 'deadline ' + fmt.kind;
+    dl.textContent = fmt.text;
+    el.appendChild(dl);
+  }
+
   const text = document.createElement('div');
   text.className = 'text';
   text.textContent = task.text;
