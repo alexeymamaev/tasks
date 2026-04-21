@@ -88,6 +88,15 @@ const ICON_KEYWORDS = {
   'созвон': 'video', 'call': 'phone-call', 'звонок': 'phone', 'позвонить': 'phone',
   'письмо': 'mail', 'email': 'mail', 'почт': 'mail', 'написать': 'mail',
   'отчёт': 'file-text', 'отчет': 'file-text', 'report': 'file-text',
+  'документ': 'file-text', 'document': 'file-text', 'doc': 'file-text',
+  'договор': 'file-text', 'contract': 'file-text',
+  'задач': 'clipboard', 'task': 'clipboard', 'todo': 'clipboard', 'список': 'clipboard',
+  'план': 'calendar-check', 'plan': 'calendar-check',
+  'дедлайн': 'calendar-clock', 'deadline': 'calendar-clock', 'срок': 'calendar-clock',
+  'идея': 'light-bulb', 'idea': 'light-bulb', 'мысль': 'light-bulb',
+  'проверить': 'check', 'check': 'check',
+  'ноутбук': 'laptop', 'ноут': 'laptop', 'laptop': 'laptop',
+  'принтер': 'printer', 'распечатать': 'printer', 'print': 'printer',
 
   // fitness
   'зал': 'dumbbell', 'спорт': 'dumbbell', 'gym': 'dumbbell', 'тренировк': 'dumbbell',
@@ -130,7 +139,9 @@ const ICON_KEYWORDS = {
   // learning / reading
   'книг': 'book-open', 'book': 'book-open', 'читать': 'book-open', 'прочитать': 'book-open',
   'учёб': 'graduation-cap', 'учеб': 'graduation-cap', 'курс': 'graduation-cap', 'study': 'graduation-cap',
-  'записать': 'pencil', 'заметк': 'pencil',
+  'записать': 'pencil', 'заметк': 'pencil', 'note': 'pencil', 'notes': 'pencil',
+  'блокнот': 'notebook', 'notebook': 'notebook',
+  'язык': 'language', 'english': 'language',
 
   // family / people
   'лид': 'heart', 'лёв': 'baby', 'мир': 'baby',

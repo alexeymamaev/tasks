@@ -116,6 +116,7 @@ async function addTask(text) {
   return db.tasks.add({
     icon: 'circle-dashed',
     text,
+    notes: '',
     deadline: null,
     created_at: Date.now(),
     done_at: 0,
@@ -146,7 +147,7 @@ const DEFAULT_ICON = 'circle-dashed';
 // unique icon names. Matching: per-word (min length 2), exact first, then
 // prefix either way (word starts with keyword, or keyword starts with word)
 // so simple stems work without listing every inflection.
-function matchIcons(text, limit = 5) {
+function matchIcons(text, limit = 8) {
   if (!text || typeof ICON_KEYWORDS === 'undefined') return [];
   const words = (text.toLowerCase().match(/\p{L}+/gu) || []).filter(w => w.length >= 2);
   const out = [];
@@ -171,23 +172,24 @@ function matchIcons(text, limit = 5) {
 }
 
 // Suggestions row: keyword matches first (so typing feels responsive), then
-// defaults from the curated list. Always exactly 5 slots. The user's current
-// pick is NOT baked into ordering — selection only toggles the highlight in
-// place, so tapping an icon doesn't move it between slots. The current pick
-// gets its own surface (the icon-box next to the input).
+// defaults from the curated list. Always exactly 8 slots (mirrors iOS emoji
+// keyboard row). Selection only toggles highlight in place, so tapping an
+// icon doesn't move it between slots. The icon-box next to the input shows
+// the current pick separately.
+const SUGGESTIONS_LIMIT = 8;
 function suggestionIcons(text) {
   const defaults = (typeof CURATED_FULL !== 'undefined' ? CURATED_FULL : ['circle-dashed']);
-  const matched = matchIcons(text, 5);
+  const matched = matchIcons(text, SUGGESTIONS_LIMIT);
   const out = [];
   const seen = new Set();
   const push = (n) => { if (n && !seen.has(n)) { seen.add(n); out.push(n); } };
   matched.forEach(push);
   if (out.length === 0) push(DEFAULT_ICON);
   for (const n of defaults) {
-    if (out.length >= 5) break;
+    if (out.length >= SUGGESTIONS_LIMIT) break;
     push(n);
   }
-  return out.slice(0, 5);
+  return out.slice(0, SUGGESTIONS_LIMIT);
 }
 
 function todayISO() {
@@ -273,13 +275,21 @@ function cardBase(task) {
   text.className = 'text';
   text.textContent = task.text;
   el.appendChild(text);
+
+  if (task.notes && task.notes.trim()) {
+    const mark = document.createElement('div');
+    mark.className = 'notes-mark';
+    mark.appendChild(iconNode('pencil'));
+    el.appendChild(mark);
+  }
   return el;
 }
 
 function activeCardNode(task) {
   const el = cardBase(task);
   attachLongPress(el, {
-    onTap: async () => {
+    onTap: () => openSheet({ task }),
+    onLongPress: async () => {
       if (el.classList.contains('removing')) return;
       el.classList.add('removing');
       try {
@@ -292,7 +302,6 @@ function activeCardNode(task) {
         showError(e);
       }
     },
-    onLongPress: () => openSheet({ task }),
   });
   return el;
 }
@@ -477,6 +486,7 @@ function openSheet({ task }) {
   const draft = {
     text: task?.text || '',
     icon: task?.icon || DEFAULT_ICON,
+    notes: task?.notes || '',
     deadline: isEdit ? (task?.deadline || null) : todayISO(),
   };
 
@@ -588,12 +598,40 @@ function openSheet({ task }) {
   sheet.appendChild(iconSection);
   renderSuggestions();
 
-  // Debounced re-render of suggestions on text input.
+  // Debounced re-render of suggestions on text input — long enough that a
+  // partial word ("док" → "документ") doesn't flash through 3 matches before
+  // settling.
   let suggTimer = null;
   textInput.addEventListener('input', () => {
     if (suggTimer) clearTimeout(suggTimer);
-    suggTimer = setTimeout(renderSuggestions, 120);
+    suggTimer = setTimeout(renderSuggestions, 250);
   });
+
+  // notes section: label + textarea box (auto-grow, no max-height; the sheet
+  // itself scrolls internally if it overflows).
+  const notesLabel = document.createElement('div');
+  notesLabel.className = 'sheet-label';
+  notesLabel.textContent = 'ЗАМЕТКИ';
+  const notesWrap = document.createElement('div');
+  notesWrap.className = 'sheet-notes-wrap';
+  const notesInput = document.createElement('textarea');
+  notesInput.className = 'sheet-notes';
+  notesInput.placeholder = 'Заметки (опционально)';
+  notesInput.rows = 2;
+  notesInput.value = draft.notes;
+  notesInput.autocomplete = 'off';
+  notesInput.setAttribute('autocorrect', 'off');
+  notesInput.spellcheck = false;
+  const autoResizeNotes = () => {
+    notesInput.style.height = 'auto';
+    notesInput.style.height = notesInput.scrollHeight + 'px';
+  };
+  notesInput.addEventListener('input', () => {
+    draft.notes = notesInput.value;
+    autoResizeNotes();
+  });
+  notesWrap.appendChild(notesInput);
+  sheet.append(notesLabel, notesWrap);
 
   // deadline row: "Дедлайн" label on the left, small date-input pill on the right
   const dlRow = document.createElement('div');
@@ -635,6 +673,7 @@ function openSheet({ task }) {
 
   const commit = async () => {
     const text = draft.text.trim();
+    const notes = (draft.notes || '').trim();
     try {
       if (isEdit) {
         // empty text on existing task = no-op (keep original). Only the Delete
@@ -643,6 +682,7 @@ function openSheet({ task }) {
           await db.tasks.update(task.id, {
             text,
             icon: draft.icon || DEFAULT_ICON,
+            notes,
             deadline: draft.deadline || null,
           });
         }
@@ -650,6 +690,7 @@ function openSheet({ task }) {
         await db.tasks.add({
           icon: draft.icon || DEFAULT_ICON,
           text,
+          notes,
           deadline: draft.deadline || null,
           created_at: Date.now(),
           done_at: 0,
@@ -681,10 +722,11 @@ function openSheet({ task }) {
     textInput.focus();
   }
 
-  // animate in + size the textarea for any pre-filled content
+  // animate in + size textareas for any pre-filled content
   requestAnimationFrame(() => {
     backdrop.classList.add('open');
     autoResize();
+    autoResizeNotes();
   });
 }
 

@@ -2,7 +2,7 @@
   --bg-top: #4D3A31;
   --bg-mid: #2A2018;
   --bg-bot: #0D0A08;
-  --card: #2A211C;
+  --card: #493A32;
   --text: #FFFFFF;
   --text-dim: #8B847B;
   --text-muted: #6A635A;
@@ -17,10 +17,11 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; padding: 0; }
+html { background: var(--bg-bot); }
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
   color: var(--text);
-  background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 55%, var(--bg-bot) 100%);
+  background: var(--bg-bot) linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 55%, var(--bg-bot) 100%);
   background-attachment: fixed;
   min-height: 100vh;
   min-height: 100svh;
@@ -95,18 +96,30 @@ body {
   line-height: 1;
 }
 .card .text {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
   line-height: 1.25;
   letter-spacing: -0.01em;
   word-break: break-word;
   overflow-wrap: anywhere;
   display: -webkit-box;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 5;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 .card.removing { opacity: 0; transform: scale(0.9); }
+
+.card .notes-mark {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  color: var(--text-dim);
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.card .notes-mark svg,
+.card .notes-mark .icon { width: 12px; height: 12px; }
 
 .card .deadline {
   position: absolute;
@@ -312,6 +325,26 @@ body {
 }
 .sheet-text::placeholder { color: var(--text-muted); }
 
+.sheet-notes-wrap {
+  border-radius: 14px;
+  background: var(--sheet-control);
+  padding: 14px 16px;
+}
+.sheet-notes {
+  width: 100%;
+  min-width: 0;
+  display: block;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  resize: none;
+  color: var(--text);
+  font: 500 16px/1.35 -apple-system, system-ui, sans-serif;
+  padding: 0;
+  overflow: hidden;
+}
+.sheet-notes::placeholder { color: var(--text-muted); }
+
 .sheet-section {
   display: flex;
   flex-direction: column;
@@ -326,8 +359,8 @@ body {
 
 .sheet-icon-row {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
 }
 .sheet-icons-all {
   align-self: flex-start;
@@ -358,8 +391,13 @@ body {
 }
 .sheet-icon .icon,
 .sheet-icon svg {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
+}
+.sheet-icon-row .sheet-icon .icon,
+.sheet-icon-row .sheet-icon svg {
+  width: 18px;
+  height: 18px;
 }
 
 .sheet-dl-row {
@@ -453,6 +491,8 @@ body {
 .picker-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
+  grid-auto-rows: max-content;
+  align-content: start;
   gap: 8px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -460,6 +500,7 @@ body {
   min-height: 0;
   flex: 1;
 }
+.picker-grid .sheet-icon { align-self: start; }
 
 .picker-empty {
   grid-column: 1 / -1;
