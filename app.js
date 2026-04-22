@@ -61,6 +61,10 @@ const db = new Dexie('tasks-v1');
 db.version(1).stores({
   tasks: '++id, done_at, created_at',
 });
+db.version(2).stores({
+  tasks: '++id, done_at, created_at, track_id',
+  tracks: '++id, category',
+});
 
 async function ensureDbOpen() {
   if (db.isOpen()) return;
@@ -118,6 +122,7 @@ async function addTask(text) {
     text,
     notes: '',
     deadline: null,
+    track_id: null,
     created_at: Date.now(),
     done_at: 0,
   });
@@ -130,6 +135,55 @@ async function markDone(id) {
 async function undoDone(id) {
   await db.tasks.update(id, { done_at: 0 });
 }
+
+// ---------- tracks ----------
+
+async function listTracks() {
+  const arr = await db.tracks.toArray();
+  arr.sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+  return arr;
+}
+
+async function addTrack({ name, icon, category = 'personal' }) {
+  const all = await db.tracks.toArray();
+  const maxPos = all.reduce((m, t) => Math.max(m, t.position ?? 0), 0);
+  return db.tracks.add({
+    name: name.trim(),
+    icon: icon || DEFAULT_ICON,
+    category,
+    position: maxPos + 1,
+    created_at: Date.now(),
+  });
+}
+
+async function deleteTrack(id) {
+  await db.transaction('rw', db.tracks, db.tasks, async () => {
+    await db.tracks.delete(id);
+    const linked = await db.tasks.where('track_id').equals(id).toArray();
+    for (const t of linked) {
+      await db.tasks.update(t.id, { track_id: null });
+    }
+  });
+}
+
+async function updateTrack(id, patch) {
+  await db.tracks.update(id, patch);
+}
+
+// Progress for a track = done / (done + active) over the track's lifetime.
+async function trackStats(trackId) {
+  const linked = await db.tasks.where('track_id').equals(trackId).toArray();
+  let done = 0;
+  for (const t of linked) if (t.done_at) done++;
+  return { done, total: linked.length };
+}
+
+async function listTasksByTrack(trackId) {
+  return db.tasks.where('track_id').equals(trackId).toArray();
+}
+
+const TRACK_CATEGORIES = ['work', 'personal', 'inactive'];
+const TRACK_CATEGORY_LABELS = { work: 'Работа', personal: 'Личное', inactive: 'Неактивные' };
 
 // ---------- render ----------
 
@@ -391,17 +445,153 @@ function journalCardNode(task) {
   return el;
 }
 
-async function renderMain() {
+// ---------- pager (Morning ↔ Tracks) ----------
+
+let currentPage = 0; // 0 = morning, 1 = tracks
+let pagerEl = null;
+let inputBarEl = null;
+
+async function renderApp() {
   const root = document.getElementById('app');
   root.replaceChildren();
+  root.classList.add('app-root');
+
+  pagerEl = document.createElement('div');
+  pagerEl.className = 'pager';
+
+  const pMorning = document.createElement('section');
+  pMorning.className = 'page page-morning';
+  const pTracks = document.createElement('section');
+  pTracks.className = 'page page-tracks';
+  pagerEl.append(pMorning, pTracks);
+
+  root.appendChild(pagerEl);
+
+  inputBarEl = document.createElement('div');
+  inputBarEl.className = 'input-bar';
+  root.appendChild(inputBarEl);
+
+  attachPagerSwipe(pagerEl);
+  await Promise.all([renderMorning(), renderTracks()]);
+  setPage(currentPage, false);
+}
+
+function setPage(idx, animate = true) {
+  currentPage = Math.max(0, Math.min(1, idx));
+  if (!animate) pagerEl.classList.add('no-anim');
+  pagerEl.style.transform = `translateX(${-currentPage * 50}%)`;
+  if (!animate) requestAnimationFrame(() => pagerEl.classList.remove('no-anim'));
+  updateInputBar();
+  updatePagerDots();
+}
+
+function updateInputBar() {
+  if (!inputBarEl) return;
+  inputBarEl.replaceChildren();
+  const wrap = document.createElement('button');
+  wrap.className = 'wrap';
+  wrap.type = 'button';
+  wrap.append(iconNode('plus'));
+  const label = document.createElement('span');
+  if (currentPage === 0) {
+    label.textContent = 'Добавить задачу';
+    wrap.addEventListener('click', () => openSheet({ task: null }));
+  } else {
+    label.textContent = 'Добавить трек';
+    wrap.addEventListener('click', () => openTrackSheet({ track: null }));
+  }
+  wrap.append(label);
+  inputBarEl.appendChild(wrap);
+  renderLucide();
+}
+
+function updatePagerDots() {
+  document.querySelectorAll('.pager-dots .dot').forEach((el, i) => {
+    el.classList.toggle('active', i === currentPage);
+  });
+}
+
+function pagerDotsNode() {
+  const wrap = document.createElement('div');
+  wrap.className = 'pager-dots';
+  for (let i = 0; i < 2; i++) {
+    const d = document.createElement('span');
+    d.className = 'dot' + (i === currentPage ? ' active' : '');
+    wrap.appendChild(d);
+  }
+  return wrap;
+}
+
+// Horizontal swipe between pages. A move is considered a swipe only if the
+// pointer moves horizontally > vertically past a small threshold, so vertical
+// scroll inside a page is never hijacked. Drag handles on track strips
+// stopPropagation to own their gestures.
+function attachPagerSwipe(el) {
+  let startX = 0, startY = 0, dragging = false, active = false, baseTx = 0;
+  const W = () => window.innerWidth;
+
+  el.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('[data-no-swipe]')) return;
+    active = true;
+    dragging = false;
+    startX = e.clientX;
+    startY = e.clientY;
+    // Pager width is 200% of parent (2*W). translateX(-50%) shifts it by 1*W px.
+    // So at page N, px-equivalent of "-50*N %" is -W*N.
+    baseTx = -currentPage * W();
+  });
+  el.addEventListener('pointermove', (e) => {
+    if (!active) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    if (!dragging) {
+      if (Math.abs(dx) < 10) return;
+      if (Math.abs(dx) > Math.abs(dy) * 1.3) {
+        dragging = true;
+        el.classList.add('dragging');
+      } else {
+        active = false;
+        return;
+      }
+    }
+    // Clamp past bounds with resistance so you can't drag beyond end pages.
+    let tx = baseTx + dx;
+    const maxTx = 0;
+    const minTx = -W(); // one full viewport = second page fully visible
+    if (tx > maxTx) tx = maxTx + (tx - maxTx) * 0.3;
+    if (tx < minTx) tx = minTx + (tx - minTx) * 0.3;
+    el.style.transform = `translateX(${tx}px)`;
+  });
+  const end = (e) => {
+    if (!active) return;
+    active = false;
+    if (!dragging) return;
+    el.classList.remove('dragging');
+    const dx = e.clientX - startX;
+    const threshold = W() * 0.2;
+    let next = currentPage;
+    if (dx < -threshold && currentPage < 1) next = currentPage + 1;
+    else if (dx > threshold && currentPage > 0) next = currentPage - 1;
+    // Reset transform to % (setPage uses %)
+    el.style.transform = '';
+    setPage(next, true);
+    dragging = false;
+  };
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointercancel', end);
+  el.addEventListener('pointerleave', (e) => { if (active && dragging) end(e); });
+}
+
+// ---------- render: Morning (main) ----------
+
+async function renderMorning() {
+  const page = document.querySelector('.page-morning');
+  if (!page) return;
+  page.replaceChildren();
 
   const screen = document.createElement('div');
   screen.className = 'screen';
 
-  // top-region keeps header + active grid inside one flex column that is at
-  // least viewport-height minus input-bar reserve; margin-top: auto on the
-  // active grid pins it to the bottom of the region (above the input bar).
-  // Journal lives outside top-region so it scrolls in from below.
   const topRegion = document.createElement('div');
   topRegion.className = 'top-region';
 
@@ -446,24 +636,125 @@ async function renderMain() {
     screen.appendChild(jgrid);
   }
 
-  root.appendChild(screen);
-  root.appendChild(inputBarNode());
+  screen.appendChild(pagerDotsNode());
+  page.appendChild(screen);
   renderLucide();
 }
 
-function inputBarNode() {
-  const wrapOuter = document.createElement('div');
-  wrapOuter.className = 'input-bar';
-  const wrap = document.createElement('button');
-  wrap.className = 'wrap';
-  wrap.type = 'button';
-  wrap.append(iconNode('plus'));
-  const label = document.createElement('span');
-  label.textContent = 'Добавить задачу';
-  wrap.append(label);
-  wrap.addEventListener('click', () => openSheet({ task: null }));
-  wrapOuter.appendChild(wrap);
-  return wrapOuter;
+// Existing task-mutation call sites use renderMain() after the mutation.
+// It now refreshes both pages so track stats stay in sync with task state.
+async function renderMain() {
+  await Promise.all([renderMorning(), renderTracks()]);
+}
+
+// ---------- render: Tracks ----------
+
+async function renderTracks() {
+  const page = document.querySelector('.page-tracks');
+  if (!page) return;
+  page.replaceChildren();
+
+  const screen = document.createElement('div');
+  screen.className = 'screen';
+
+  const header = document.createElement('div');
+  header.className = 'header';
+  const h1 = document.createElement('h1');
+  h1.textContent = 'Треки';
+  const sub = document.createElement('div');
+  sub.className = 'sub';
+  sub.textContent = 'направления деятельности.';
+  header.append(h1, sub);
+  screen.appendChild(header);
+
+  const tracks = await listTracks();
+  const byCat = { work: [], personal: [], inactive: [] };
+  tracks.forEach(t => {
+    const cat = TRACK_CATEGORIES.includes(t.category) ? t.category : 'personal';
+    byCat[cat].push(t);
+  });
+
+  // compute stats for all in parallel
+  const statsMap = new Map();
+  await Promise.all(tracks.map(async t => {
+    statsMap.set(t.id, await trackStats(t.id));
+  }));
+
+  if (tracks.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+    empty.textContent = 'Пока нет треков. Добавь первый снизу.';
+    screen.appendChild(empty);
+  } else {
+    for (const cat of TRACK_CATEGORIES) {
+      const list = byCat[cat];
+      const sec = document.createElement('section');
+      sec.className = 'track-section track-section-' + cat;
+      sec.dataset.category = cat;
+
+      const divider = document.createElement('div');
+      divider.className = 'track-divider' + (cat === 'inactive' ? ' inactive' : '');
+      const lbl = document.createElement('span');
+      lbl.className = 'track-divider-label';
+      lbl.textContent = TRACK_CATEGORY_LABELS[cat];
+      divider.appendChild(lbl);
+      sec.appendChild(divider);
+
+      list.forEach(t => sec.appendChild(trackStripNode(t, statsMap.get(t.id) || { done: 0, total: 0 })));
+      screen.appendChild(sec);
+    }
+  }
+
+  screen.appendChild(pagerDotsNode());
+  page.appendChild(screen);
+  renderLucide();
+}
+
+function trackStripNode(track, stats) {
+  const strip = document.createElement('div');
+  strip.className = 'track-strip';
+  strip.dataset.id = String(track.id);
+  strip.dataset.category = track.category || 'personal';
+  if (track.category === 'inactive') strip.classList.add('inactive');
+
+  // progress fill — gradient stops at done/total ratio
+  const ratio = stats.total > 0 ? stats.done / stats.total : 0;
+  if (track.category !== 'inactive') {
+    strip.style.setProperty('--progress', (ratio * 100).toFixed(1) + '%');
+  }
+
+  const grip = document.createElement('button');
+  grip.type = 'button';
+  grip.className = 'track-grip';
+  grip.dataset.noSwipe = '1';
+  grip.setAttribute('aria-label', 'Перетащить');
+  grip.appendChild(iconNode('grip-vertical'));
+
+  const icon = iconNode(track.icon || DEFAULT_ICON);
+  icon.classList.add('track-icon');
+
+  const name = document.createElement('span');
+  name.className = 'track-name';
+  name.textContent = track.name;
+
+  const meta = document.createElement('span');
+  meta.className = 'track-meta';
+  meta.textContent = `задач: ${stats.done}/${stats.total}`;
+
+  strip.append(grip, icon, name, meta);
+
+  strip.addEventListener('click', (e) => {
+    // Ignore clicks while drag just happened; handled in drag state
+    if (strip.classList.contains('was-dragged')) {
+      strip.classList.remove('was-dragged');
+      return;
+    }
+    if (e.target.closest('.track-grip')) return;
+    openTrackSheet({ track });
+  });
+
+  attachTrackDrag(strip, grip);
+  return strip;
 }
 
 // ---------- bottom sheet (create / edit) ----------
@@ -488,7 +779,14 @@ function openSheet({ task }) {
     icon: task?.icon || DEFAULT_ICON,
     notes: task?.notes || '',
     deadline: isEdit ? (task?.deadline || null) : todayISO(),
+    track_id: task?.track_id ?? null,
   };
+
+  // When user is mid-creation of a new track (inline input open) and taps
+  // backdrop/Готово, input.blur starts an async addTrack while closeSheet
+  // starts the task commit. Task commit must wait for the track's id to
+  // land in draft.track_id, otherwise the task saves with the stale null.
+  let pendingTrackInput = null;
 
   // handle
   const handle = document.createElement('div');
@@ -598,6 +896,112 @@ function openSheet({ task }) {
   sheet.appendChild(iconSection);
   renderSuggestions();
 
+  // track section: horizontal chip row [— / track / track / +]. Tap chip =
+  // select (or deselect if tapping the current). "+" swaps itself for an
+  // inline input — no secondary picker sheet.
+  const trackSection = document.createElement('div');
+  trackSection.className = 'sheet-section';
+  const trackLabel = document.createElement('div');
+  trackLabel.className = 'sheet-label';
+  trackLabel.textContent = 'ТРЕК';
+  const trackRow = document.createElement('div');
+  trackRow.className = 'sheet-track-row';
+  trackSection.append(trackLabel, trackRow);
+  sheet.appendChild(trackSection);
+
+  const renderTrackChips = async () => {
+    let tracks = [];
+    try {
+      tracks = await listTracks();
+    } catch (e) {
+      if (isIdbDisconnectError(e)) { await recoverDb(); return; }
+      showError(e);
+    }
+    trackRow.replaceChildren();
+
+    const none = document.createElement('button');
+    none.type = 'button';
+    none.className = 'track-chip track-chip-none';
+    if (!draft.track_id) none.classList.add('selected');
+    none.textContent = '—';
+    none.addEventListener('click', () => {
+      draft.track_id = null;
+      renderTrackChips();
+    });
+    trackRow.appendChild(none);
+
+    tracks.forEach(t => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'track-chip';
+      if (t.id === draft.track_id) b.classList.add('selected');
+      b.appendChild(iconNode(t.icon));
+      const label = document.createElement('span');
+      label.textContent = t.name;
+      b.appendChild(label);
+      b.addEventListener('click', () => {
+        draft.track_id = (draft.track_id === t.id) ? null : t.id;
+        renderTrackChips();
+      });
+      trackRow.appendChild(b);
+    });
+
+    const plus = document.createElement('button');
+    plus.type = 'button';
+    plus.className = 'track-chip track-chip-plus';
+    plus.appendChild(iconNode('plus'));
+    plus.addEventListener('click', () => swapPlusForInput(plus));
+    trackRow.appendChild(plus);
+
+    renderLucide();
+  };
+
+  const swapPlusForInput = (plusChip) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'track-chip track-chip-input';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Новый трек';
+    input.autocomplete = 'off';
+    input.setAttribute('autocorrect', 'off');
+    input.spellcheck = false;
+    wrap.appendChild(input);
+    plusChip.replaceWith(wrap);
+    input.focus();
+    // ensure the input is visible even with keyboard up
+    wrap.scrollIntoView({ inline: 'end', block: 'nearest' });
+
+    let done = false;
+    const commit = async () => {
+      if (done) return;
+      done = true;
+      const name = input.value.trim();
+      if (!name) { renderTrackChips(); return; }
+      const matched = matchIcons(name, 1);
+      const icon = matched[0] || DEFAULT_ICON;
+      try {
+        const id = await addTrack({ name, icon });
+        draft.track_id = id;
+      } catch (e) {
+        if (isIdbDisconnectError(e)) await recoverDb();
+        else showError(e);
+      }
+      renderTrackChips();
+    };
+
+    input.addEventListener('blur', () => {
+      const p = commit();
+      pendingTrackInput = p;
+      p.finally(() => { if (pendingTrackInput === p) pendingTrackInput = null; });
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+      else if (e.key === 'Escape') { e.preventDefault(); input.value = ''; input.blur(); }
+    });
+  };
+
+  renderTrackChips();
+
   // Debounced re-render of suggestions on text input — long enough that a
   // partial word ("док" → "документ") doesn't flash through 3 matches before
   // settling.
@@ -672,6 +1076,11 @@ function openSheet({ task }) {
   }
 
   const commit = async () => {
+    // If a new-track inline input is mid-flight (async addTrack → draft.track_id),
+    // wait for it so the task saves with the resolved id instead of stale null.
+    if (pendingTrackInput) {
+      try { await pendingTrackInput; } catch {}
+    }
     const text = draft.text.trim();
     const notes = (draft.notes || '').trim();
     try {
@@ -684,6 +1093,7 @@ function openSheet({ task }) {
             icon: draft.icon || DEFAULT_ICON,
             notes,
             deadline: draft.deadline || null,
+            track_id: draft.track_id || null,
           });
         }
       } else if (text) {
@@ -692,6 +1102,7 @@ function openSheet({ task }) {
           text,
           notes,
           deadline: draft.deadline || null,
+          track_id: draft.track_id || null,
           created_at: Date.now(),
           done_at: 0,
         });
@@ -820,12 +1231,412 @@ async function closeSheet(backdrop, { commit, skipCommit } = {}) {
   }, 200);
 }
 
+// ---------- track drag-drop ----------
+
+// Drag a track strip between category sections by its grip handle. Long-press
+// starts the drag; horizontal/vertical movement is captured (touch-action:none
+// on the grip prevents the pager swipe and page scroll). On release, snap the
+// strip into the section it was dropped over and persist category+position.
+function attachTrackDrag(strip, grip) {
+  let pressTimer = null;
+  let dragging = false;
+  let startX = 0, startY = 0;
+  let pointerId = null;
+  let ghost = null;
+  let originRect = null;
+
+  const cancelPress = () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } };
+
+  grip.addEventListener('pointerdown', (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    e.preventDefault();
+    pointerId = e.pointerId;
+    startX = e.clientX;
+    startY = e.clientY;
+    cancelPress();
+    pressTimer = setTimeout(() => {
+      pressTimer = null;
+      startDrag(e);
+    }, 220);
+  });
+
+  grip.addEventListener('pointermove', (e) => {
+    if (e.pointerId !== pointerId) return;
+    if (!dragging) {
+      // Movement > 10px before long-press fires cancels it (user is scrolling/panning)
+      const dx = e.clientX - startX, dy = e.clientY - startY;
+      if (dx * dx + dy * dy > 100) cancelPress();
+      return;
+    }
+    e.preventDefault();
+    moveGhost(e.clientX, e.clientY);
+    highlightDropTarget(e.clientY);
+  });
+
+  const releaseHandler = async (e) => {
+    if (e.pointerId !== pointerId) return;
+    cancelPress();
+    if (!dragging) { pointerId = null; return; }
+    dragging = false;
+    try {
+      const targetCat = sectionAtY(e.clientY);
+      const targetIndex = dropIndexAt(targetCat, e.clientY);
+      await commitDragDrop(strip, targetCat, targetIndex);
+    } catch (err) {
+      if (isIdbDisconnectError(err)) await recoverDb();
+      else showError(err);
+    } finally {
+      tearDownGhost();
+      strip.classList.add('was-dragged');
+      setTimeout(() => strip.classList.remove('was-dragged'), 300);
+      await renderTracks();
+    }
+    pointerId = null;
+  };
+  grip.addEventListener('pointerup', releaseHandler);
+  grip.addEventListener('pointercancel', releaseHandler);
+
+  function startDrag(e) {
+    dragging = true;
+    if (navigator.vibrate) navigator.vibrate(12);
+    grip.setPointerCapture?.(pointerId);
+
+    originRect = strip.getBoundingClientRect();
+    ghost = strip.cloneNode(true);
+    ghost.classList.add('drag-ghost');
+    ghost.style.width = originRect.width + 'px';
+    ghost.style.height = originRect.height + 'px';
+    ghost.style.left = originRect.left + 'px';
+    ghost.style.top = originRect.top + 'px';
+    document.body.appendChild(ghost);
+
+    strip.classList.add('drag-origin');
+    moveGhost(e.clientX, e.clientY);
+  }
+
+  function moveGhost(clientX, clientY) {
+    if (!ghost || !originRect) return;
+    const dx = clientX - startX;
+    const dy = clientY - startY;
+    ghost.style.transform = `translate(${dx}px, ${dy}px)`;
+  }
+
+  function highlightDropTarget(y) {
+    document.querySelectorAll('.track-section.drop-target').forEach(el => el.classList.remove('drop-target'));
+    const cat = sectionAtY(y);
+    if (cat) {
+      const sec = document.querySelector(`.track-section-${cat}`);
+      sec?.classList.add('drop-target');
+    }
+  }
+
+  function tearDownGhost() {
+    if (ghost) { ghost.remove(); ghost = null; }
+    strip.classList.remove('drag-origin');
+    document.querySelectorAll('.track-section.drop-target').forEach(el => el.classList.remove('drop-target'));
+  }
+}
+
+function sectionAtY(y) {
+  for (const cat of TRACK_CATEGORIES) {
+    const sec = document.querySelector(`.track-section-${cat}`);
+    if (!sec) continue;
+    const r = sec.getBoundingClientRect();
+    if (y >= r.top && y <= r.bottom) return cat;
+  }
+  // Outside any section — pick the nearest by vertical distance
+  let best = null, bestDist = Infinity;
+  for (const cat of TRACK_CATEGORIES) {
+    const sec = document.querySelector(`.track-section-${cat}`);
+    if (!sec) continue;
+    const r = sec.getBoundingClientRect();
+    const center = (r.top + r.bottom) / 2;
+    const d = Math.abs(y - center);
+    if (d < bestDist) { bestDist = d; best = cat; }
+  }
+  return best;
+}
+
+// Index where the dragged strip should land within its target section.
+function dropIndexAt(category, y) {
+  const sec = document.querySelector(`.track-section-${category}`);
+  if (!sec) return 0;
+  const strips = Array.from(sec.querySelectorAll('.track-strip:not(.drag-origin)'));
+  for (let i = 0; i < strips.length; i++) {
+    const r = strips[i].getBoundingClientRect();
+    const mid = (r.top + r.bottom) / 2;
+    if (y < mid) return i;
+  }
+  return strips.length;
+}
+
+async function commitDragDrop(strip, targetCat, targetIndex) {
+  const trackId = Number(strip.dataset.id);
+  const tracks = await listTracks();
+  // Build target category list, excluding the dragged track
+  const inCat = tracks.filter(t => (t.category || 'personal') === targetCat && t.id !== trackId);
+  // Insert at targetIndex
+  const reorder = inCat.slice(0, targetIndex).concat([{ id: trackId }]).concat(inCat.slice(targetIndex));
+  await db.transaction('rw', db.tracks, async () => {
+    await db.tracks.update(trackId, { category: targetCat });
+    for (let i = 0; i < reorder.length; i++) {
+      await db.tracks.update(reorder[i].id, { position: i + 1 });
+    }
+  });
+}
+
+// ---------- track sheet (create / edit) ----------
+
+let trackSheetOpen = false;
+
+function openTrackSheet({ track }) {
+  if (trackSheetOpen) return;
+  trackSheetOpen = true;
+  const isEdit = !!track;
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'sheet-backdrop';
+
+  const sheet = document.createElement('div');
+  sheet.className = 'sheet';
+  backdrop.appendChild(sheet);
+
+  const draft = {
+    name: track?.name || '',
+    icon: track?.icon || DEFAULT_ICON,
+    // Editing an inactive track still exposes a work/personal toggle — tapping
+    // it reactivates into that category.
+    category: (track?.category === 'inactive' ? 'personal' : (track?.category || 'personal')),
+  };
+
+  const handle = document.createElement('div');
+  handle.className = 'sheet-handle';
+  sheet.appendChild(handle);
+
+  const header = document.createElement('div');
+  header.className = 'sheet-header';
+  const title = document.createElement('div');
+  title.className = 'sheet-title';
+  title.textContent = isEdit ? 'Редактирование' : 'Новый трек';
+  const doneBtn = document.createElement('button');
+  doneBtn.type = 'button';
+  doneBtn.className = 'sheet-done';
+  doneBtn.textContent = isEdit ? 'Готово' : 'Создать';
+  header.append(title, doneBtn);
+  sheet.appendChild(header);
+
+  // input row: iconbox + name input
+  const inputRow = document.createElement('div');
+  inputRow.className = 'sheet-input-row';
+
+  const iconBox = document.createElement('button');
+  iconBox.type = 'button';
+  iconBox.className = 'sheet-iconbox';
+  const renderIconBox = () => {
+    iconBox.replaceChildren(iconNode(draft.icon || DEFAULT_ICON));
+    renderLucide();
+  };
+  renderIconBox();
+
+  const inputWrap = document.createElement('div');
+  inputWrap.className = 'sheet-input-wrap';
+  const nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.className = 'sheet-text';
+  nameInput.placeholder = 'Название трека';
+  nameInput.value = draft.name;
+  nameInput.autocomplete = 'off';
+  nameInput.setAttribute('autocorrect', 'off');
+  nameInput.spellcheck = false;
+  nameInput.autocapitalize = 'sentences';
+  nameInput.addEventListener('input', () => { draft.name = nameInput.value; });
+  inputWrap.appendChild(nameInput);
+
+  inputRow.append(iconBox, inputWrap);
+  sheet.appendChild(inputRow);
+
+  // category toggle (Работа / Личное)
+  const catSection = document.createElement('div');
+  catSection.className = 'sheet-section';
+  const catLabel = document.createElement('div');
+  catLabel.className = 'sheet-label';
+  catLabel.textContent = 'КАТЕГОРИЯ';
+  const toggle = document.createElement('div');
+  toggle.className = 'category-toggle';
+  const renderToggle = () => {
+    toggle.replaceChildren();
+    for (const cat of ['work', 'personal']) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'category-toggle-btn' + (draft.category === cat ? ' selected' : '');
+      b.textContent = TRACK_CATEGORY_LABELS[cat];
+      b.addEventListener('click', () => { draft.category = cat; renderToggle(); });
+      toggle.appendChild(b);
+    }
+  };
+  renderToggle();
+  catSection.append(catLabel, toggle);
+  sheet.appendChild(catSection);
+
+  // icon suggestions + Все иконки
+  const iconSection = document.createElement('div');
+  iconSection.className = 'sheet-section';
+  const iconLabel = document.createElement('div');
+  iconLabel.className = 'sheet-label';
+  iconLabel.textContent = 'ИКОНКА';
+  const iconRow = document.createElement('div');
+  iconRow.className = 'sheet-icon-row';
+  const renderSuggestions = () => {
+    iconRow.replaceChildren();
+    const names = suggestionIcons(draft.name);
+    names.forEach(name => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'sheet-icon';
+      if (name === draft.icon) b.classList.add('selected');
+      b.appendChild(iconNode(name));
+      b.addEventListener('click', () => {
+        draft.icon = name;
+        iconRow.querySelectorAll('.sheet-icon').forEach(el => el.classList.remove('selected'));
+        b.classList.add('selected');
+        renderIconBox();
+      });
+      iconRow.appendChild(b);
+    });
+    renderLucide();
+  };
+  renderSuggestions();
+
+  const allBtn = document.createElement('button');
+  allBtn.type = 'button';
+  allBtn.className = 'sheet-icons-all';
+  allBtn.textContent = 'Все иконки';
+  const openPicker = () => openIconPicker({
+    current: draft.icon,
+    onSelect: (name) => { draft.icon = name; renderSuggestions(); renderIconBox(); },
+  });
+  allBtn.addEventListener('click', openPicker);
+  iconBox.addEventListener('click', openPicker);
+
+  iconSection.append(iconLabel, iconRow, allBtn);
+  sheet.appendChild(iconSection);
+
+  // Re-render suggestions when name changes (debounced)
+  let suggTimer = null;
+  nameInput.addEventListener('input', () => {
+    if (suggTimer) clearTimeout(suggTimer);
+    suggTimer = setTimeout(renderSuggestions, 250);
+  });
+
+  // Tasks list (edit mode) — active + done-today, tap = open task sheet
+  if (isEdit) {
+    const tasksLabel = document.createElement('div');
+    tasksLabel.className = 'sheet-label';
+    tasksLabel.textContent = 'ЗАДАЧИ';
+    sheet.appendChild(tasksLabel);
+
+    const tasksBlock = document.createElement('div');
+    tasksBlock.className = 'track-tasks-list';
+    sheet.appendChild(tasksBlock);
+
+    (async () => {
+      const all = await listTasksByTrack(track.id);
+      const todayStart = startOfTodayMs();
+      const filtered = all.filter(t => !t.done_at || t.done_at >= todayStart);
+      filtered.sort((a, b) => (a.done_at ? a.done_at : Infinity) - (b.done_at ? b.done_at : Infinity));
+      if (filtered.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'track-tasks-empty';
+        empty.textContent = 'Пока нет задач в этом треке.';
+        tasksBlock.appendChild(empty);
+      } else {
+        filtered.forEach(t => {
+          const row = document.createElement('button');
+          row.type = 'button';
+          row.className = 'track-task-row' + (t.done_at ? ' done' : '');
+          const ib = document.createElement('span');
+          ib.className = 'track-task-icon';
+          ib.appendChild(iconNode(t.icon || DEFAULT_ICON));
+          const tx = document.createElement('span');
+          tx.className = 'track-task-text';
+          tx.textContent = t.text;
+          row.append(ib, tx);
+          row.addEventListener('click', () => {
+            closeTrackSheet(backdrop, { skipCommit: true });
+            setTimeout(() => openSheet({ task: t }), 220);
+          });
+          tasksBlock.appendChild(row);
+        });
+      }
+      renderLucide();
+    })().catch(showError);
+
+    const dvd = document.createElement('hr');
+    dvd.className = 'sheet-divider';
+    sheet.appendChild(dvd);
+
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'sheet-delete';
+    const delIcon = iconNode('trash-2');
+    const delTxt = document.createElement('span');
+    delTxt.textContent = 'Удалить трек';
+    del.append(delIcon, delTxt);
+    del.addEventListener('click', async () => {
+      try { await deleteTrack(track.id); }
+      catch (e) {
+        if (isIdbDisconnectError(e)) await recoverDb();
+        else showError(e);
+      }
+      closeTrackSheet(backdrop, { skipCommit: true });
+    });
+    sheet.appendChild(del);
+  }
+
+  const commit = async () => {
+    const name = draft.name.trim();
+    try {
+      if (isEdit) {
+        if (name) {
+          await updateTrack(track.id, { name, icon: draft.icon || DEFAULT_ICON, category: draft.category });
+        }
+      } else if (name) {
+        await addTrack({ name, icon: draft.icon || DEFAULT_ICON, category: draft.category });
+      }
+    } catch (e) {
+      if (isIdbDisconnectError(e)) await recoverDb();
+      else showError(e);
+    }
+  };
+
+  doneBtn.addEventListener('click', () => closeTrackSheet(backdrop, { commit }));
+  backdrop.addEventListener('click', (e) => {
+    if (e.target === backdrop) closeTrackSheet(backdrop, { commit });
+  });
+
+  document.body.appendChild(backdrop);
+  renderLucide();
+  if (!isEdit) nameInput.focus();
+  requestAnimationFrame(() => backdrop.classList.add('open'));
+}
+
+async function closeTrackSheet(backdrop, { commit, skipCommit } = {}) {
+  if (!trackSheetOpen && !skipCommit) return;
+  trackSheetOpen = false;
+  backdrop.classList.remove('open');
+  if (commit) await commit();
+  setTimeout(() => {
+    backdrop.remove();
+    renderMain().catch(showError);
+  }, 200);
+}
+
 // ---------- boot ----------
 
 async function boot(retry = 0) {
   try {
     await ensureDbOpen();
-    await renderMain();
+    await renderApp();
   } catch (e) {
     if (isIdbDisconnectError(e) && retry < 2) {
       await recoverDb();
