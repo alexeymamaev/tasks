@@ -129,7 +129,7 @@ body {
   aspect-ratio: 1 / 1;
   background: var(--card);
   border-radius: 18px;
-  padding: 12px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
