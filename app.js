@@ -335,6 +335,10 @@ function cardBase(task, tracksById) {
     const mark = document.createElement('div');
     mark.className = 'track-mark';
     mark.appendChild(iconNode(track.icon || DEFAULT_ICON));
+    const name = document.createElement('span');
+    name.className = 'name';
+    name.textContent = track.name;
+    mark.appendChild(name);
     el.appendChild(mark);
   }
 
