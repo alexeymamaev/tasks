@@ -155,7 +155,6 @@ body {
   padding: 10px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   position: relative;
   cursor: pointer;
   user-select: none;
@@ -177,9 +176,10 @@ body {
   word-break: break-word;
   overflow-wrap: anywhere;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 5;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  margin-top: auto;
 }
 .card.removing { opacity: 0; transform: scale(0.9); }
 

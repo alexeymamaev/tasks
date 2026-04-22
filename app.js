@@ -638,7 +638,7 @@ async function renderMorning() {
   headerRow.append(h1, pagePillNode());
   const sub = document.createElement('div');
   sub.className = 'sub';
-  sub.textContent = 'вот твои задачи на сегодня.';
+  sub.textContent = 'давай займемся делом –';
   header.append(headerRow, sub);
   topRegion.appendChild(header);
 
