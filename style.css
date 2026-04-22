@@ -88,6 +88,12 @@ body {
   margin: 0 auto;
 }
 
+/* Tracks page has no .top-region, so safe-area-inset compensation goes
+ * directly on the .screen. Morning uses .top-region which already handles it. */
+.page-tracks > .screen {
+  padding-top: calc(24px + env(safe-area-inset-top, 0));
+}
+
 .top-region {
   display: flex;
   flex-direction: column;
