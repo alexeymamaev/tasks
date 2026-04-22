@@ -270,10 +270,12 @@ function renderLucide() {
 function attachLongPress(el, { onLongPress, onTap, ms = 500 }) {
   let timer = null;
   let firedLong = false;
+  let moved = false;
   let startX = 0, startY = 0;
   const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
   el.addEventListener('pointerdown', (e) => {
     firedLong = false;
+    moved = false;
     startX = e.clientX; startY = e.clientY;
     cancel();
     timer = setTimeout(() => {
@@ -284,14 +286,16 @@ function attachLongPress(el, { onLongPress, onTap, ms = 500 }) {
     }, ms);
   });
   el.addEventListener('pointermove', (e) => {
-    if (!timer) return;
     const dx = e.clientX - startX, dy = e.clientY - startY;
-    if (dx*dx + dy*dy > 100) cancel();
+    if (dx*dx + dy*dy > 100) {
+      moved = true;
+      cancel();
+    }
   });
   el.addEventListener('pointerup', (e) => {
     const wasLong = firedLong;
     cancel();
-    if (!wasLong) onTap?.(e);
+    if (!wasLong && !moved) onTap?.(e);
   });
   el.addEventListener('pointercancel', cancel);
   el.addEventListener('pointerleave', cancel);
@@ -494,7 +498,7 @@ function setPage(idx, animate = true) {
   pagerEl.style.transform = `translateX(${-currentPage * 50}%)`;
   if (!animate) requestAnimationFrame(() => pagerEl.classList.remove('no-anim'));
   updateInputBar();
-  updatePagerDots();
+  updatePagePill();
 }
 
 function updateInputBar() {
@@ -517,21 +521,39 @@ function updateInputBar() {
   renderLucide();
 }
 
-function updatePagerDots() {
-  document.querySelectorAll('.pager-dots .dot').forEach((el, i) => {
-    el.classList.toggle('active', i === currentPage);
+function updatePagePill() {
+  document.querySelectorAll('.page-pill-half').forEach(el => {
+    el.classList.toggle('active', Number(el.dataset.page) === currentPage);
   });
 }
 
-function pagerDotsNode() {
+function pagePillNode() {
   const wrap = document.createElement('div');
-  wrap.className = 'pager-dots';
-  for (let i = 0; i < 2; i++) {
-    const d = document.createElement('span');
-    d.className = 'dot' + (i === currentPage ? ' active' : '');
-    wrap.appendChild(d);
-  }
+  wrap.className = 'page-pill';
+  wrap.setAttribute('data-no-swipe', '');
+  const mkHalf = (label, idx) => {
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'page-pill-half' + (idx === currentPage ? ' active' : '');
+    el.textContent = label;
+    el.dataset.page = String(idx);
+    el.addEventListener('click', () => setPage(idx));
+    return el;
+  };
+  wrap.append(mkHalf('Задачи', 0), mkHalf('Треки', 1));
   return wrap;
+}
+
+function sectionDivider(label) {
+  const d = document.createElement('div');
+  d.className = 'divider' + (label ? '' : ' plain');
+  if (label) {
+    const l = document.createElement('span');
+    l.className = 'divider-label';
+    l.textContent = label;
+    d.appendChild(l);
+  }
+  return d;
 }
 
 // Horizontal swipe between pages. A move is considered a swipe only if the
@@ -609,12 +631,15 @@ async function renderMorning() {
 
   const header = document.createElement('div');
   header.className = 'header';
+  const headerRow = document.createElement('div');
+  headerRow.className = 'header-row';
   const h1 = document.createElement('h1');
   h1.textContent = greeting();
+  headerRow.append(h1, pagePillNode());
   const sub = document.createElement('div');
   sub.className = 'sub';
   sub.textContent = 'вот твои задачи на сегодня.';
-  header.append(h1, sub);
+  header.append(headerRow, sub);
   topRegion.appendChild(header);
 
   const [active, journal, tracks] = await Promise.all([listActive(), listJournal(), listTracks()]);
@@ -626,30 +651,51 @@ async function renderMorning() {
     empty.textContent = 'Пока пусто. Добавь первую задачу снизу.';
     topRegion.appendChild(empty);
   } else {
-    const grid = document.createElement('div');
-    grid.className = 'grid active-grid';
-    active.forEach(t => grid.appendChild(activeCardNode(t, tracksById)));
-    topRegion.appendChild(grid);
+    const buckets = { work: [], personal: [], rest: [] };
+    active.forEach(t => {
+      const track = t.track_id ? tracksById.get(t.track_id) : null;
+      if (track && track.category === 'work') buckets.work.push(t);
+      else if (track && track.category === 'personal') buckets.personal.push(t);
+      else buckets.rest.push(t);
+    });
+    const nonEmpty = ['work', 'personal', 'rest'].filter(k => buckets[k].length > 0);
+
+    if (nonEmpty.length >= 2) {
+      const wrap = document.createElement('div');
+      wrap.className = 'active-grouped';
+      const sections = [
+        { key: 'work', label: 'РАБОТА' },
+        { key: 'personal', label: 'ЛИЧНОЕ' },
+        { key: 'rest', label: null },
+      ];
+      for (const { key, label } of sections) {
+        const list = buckets[key];
+        if (!list.length) continue;
+        wrap.appendChild(sectionDivider(label));
+        const grid = document.createElement('div');
+        grid.className = 'grid';
+        list.forEach(t => grid.appendChild(activeCardNode(t, tracksById)));
+        wrap.appendChild(grid);
+      }
+      topRegion.appendChild(wrap);
+    } else {
+      const grid = document.createElement('div');
+      grid.className = 'grid active-grid';
+      active.forEach(t => grid.appendChild(activeCardNode(t, tracksById)));
+      topRegion.appendChild(grid);
+    }
   }
 
   screen.appendChild(topRegion);
 
   if (journal.length > 0) {
-    const divider = document.createElement('div');
-    divider.className = 'divider';
-    const label = document.createElement('span');
-    label.className = 'divider-label';
-    label.textContent = 'ЖУРНАЛ';
-    divider.appendChild(label);
-    screen.appendChild(divider);
-
+    screen.appendChild(sectionDivider('ЖУРНАЛ'));
     const jgrid = document.createElement('div');
     jgrid.className = 'grid journal-grid';
     journal.forEach(t => jgrid.appendChild(journalCardNode(t, tracksById)));
     screen.appendChild(jgrid);
   }
 
-  screen.appendChild(pagerDotsNode());
   page.appendChild(screen);
   renderLucide();
 }
@@ -672,12 +718,15 @@ async function renderTracks() {
 
   const header = document.createElement('div');
   header.className = 'header';
+  const headerRow = document.createElement('div');
+  headerRow.className = 'header-row';
   const h1 = document.createElement('h1');
   h1.textContent = 'Треки';
+  headerRow.append(h1, pagePillNode());
   const sub = document.createElement('div');
   sub.className = 'sub';
   sub.textContent = 'направления деятельности.';
-  header.append(h1, sub);
+  header.append(headerRow, sub);
   screen.appendChild(header);
 
   const tracks = await listTracks();
@@ -718,7 +767,6 @@ async function renderTracks() {
     }
   }
 
-  screen.appendChild(pagerDotsNode());
   page.appendChild(screen);
   renderLucide();
 }

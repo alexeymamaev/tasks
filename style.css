@@ -61,25 +61,35 @@ body {
   touch-action: pan-y;
 }
 
-.pager-dots {
+.page-pill {
   display: flex;
-  justify-content: center;
-  gap: 6px;
-  padding: 12px 0 4px 0;
-  margin-top: 20px;
-}
-.pager-dots .dot {
-  width: 6px;
-  height: 6px;
+  height: 20px;
   border-radius: 999px;
-  background: var(--text-muted);
-  opacity: 0.4;
-  transition: background 160ms ease, opacity 160ms ease, transform 160ms ease;
+  overflow: hidden;
+  flex-shrink: 0;
 }
-.pager-dots .dot.active {
+.page-pill-half {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 8px;
+  border: 0;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  background: #f7bba5;
+  color: rgba(13, 10, 8, 0.55);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background 160ms ease, color 160ms ease;
+}
+.page-pill-half:last-child { width: 58px; }
+.page-pill-half.active {
   background: var(--accent);
-  opacity: 1;
-  transform: scale(1.1);
+  color: #0D0A08;
 }
 
 .screen {
@@ -102,6 +112,7 @@ body {
   padding-top: calc(24px + env(safe-area-inset-top, 0));
 }
 .top-region > .active-grid,
+.top-region > .active-grouped,
 .top-region > .empty {
   margin-top: auto;
 }
@@ -110,6 +121,12 @@ body {
 
 .header {
   padding: 12px 4px 20px 4px;
+}
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 .header h1 {
   margin: 0;
@@ -179,15 +196,12 @@ body {
 .card .notes-mark .icon { width: 12px; height: 12px; }
 
 .card .track-mark {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
   color: var(--text-dim);
   display: flex;
   align-items: center;
   gap: 4px;
   pointer-events: none;
-  max-width: calc(100% - 32px); /* leave room for notes-mark on the right */
+  max-width: calc(100% - 22px); /* leave room for notes-mark on the right */
 }
 .card .track-mark svg,
 .card .track-mark .icon { width: 10px; height: 10px; flex: 0 0 10px; }
@@ -236,7 +250,7 @@ body {
   height: 26px;
 }
 
-/* ---------- journal divider ---------- */
+/* ---------- section dividers ---------- */
 
 .divider {
   display: flex;
@@ -253,6 +267,19 @@ body {
   flex: 1;
   height: 1px;
   background: var(--divider);
+}
+
+.active-grouped {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.active-grouped .divider {
+  margin: 0 4px;
+  padding: 8px 0 4px 0;
+}
+.active-grouped .divider.plain {
+  padding: 12px 0 4px 0;
 }
 
 /* ---------- empty ---------- */
