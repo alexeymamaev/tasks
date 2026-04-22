@@ -311,7 +311,7 @@ function formatDeadline(isoDate) {
   return { text: short, kind: diffDays < 0 ? 'overdue' : 'future' };
 }
 
-function cardBase(task) {
+function cardBase(task, tracksById) {
   const el = document.createElement('div');
   el.className = 'card';
   el.dataset.id = String(task.id);
@@ -330,6 +330,14 @@ function cardBase(task) {
   text.textContent = task.text;
   el.appendChild(text);
 
+  const track = task.track_id && tracksById ? tracksById.get(task.track_id) : null;
+  if (track) {
+    const mark = document.createElement('div');
+    mark.className = 'track-mark';
+    mark.appendChild(iconNode(track.icon || DEFAULT_ICON));
+    el.appendChild(mark);
+  }
+
   if (task.notes && task.notes.trim()) {
     const mark = document.createElement('div');
     mark.className = 'notes-mark';
@@ -339,8 +347,8 @@ function cardBase(task) {
   return el;
 }
 
-function activeCardNode(task) {
-  const el = cardBase(task);
+function activeCardNode(task, tracksById) {
+  const el = cardBase(task, tracksById);
   attachLongPress(el, {
     onTap: () => openSheet({ task }),
     onLongPress: async () => {
@@ -418,8 +426,8 @@ function checkBadgeSvg() {
   return svg;
 }
 
-function journalCardNode(task) {
-  const el = cardBase(task);
+function journalCardNode(task, tracksById) {
+  const el = cardBase(task, tracksById);
   el.classList.add('done');
   const badge = document.createElement('div');
   badge.className = 'check-badge';
@@ -605,7 +613,8 @@ async function renderMorning() {
   header.append(h1, sub);
   topRegion.appendChild(header);
 
-  const [active, journal] = await Promise.all([listActive(), listJournal()]);
+  const [active, journal, tracks] = await Promise.all([listActive(), listJournal(), listTracks()]);
+  const tracksById = new Map(tracks.map(t => [t.id, t]));
 
   if (active.length === 0) {
     const empty = document.createElement('div');
@@ -615,7 +624,7 @@ async function renderMorning() {
   } else {
     const grid = document.createElement('div');
     grid.className = 'grid active-grid';
-    active.forEach(t => grid.appendChild(activeCardNode(t)));
+    active.forEach(t => grid.appendChild(activeCardNode(t, tracksById)));
     topRegion.appendChild(grid);
   }
 
@@ -632,7 +641,7 @@ async function renderMorning() {
 
     const jgrid = document.createElement('div');
     jgrid.className = 'grid journal-grid';
-    journal.forEach(t => jgrid.appendChild(journalCardNode(t)));
+    journal.forEach(t => jgrid.appendChild(journalCardNode(t, tracksById)));
     screen.appendChild(jgrid);
   }
 

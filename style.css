@@ -172,6 +172,18 @@ body {
 .card .notes-mark svg,
 .card .notes-mark .icon { width: 12px; height: 12px; }
 
+.card .track-mark {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  color: var(--text-dim);
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.card .track-mark svg,
+.card .track-mark .icon { width: 12px; height: 12px; }
+
 .card .deadline {
   position: absolute;
   top: 10px;
