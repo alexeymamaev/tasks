@@ -275,25 +275,59 @@ function matchIcons(text, limit = 8) {
   return out;
 }
 
-// Suggestions row: keyword matches first (so typing feels responsive), then
-// defaults from the curated list. Always exactly 8 slots (mirrors iOS emoji
-// keyboard row). Selection only toggles highlight in place, so tapping an
-// icon doesn't move it between slots. The icon-box next to the input shows
-// the current pick separately.
-const SUGGESTIONS_LIMIT = 8;
-function suggestionIcons(text) {
-  const defaults = (typeof CURATED_FULL !== 'undefined' ? CURATED_FULL : ['circle-dashed']);
-  const matched = matchIcons(text, SUGGESTIONS_LIMIT);
-  const out = [];
+// Icon row = iPhone emoji keyboard pattern:
+//   slot 0 = prediction from text (only if it differs from current pick —
+//     otherwise it's already in the icon-box, no point duplicating),
+//   rest   = MRU recents, then curated fallback to always fill 8 slots.
+// Tap = apply + push to recents. No selected/toggle state: the icon-box
+// beside the input is the single source of truth for the current pick.
+const ICON_ROW_SIZE = 8;
+const RECENTS_KEY = 'tasks.recentIcons';
+const RECENTS_MAX = 20;
+
+function getRecentIcons() {
+  try {
+    const raw = localStorage.getItem(RECENTS_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.filter(x => typeof x === 'string') : [];
+  } catch { return []; }
+}
+
+function pushRecentIcon(name) {
+  if (!name) return;
+  const cur = getRecentIcons().filter(x => x !== name);
+  cur.unshift(name);
+  try { localStorage.setItem(RECENTS_KEY, JSON.stringify(cur.slice(0, RECENTS_MAX))); } catch {}
+}
+
+function buildIconRow(text, currentIcon) {
+  const predicted = matchIcons(text, 1)[0] || null;
+  const showPrediction = predicted && predicted !== currentIcon;
+
+  const slots = [];
   const seen = new Set();
-  const push = (n) => { if (n && !seen.has(n)) { seen.add(n); out.push(n); } };
-  matched.forEach(push);
-  if (out.length === 0) push(DEFAULT_ICON);
+  const push = (name, kind) => {
+    if (!name || seen.has(name)) return false;
+    seen.add(name);
+    slots.push({ icon: name, kind });
+    return true;
+  };
+
+  if (showPrediction) push(predicted, 'prediction');
+
+  getRecentIcons().forEach(n => {
+    if (slots.length >= ICON_ROW_SIZE) return;
+    push(n, 'recent');
+  });
+
+  const defaults = (typeof CURATED_FULL !== 'undefined' ? CURATED_FULL : [DEFAULT_ICON]);
   for (const n of defaults) {
-    if (out.length >= SUGGESTIONS_LIMIT) break;
-    push(n);
+    if (slots.length >= ICON_ROW_SIZE) break;
+    push(n, 'default');
   }
-  return out.slice(0, SUGGESTIONS_LIMIT);
+
+  return slots.slice(0, ICON_ROW_SIZE);
 }
 
 function todayISO() {
@@ -990,26 +1024,24 @@ function openSheet({ task }) {
   iconSection.className = 'sheet-section';
   const iconLabel = document.createElement('div');
   iconLabel.className = 'sheet-label';
-  iconLabel.textContent = 'ПРЕДЛОЖЕНИЯ';
+  iconLabel.textContent = 'ЧАСТО';
   const iconRow = document.createElement('div');
   iconRow.className = 'sheet-icon-row';
 
   const renderSuggestions = () => {
     iconRow.replaceChildren();
-    const names = suggestionIcons(draft.text);
-    names.forEach(name => {
+    const slots = buildIconRow(draft.text, draft.icon);
+    slots.forEach(slot => {
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'sheet-icon';
-      if (name === draft.icon) b.classList.add('selected');
-      b.appendChild(iconNode(name));
+      if (slot.kind === 'prediction') b.classList.add('prediction');
+      b.appendChild(iconNode(slot.icon));
       b.addEventListener('click', () => {
-        draft.icon = name;
-        // Toggle selected class in place — do NOT re-render the row, which
-        // would shuffle positions. Icon-box shows the pick separately.
-        iconRow.querySelectorAll('.sheet-icon').forEach(el => el.classList.remove('selected'));
-        b.classList.add('selected');
+        draft.icon = slot.icon;
+        pushRecentIcon(slot.icon);
         renderIconBox();
+        renderSuggestions();
       });
       iconRow.appendChild(b);
     });
@@ -1025,6 +1057,7 @@ function openSheet({ task }) {
       current: draft.icon,
       onSelect: (name) => {
         draft.icon = name;
+        pushRecentIcon(name);
         renderSuggestions();
         renderIconBox();
       },
@@ -1746,23 +1779,23 @@ function openTrackSheet({ track }) {
   iconSection.className = 'sheet-section';
   const iconLabel = document.createElement('div');
   iconLabel.className = 'sheet-label';
-  iconLabel.textContent = 'ИКОНКА';
+  iconLabel.textContent = 'ЧАСТО';
   const iconRow = document.createElement('div');
   iconRow.className = 'sheet-icon-row';
   const renderSuggestions = () => {
     iconRow.replaceChildren();
-    const names = suggestionIcons(draft.name);
-    names.forEach(name => {
+    const slots = buildIconRow(draft.name, draft.icon);
+    slots.forEach(slot => {
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'sheet-icon';
-      if (name === draft.icon) b.classList.add('selected');
-      b.appendChild(iconNode(name));
+      if (slot.kind === 'prediction') b.classList.add('prediction');
+      b.appendChild(iconNode(slot.icon));
       b.addEventListener('click', () => {
-        draft.icon = name;
-        iconRow.querySelectorAll('.sheet-icon').forEach(el => el.classList.remove('selected'));
-        b.classList.add('selected');
+        draft.icon = slot.icon;
+        pushRecentIcon(slot.icon);
         renderIconBox();
+        renderSuggestions();
       });
       iconRow.appendChild(b);
     });
@@ -1776,7 +1809,7 @@ function openTrackSheet({ track }) {
   allBtn.textContent = 'Все иконки';
   const openPicker = () => openIconPicker({
     current: draft.icon,
-    onSelect: (name) => { draft.icon = name; renderSuggestions(); renderIconBox(); },
+    onSelect: (name) => { draft.icon = name; pushRecentIcon(name); renderSuggestions(); renderIconBox(); },
   });
   allBtn.addEventListener('click', openPicker);
   iconBox.addEventListener('click', openPicker);

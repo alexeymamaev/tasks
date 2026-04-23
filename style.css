@@ -518,6 +518,10 @@ body {
   background: var(--accent);
   color: #0D0A08;
 }
+.sheet-icon.prediction {
+  background: rgba(255, 148, 120, 0.2);
+  color: var(--accent);
+}
 .sheet-icon .icon,
 .sheet-icon svg {
   width: 20px;
