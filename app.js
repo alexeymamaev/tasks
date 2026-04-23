@@ -96,7 +96,18 @@ window.addEventListener('pageshow', () => { ensureDbOpen().catch(() => {}); });
 
 async function listActive() {
   const arr = await db.tasks.where('done_at').equals(0).toArray();
-  arr.sort((a, b) => b.created_at - a.created_at);
+  arr.sort((a, b) => {
+    const ad = a.deadline || '';
+    const bd = b.deadline || '';
+    if (ad && bd) {
+      if (ad !== bd) return ad < bd ? -1 : 1;
+    } else if (ad) {
+      return -1;
+    } else if (bd) {
+      return 1;
+    }
+    return b.created_at - a.created_at;
+  });
   return arr;
 }
 
