@@ -623,6 +623,26 @@ body {
   margin: 0;
 }
 
+.sheet-finish {
+  width: 100%;
+  background: var(--accent);
+  color: #0D0A08;
+  border: 0;
+  border-radius: 999px;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font: 600 16px -apple-system, system-ui, sans-serif;
+  cursor: pointer;
+  transition: transform 120ms ease;
+  margin-top: 4px;
+}
+.sheet-finish:active { transform: scale(0.98); }
+.sheet-finish .icon,
+.sheet-finish svg { width: 20px; height: 20px; }
+
 .sheet-delete {
   align-self: flex-start;
   padding: 8px 0;

@@ -1195,8 +1195,28 @@ function openSheet({ task }) {
   dlRow.append(dlLabel, dlInput);
   sheet.appendChild(dlRow);
 
-  // delete (edit mode only) — divider above for clear separation
+  // finish + delete (edit mode only) — divider between them for clear separation
   if (isEdit) {
+    const finish = document.createElement('button');
+    finish.type = 'button';
+    finish.className = 'sheet-finish';
+    finish.appendChild(iconNode('check'));
+    const finishLbl = document.createElement('span');
+    finishLbl.textContent = 'Завершить';
+    finish.appendChild(finishLbl);
+    finish.addEventListener('click', async () => {
+      sheetOpen = false;
+      try {
+        await markDone(task.id);
+        showUndoSnackbar(task.id);
+      } catch (e) {
+        if (isIdbDisconnectError(e)) await recoverDb();
+        else showError(e);
+      }
+      closeSheet(backdrop, { skipCommit: true });
+    });
+    sheet.appendChild(finish);
+
     const dvd = document.createElement('hr');
     dvd.className = 'sheet-divider';
     sheet.appendChild(dvd);
