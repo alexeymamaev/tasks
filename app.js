@@ -319,7 +319,17 @@ function cardBase(task, tracksById) {
   const el = document.createElement('div');
   el.className = 'card';
   el.dataset.id = String(task.id);
-  el.appendChild(iconNode(task.icon));
+
+  const iconRow = document.createElement('div');
+  iconRow.className = 'icon-row';
+  iconRow.appendChild(iconNode(task.icon));
+  if (task.notes && task.notes.trim()) {
+    const mark = document.createElement('div');
+    mark.className = 'notes-mark';
+    mark.appendChild(iconNode('notebook-pen'));
+    iconRow.appendChild(mark);
+  }
+  el.appendChild(iconRow);
 
   const fmt = formatDeadline(task.deadline);
   if (fmt) {
@@ -346,12 +356,6 @@ function cardBase(task, tracksById) {
     el.appendChild(mark);
   }
 
-  if (task.notes && task.notes.trim()) {
-    const mark = document.createElement('div');
-    mark.className = 'notes-mark';
-    mark.appendChild(iconNode('pencil'));
-    el.appendChild(mark);
-  }
   return el;
 }
 

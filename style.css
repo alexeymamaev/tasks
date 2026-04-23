@@ -180,20 +180,23 @@ body {
   -webkit-box-orient: vertical;
   overflow: hidden;
   margin-top: auto;
+  padding-top: 1px;
 }
 .card.removing { opacity: 0; transform: scale(0.9); }
 
+.card .icon-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
 .card .notes-mark {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
   color: var(--text-dim);
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
   pointer-events: none;
 }
 .card .notes-mark svg,
-.card .notes-mark .icon { width: 12px; height: 12px; }
+.card .notes-mark .icon { width: 14px; height: 14px; }
 
 .card .track-mark {
   color: var(--text-dim);
@@ -201,12 +204,12 @@ body {
   align-items: center;
   gap: 4px;
   pointer-events: none;
-  max-width: calc(100% - 22px); /* leave room for notes-mark on the right */
+  margin-top: 6px;
 }
 .card .track-mark svg,
 .card .track-mark .icon { width: 10px; height: 10px; flex: 0 0 10px; }
 .card .track-mark .name {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.5px;
   color: var(--text-dim);
@@ -684,8 +687,8 @@ body {
 }
 
 /* Lucide icons on cards */
-.card > .icon,
-.card > svg {
+.card .icon-row > .icon,
+.card .icon-row > svg {
   width: 22px;
   height: 22px;
 }
