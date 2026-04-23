@@ -271,6 +271,24 @@ body {
   height: 1px;
   background: var(--divider);
 }
+.divider.has-link::after { content: none; }
+.divider.has-link .divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--divider);
+}
+.divider.has-link .divider-link {
+  margin-left: 10px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  padding: 4px 2px;
+}
+.divider.has-link .divider-link:active { opacity: 0.6; }
 
 .active-grouped {
   display: flex;
@@ -684,6 +702,54 @@ body {
   font-size: 14px;
   text-align: center;
   padding: 24px 12px;
+}
+
+/* ---------- history sheet (Весь журнал) ---------- */
+
+.history-sheet {
+  padding: 14px 24px calc(24px + env(safe-area-inset-bottom, 0)) 24px;
+}
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 4px 0 14px;
+}
+.history-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+}
+.history-clear-all {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  padding: 4px 2px;
+}
+.history-clear-all:active { opacity: 0.6; }
+.history-content {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  min-height: 0;
+  flex: 1;
+  padding-bottom: 8px;
+}
+.history-group { margin-bottom: 20px; }
+.history-group:last-child { margin-bottom: 0; }
+.history-day {
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+.history-empty {
+  color: var(--text-dim);
+  text-align: center;
+  padding: 40px 0;
+  font-size: 13px;
 }
 
 /* Lucide icons on cards */

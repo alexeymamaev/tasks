@@ -127,6 +127,45 @@ async function listJournal() {
   return arr;
 }
 
+async function listAllDone() {
+  const arr = await db.tasks.where('done_at').above(0).toArray();
+  arr.sort((a, b) => b.done_at - a.done_at);
+  return arr;
+}
+
+async function deleteAllDone() {
+  await db.tasks.where('done_at').above(0).delete();
+}
+
+function dayKey(ts) {
+  const d = new Date(ts);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+function dayLabel(ts) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const d = new Date(ts); d.setHours(0, 0, 0, 0);
+  const diff = Math.round((today - d) / 86400000);
+  if (diff === 0) return 'СЕГОДНЯ';
+  if (diff === 1) return 'ВЧЕРА';
+  const weekdays = ['ВС','ПН','ВТ','СР','ЧТ','ПТ','СБ'];
+  const wd = weekdays[d.getDay()];
+  const short = d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+    .replace('.', '').toUpperCase();
+  return `${wd} · ${short}`;
+}
+
+function groupByDay(tasks) {
+  const groups = new Map();
+  for (const t of tasks) {
+    const k = dayKey(t.done_at);
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(t);
+  }
+  return [...groups.entries()].map(([ts, items]) => ({ ts, label: dayLabel(ts), tasks: items }));
+}
+
 async function addTask(text) {
   return db.tasks.add({
     icon: 'circle-dashed',
@@ -572,7 +611,7 @@ function pagePillNode() {
   return wrap;
 }
 
-function sectionDivider(label) {
+function sectionDivider(label, opts) {
   const d = document.createElement('div');
   d.className = 'divider' + (label ? '' : ' plain');
   if (label) {
@@ -580,6 +619,17 @@ function sectionDivider(label) {
     l.className = 'divider-label';
     l.textContent = label;
     d.appendChild(l);
+  }
+  if (opts?.link) {
+    d.classList.add('has-link');
+    const line = document.createElement('span');
+    line.className = 'divider-line';
+    d.appendChild(line);
+    const link = document.createElement('span');
+    link.className = 'divider-link';
+    link.textContent = opts.link.text;
+    link.addEventListener('click', (e) => { e.stopPropagation(); opts.link.onClick(); });
+    d.appendChild(link);
   }
   return d;
 }
@@ -717,7 +767,9 @@ async function renderMorning() {
   screen.appendChild(topRegion);
 
   if (journal.length > 0) {
-    screen.appendChild(sectionDivider('ЖУРНАЛ'));
+    screen.appendChild(sectionDivider('ЖУРНАЛ', {
+      link: { text: 'Весь журнал', onClick: openHistorySheet },
+    }));
     const jgrid = document.createElement('div');
     jgrid.className = 'grid journal-grid';
     journal.forEach(t => jgrid.appendChild(journalCardNode(t, tracksById)));
@@ -1306,6 +1358,108 @@ function openIconPicker({ current, onSelect }) {
 
   document.body.appendChild(backdrop);
   renderGrid();
+  requestAnimationFrame(() => backdrop.classList.add('open'));
+}
+
+function openHistorySheet() {
+  const backdrop = document.createElement('div');
+  backdrop.className = 'picker-backdrop history-backdrop';
+
+  const sheet = document.createElement('div');
+  sheet.className = 'picker-sheet history-sheet';
+  backdrop.appendChild(sheet);
+
+  const handle = document.createElement('div');
+  handle.className = 'sheet-handle';
+  sheet.appendChild(handle);
+
+  const header = document.createElement('div');
+  header.className = 'history-header';
+  const title = document.createElement('div');
+  title.className = 'history-title';
+  title.textContent = 'Весь журнал';
+  const clearAll = document.createElement('span');
+  clearAll.className = 'history-clear-all';
+  clearAll.textContent = 'Очистить всё';
+  header.append(title, clearAll);
+  sheet.appendChild(header);
+
+  const content = document.createElement('div');
+  content.className = 'history-content';
+  sheet.appendChild(content);
+
+  const close = () => {
+    backdrop.classList.remove('open');
+    setTimeout(() => backdrop.remove(), 200);
+  };
+
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
+
+  const render = async () => {
+    content.replaceChildren();
+    const [tasks, tracks] = await Promise.all([listAllDone(), listTracks()]);
+    const tracksById = new Map(tracks.map(t => [t.id, t]));
+    if (tasks.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'history-empty';
+      empty.textContent = 'Пока пусто — ещё ничего не выполнено.';
+      content.appendChild(empty);
+      return;
+    }
+    const groups = groupByDay(tasks);
+    for (const g of groups) {
+      const gWrap = document.createElement('div');
+      gWrap.className = 'history-group';
+      const lbl = document.createElement('div');
+      lbl.className = 'history-day';
+      lbl.textContent = g.label;
+      gWrap.appendChild(lbl);
+      const grid = document.createElement('div');
+      grid.className = 'grid journal-grid';
+      g.tasks.forEach(t => {
+        const card = cardBase(t, tracksById);
+        card.classList.add('done');
+        const badge = document.createElement('div');
+        badge.className = 'check-badge';
+        const rot = ((t.id * 13) % 15) - 7;
+        badge.style.setProperty('--rot', rot + 'deg');
+        badge.appendChild(checkBadgeSvg());
+        card.appendChild(badge);
+        attachLongPress(card, {
+          onTap: () => { close(); setTimeout(() => openSheet({ task: t }), 220); },
+          onLongPress: async () => {
+            try {
+              await undoDone(t.id);
+              await render();
+              await renderMain();
+            } catch (e) {
+              if (isIdbDisconnectError(e)) { await recoverDb(); return; }
+              showError(e);
+            }
+          },
+        });
+        grid.appendChild(card);
+      });
+      gWrap.appendChild(grid);
+      content.appendChild(gWrap);
+    }
+    renderLucide();
+  };
+
+  clearAll.addEventListener('click', async () => {
+    if (!confirm('Удалить все выполненные задачи? Отменить нельзя.')) return;
+    try {
+      await deleteAllDone();
+      await render();
+      await renderMain();
+    } catch (e) {
+      if (isIdbDisconnectError(e)) { await recoverDb(); return; }
+      showError(e);
+    }
+  });
+
+  document.body.appendChild(backdrop);
+  render().catch(showError);
   requestAnimationFrame(() => backdrop.classList.add('open'));
 }
 
