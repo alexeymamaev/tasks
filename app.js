@@ -313,6 +313,15 @@ function attachLongPress(el, { onLongPress, onTap, ms = 500 }) {
   el.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
+function pluralizeDays(n) {
+  const mod100 = n % 100;
+  const mod10 = n % 10;
+  if (mod100 >= 11 && mod100 <= 14) return 'дней';
+  if (mod10 === 1) return 'день';
+  if (mod10 >= 2 && mod10 <= 4) return 'дня';
+  return 'дней';
+}
+
 function formatDeadline(isoDate) {
   if (!isoDate) return null;
   const today = new Date();
@@ -322,6 +331,10 @@ function formatDeadline(isoDate) {
   const diffDays = Math.round((d - today) / 86400000);
   if (diffDays === 0) return { text: 'сегодня', kind: 'today' };
   if (diffDays === -1) return { text: 'вчера', kind: 'overdue' };
+  if (diffDays < -1 && diffDays >= -14) {
+    const n = -diffDays;
+    return { text: '−' + n + ' ' + pluralizeDays(n), kind: 'overdue' };
+  }
   const short = d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }).replace('.', '');
   return { text: short, kind: diffDays < 0 ? 'overdue' : 'future' };
 }
