@@ -117,6 +117,83 @@ function startOfTodayMs() {
   return d.getTime();
 }
 
+// ---------- stuck/fresh classification for Today screen ----------
+
+const STUCK_HOUR = 16;
+
+// Pure: is task currently stuck given a specific moment?
+// stuck = deadline < today
+//      OR (deadline = today AND now >= 16:00 AND task NOT created today)
+// Tasks created today are always fresh on their own deadline day — they
+// haven't had a chance to buksovat yet, even if the day is winding down.
+function isStuckNow(task, now = new Date()) {
+  if (!task.deadline) return false;
+  const today = todayISO();
+  if (task.deadline < today) return true;
+  if (task.deadline === today && now.getHours() >= STUCK_HOUR) {
+    if (task.created_at >= startOfTodayMs()) return false;
+    return true;
+  }
+  return false;
+}
+
+// fresh = deadline = today AND (now < 16:00 OR created today)
+function isFreshForToday(task, now = new Date()) {
+  if (!task.deadline) return false;
+  const today = todayISO();
+  if (task.deadline !== today) return false;
+  if (now.getHours() < STUCK_HOUR) return true;
+  if (task.created_at >= startOfTodayMs()) return true;
+  return false;
+}
+
+function daysBetweenIso(fromIso, toIso) {
+  const toDate = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+  const a = toDate(fromIso), b = toDate(toIso);
+  return Math.round((b - a) / 86400000);
+}
+
+async function listTodayStuck() {
+  const active = await listActive();
+  const now = new Date();
+  return active.filter(t => isStuckNow(t, now))
+    .sort((a, b) => {
+      // Oldest first_stuck_at first (most stuck on top)
+      const af = a.first_stuck_at || todayISO();
+      const bf = b.first_stuck_at || todayISO();
+      if (af !== bf) return af < bf ? -1 : 1;
+      // tiebreaker: oldest created first
+      return a.created_at - b.created_at;
+    });
+}
+
+async function listTodayFresh() {
+  const active = await listActive();
+  const now = new Date();
+  return active.filter(t => isFreshForToday(t, now))
+    .sort((a, b) => a.created_at - b.created_at);
+}
+
+// Interpretation C: sticky first_stuck_at, set once when task first transitions
+// into stuck state. Sweep on every Today render to catch newly-stuck tasks.
+// Also: clean up misfired "first_stuck_at=today" for tasks that turned out fresh
+// (e.g., created today but briefly misclassified by a buggy earlier rule).
+async function sweepStuckTimestamps() {
+  const active = await listActive();
+  const now = new Date();
+  const today = todayISO();
+  const updates = [];
+  for (const t of active) {
+    const stuck = isStuckNow(t, now);
+    if (stuck && !t.first_stuck_at) {
+      updates.push(db.tasks.update(t.id, { first_stuck_at: today }));
+    } else if (!stuck && t.first_stuck_at === today) {
+      updates.push(db.tasks.update(t.id, { first_stuck_at: null }));
+    }
+  }
+  if (updates.length) await Promise.all(updates);
+}
+
 async function listJournal() {
   const start = startOfTodayMs();
   const arr = await db.tasks
@@ -175,15 +252,18 @@ async function addTask(text) {
     track_id: null,
     created_at: Date.now(),
     done_at: 0,
+    first_stuck_at: null,
+    bump_count: 0,
+    blocker: null,
   });
 }
 
 async function markDone(id) {
-  await db.tasks.update(id, { done_at: Date.now() });
+  await db.tasks.update(id, { done_at: Date.now(), first_stuck_at: null });
 }
 
 async function undoDone(id) {
-  await db.tasks.update(id, { done_at: 0 });
+  await db.tasks.update(id, { done_at: 0, first_stuck_at: null });
 }
 
 // ---------- tracks ----------
@@ -355,9 +435,11 @@ function attachLongPress(el, { onLongPress, onTap, ms = 500 }) {
   let timer = null;
   let firedLong = false;
   let moved = false;
+  let pressed = false;
   let startX = 0, startY = 0;
   const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
   el.addEventListener('pointerdown', (e) => {
+    pressed = true;
     firedLong = false;
     moved = false;
     startX = e.clientX; startY = e.clientY;
@@ -370,6 +452,7 @@ function attachLongPress(el, { onLongPress, onTap, ms = 500 }) {
     }, ms);
   });
   el.addEventListener('pointermove', (e) => {
+    if (!pressed) return;
     const dx = e.clientX - startX, dy = e.clientY - startY;
     if (dx*dx + dy*dy > 100) {
       moved = true;
@@ -377,12 +460,16 @@ function attachLongPress(el, { onLongPress, onTap, ms = 500 }) {
     }
   });
   el.addEventListener('pointerup', (e) => {
+    if (!pressed) return;
     const wasLong = firedLong;
+    const wasMoved = moved;
+    pressed = false;
     cancel();
-    if (!wasLong && !moved) onTap?.(e);
+    if (!wasLong && !wasMoved) onTap?.(e);
   });
-  el.addEventListener('pointercancel', cancel);
-  el.addEventListener('pointerleave', cancel);
+  const bail = () => { pressed = false; cancel(); };
+  el.addEventListener('pointercancel', bail);
+  el.addEventListener('pointerleave', bail);
   el.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
@@ -456,19 +543,39 @@ function cardBase(task, tracksById) {
   return el;
 }
 
+function playStampImpact(cardEl, task) {
+  return new Promise(resolve => {
+    const finalRot = ((task.id * 13) % 15) - 7;
+
+    const shockwave = document.createElement('div');
+    shockwave.className = 'stamp-shockwave';
+    cardEl.appendChild(shockwave);
+
+    const badge = document.createElement('div');
+    badge.className = 'stamp-badge';
+    badge.style.setProperty('--final-rot', finalRot + 'deg');
+    badge.appendChild(checkBadgeSvg());
+    cardEl.appendChild(badge);
+
+    cardEl.classList.add('stamping');
+
+    setTimeout(() => resolve(), 280);
+  });
+}
+
 function activeCardNode(task, tracksById) {
   const el = cardBase(task, tracksById);
   attachLongPress(el, {
     onTap: () => openSheet({ task }),
     onLongPress: async () => {
-      if (el.classList.contains('removing')) return;
-      el.classList.add('removing');
+      if (el.classList.contains('stamping') || el.classList.contains('removing')) return;
       try {
+        await playStampImpact(el, task);
         await markDone(task.id);
         showUndoSnackbar(task.id);
-        setTimeout(() => { renderMain().catch(showError); }, 200);
+        setTimeout(() => { renderMain().catch(showError); }, 60);
       } catch (e) {
-        el.classList.remove('removing');
+        el.classList.remove('stamping');
         if (isIdbDisconnectError(e)) { await recoverDb(); return; }
         showError(e);
       }
@@ -562,9 +669,11 @@ function journalCardNode(task, tracksById) {
   return el;
 }
 
-// ---------- pager (Morning ↔ Tracks) ----------
+// ---------- pager (Сегодня ↔ Morning ↔ Tracks) ----------
 
-let currentPage = 0; // 0 = morning, 1 = tracks
+const PAGE_COUNT = 3;
+const PAGE_WIDTH_PCT = 100 / PAGE_COUNT; // 33.3333
+let currentPage = 1; // 0 = сегодня, 1 = morning (default), 2 = tracks
 let pagerEl = null;
 let inputBarEl = null;
 
@@ -576,11 +685,13 @@ async function renderApp() {
   pagerEl = document.createElement('div');
   pagerEl.className = 'pager';
 
+  const pToday = document.createElement('section');
+  pToday.className = 'page page-today';
   const pMorning = document.createElement('section');
   pMorning.className = 'page page-morning';
   const pTracks = document.createElement('section');
   pTracks.className = 'page page-tracks';
-  pagerEl.append(pMorning, pTracks);
+  pagerEl.append(pToday, pMorning, pTracks);
 
   root.appendChild(pagerEl);
 
@@ -589,14 +700,14 @@ async function renderApp() {
   root.appendChild(inputBarEl);
 
   attachPagerSwipe(pagerEl);
-  await Promise.all([renderMorning(), renderTracks()]);
+  await Promise.all([renderToday(), renderMorning(), renderTracks()]);
   setPage(currentPage, false);
 }
 
 function setPage(idx, animate = true) {
-  currentPage = Math.max(0, Math.min(1, idx));
+  currentPage = Math.max(0, Math.min(PAGE_COUNT - 1, idx));
   if (!animate) pagerEl.classList.add('no-anim');
-  pagerEl.style.transform = `translateX(${-currentPage * 50}%)`;
+  pagerEl.style.transform = `translateX(${-currentPage * PAGE_WIDTH_PCT}%)`;
   if (!animate) requestAnimationFrame(() => pagerEl.classList.remove('no-anim'));
   updateInputBar();
   updatePagePill();
@@ -605,12 +716,18 @@ function setPage(idx, animate = true) {
 function updateInputBar() {
   if (!inputBarEl) return;
   inputBarEl.replaceChildren();
+  if (currentPage === 0) {
+    // Сегодня — no bottom CTA (read-only diagnostic screen)
+    inputBarEl.style.display = 'none';
+    return;
+  }
+  inputBarEl.style.display = '';
   const wrap = document.createElement('button');
   wrap.className = 'wrap';
   wrap.type = 'button';
   wrap.append(iconNode('plus'));
   const label = document.createElement('span');
-  if (currentPage === 0) {
+  if (currentPage === 1) {
     label.textContent = 'Добавить задачу';
     wrap.addEventListener('click', () => openSheet({ task: null }));
   } else {
@@ -641,7 +758,7 @@ function pagePillNode() {
     el.addEventListener('click', () => setPage(idx));
     return el;
   };
-  wrap.append(mkHalf('Задачи', 0), mkHalf('Треки', 1));
+  wrap.append(mkHalf('Сегодня', 0), mkHalf('Задачи', 1), mkHalf('Треки', 2));
   return wrap;
 }
 
@@ -703,7 +820,7 @@ function attachPagerSwipe(el) {
     // Clamp past bounds with resistance so you can't drag beyond end pages.
     let tx = baseTx + dx;
     const maxTx = 0;
-    const minTx = -W(); // one full viewport = second page fully visible
+    const minTx = -W() * (PAGE_COUNT - 1); // max shift for last page
     if (tx > maxTx) tx = maxTx + (tx - maxTx) * 0.3;
     if (tx < minTx) tx = minTx + (tx - minTx) * 0.3;
     el.style.transform = `translateX(${tx}px)`;
@@ -716,7 +833,7 @@ function attachPagerSwipe(el) {
     const dx = e.clientX - startX;
     const threshold = W() * 0.2;
     let next = currentPage;
-    if (dx < -threshold && currentPage < 1) next = currentPage + 1;
+    if (dx < -threshold && currentPage < PAGE_COUNT - 1) next = currentPage + 1;
     else if (dx > threshold && currentPage > 0) next = currentPage - 1;
     // Reset transform to % (setPage uses %)
     el.style.transform = '';
@@ -817,7 +934,290 @@ async function renderMorning() {
 // Existing task-mutation call sites use renderMain() after the mutation.
 // It now refreshes both pages so track stats stay in sync with task state.
 async function renderMain() {
-  await Promise.all([renderMorning(), renderTracks()]);
+  await Promise.all([renderToday(), renderMorning(), renderTracks()]);
+}
+
+// ---------- render: Сегодня ----------
+
+function formatDateShort(iso) {
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
+  if (isNaN(d)) return '';
+  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }).replace('.', '');
+}
+
+function formatStuckDuration(firstStuckAt) {
+  if (!firstStuckAt) return 'висит сегодня';
+  const days = daysBetweenIso(firstStuckAt, todayISO());
+  if (days <= 0) return 'висит сегодня';
+  return 'висит ' + days + ' ' + pluralizeDays(days);
+}
+
+function todaySubtitle(stuckCount, freshCount) {
+  if (stuckCount === 0 && freshCount === 0) return 'на сегодня пусто.';
+  const parts = [];
+  if (stuckCount) parts.push(`застрявших ${stuckCount}`);
+  if (freshCount) parts.push(`свежих ${freshCount}`);
+  return parts.join(' · ');
+}
+
+function metaDotNode() {
+  const s = document.createElement('span');
+  s.className = 'meta-dot';
+  s.textContent = '·';
+  return s;
+}
+
+function metaTextNode(txt, cls = 'meta-text') {
+  const s = document.createElement('span');
+  s.className = cls;
+  s.textContent = txt;
+  return s;
+}
+
+function stuckBlockNode(task, tracksById) {
+  const el = document.createElement('div');
+  el.className = 'stuck-block';
+  el.dataset.id = String(task.id);
+
+  // Top row: icon + title + right (готово + trash)
+  const top = document.createElement('div');
+  top.className = 'stuck-top';
+  const topIcon = iconNode(task.icon || DEFAULT_ICON);
+  const title = document.createElement('div');
+  title.className = 'stuck-title';
+  title.textContent = task.text;
+
+  const right = document.createElement('div');
+  right.className = 'stuck-right';
+
+  const gotovo = document.createElement('button');
+  gotovo.type = 'button';
+  gotovo.className = 'gotovo-circle';
+  gotovo.setAttribute('aria-label', 'Завершить');
+  gotovo.appendChild(iconNode('check'));
+  gotovo.addEventListener('click', async (ev) => {
+    ev.stopPropagation();
+    if (el.classList.contains('stamping') || el.classList.contains('removing')) return;
+    try {
+      await playStampImpact(el, task);
+      await markDone(task.id);
+      showUndoSnackbar(task.id);
+      setTimeout(() => { renderMain().catch(showError); }, 60);
+    } catch (e) {
+      el.classList.remove('stamping');
+      if (isIdbDisconnectError(e)) { await recoverDb(); return; }
+      showError(e);
+    }
+  });
+
+  const trash = document.createElement('button');
+  trash.type = 'button';
+  trash.className = 'stuck-trash';
+  trash.setAttribute('aria-label', 'Удалить');
+  trash.appendChild(iconNode('trash-2'));
+  trash.addEventListener('click', async (ev) => {
+    ev.stopPropagation();
+    if (!confirm(`Удалить задачу «${task.text}»?`)) return;
+    try {
+      await db.tasks.delete(task.id);
+      await renderMain();
+    } catch (e) {
+      if (isIdbDisconnectError(e)) { await recoverDb(); return; }
+      showError(e);
+    }
+  });
+
+  right.append(gotovo, trash);
+  top.append(topIcon, title, right);
+  el.appendChild(top);
+
+  // Blocker chip (if present)
+  if (task.blocker) {
+    const chip = document.createElement('div');
+    chip.className = 'stuck-blocker-chip';
+    chip.appendChild(iconNode('lock'));
+    chip.appendChild(metaTextNode(task.blocker, 'blocker-text'));
+    el.appendChild(chip);
+  }
+
+  // Actions row (Блокер · Сдвинуть) — stage 4-5 will wire tap handlers
+  const actions = document.createElement('div');
+  actions.className = 'stuck-actions';
+  const blokBtn = compoundActionBtn('lock', 'Блокер', () => {
+    /* stage 5 */
+  });
+  const sdvBtn = compoundActionBtn('calendar-arrow-down', 'Сдвинуть', () => {
+    /* stage 4 */
+  });
+  actions.append(blokBtn, sdvBtn);
+  el.appendChild(actions);
+
+  // Footer: hairline + meta (висит coral · дата · трек)
+  const footer = document.createElement('div');
+  footer.className = 'stuck-footer';
+  const hairline = document.createElement('div');
+  hairline.className = 'stuck-hairline';
+  const meta = document.createElement('div');
+  meta.className = 'stuck-meta';
+  meta.appendChild(metaTextNode(formatStuckDuration(task.first_stuck_at), 'meta-stuck'));
+  if (task.deadline) {
+    meta.appendChild(metaDotNode());
+    const dIcon = iconNode('calendar-clock');
+    dIcon.classList.add('meta-icon');
+    meta.appendChild(dIcon);
+    meta.appendChild(metaTextNode(formatDateShort(task.deadline)));
+  }
+  const track = task.track_id && tracksById ? tracksById.get(task.track_id) : null;
+  if (track) {
+    meta.appendChild(metaDotNode());
+    const tIcon = iconNode(track.icon || DEFAULT_ICON);
+    tIcon.classList.add('meta-icon');
+    meta.appendChild(tIcon);
+    meta.appendChild(metaTextNode(track.name));
+  }
+  footer.append(hairline, meta);
+  el.appendChild(footer);
+
+  // Tap outside buttons → open edit sheet
+  el.addEventListener('click', (ev) => {
+    if (ev.target.closest('button')) return;
+    openSheet({ task });
+  });
+
+  return el;
+}
+
+function freshRowNode(task, tracksById) {
+  const el = document.createElement('div');
+  el.className = 'fresh-row';
+  el.dataset.id = String(task.id);
+
+  const icon = iconNode(task.icon || DEFAULT_ICON);
+  const text = document.createElement('span');
+  text.className = 'fresh-text';
+  text.textContent = task.text;
+
+  const check = document.createElement('button');
+  check.type = 'button';
+  check.className = 'fresh-check';
+  check.setAttribute('aria-label', 'Завершить');
+  check.appendChild(iconNode('check'));
+  check.addEventListener('click', async (ev) => {
+    ev.stopPropagation();
+    if (el.classList.contains('removing')) return;
+    check.classList.add('filling');
+    renderLucide();
+    try {
+      await new Promise(r => setTimeout(r, 220));
+      el.classList.add('removing');
+      await markDone(task.id);
+      showUndoSnackbar(task.id);
+      setTimeout(() => { renderMain().catch(showError); }, 200);
+    } catch (e) {
+      el.classList.remove('removing');
+      check.classList.remove('filling');
+      if (isIdbDisconnectError(e)) { await recoverDb(); return; }
+      showError(e);
+    }
+  });
+
+  el.append(icon, text, check);
+  el.addEventListener('click', (ev) => {
+    if (ev.target.closest('button')) return;
+    openSheet({ task });
+  });
+  return el;
+}
+
+function compoundActionBtn(iconName, label, onClick) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'stuck-action-compound';
+  const circle = document.createElement('span');
+  circle.className = 'action-circle';
+  circle.appendChild(iconNode(iconName));
+  const lbl = document.createElement('span');
+  lbl.className = 'action-label';
+  lbl.textContent = label;
+  btn.append(circle, lbl);
+  btn.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    onClick();
+  });
+  return btn;
+}
+
+async function renderToday() {
+  const page = document.querySelector('.page-today');
+  if (!page) return;
+  page.replaceChildren();
+
+  // Sweep first_stuck_at for newly-stuck tasks
+  try {
+    await sweepStuckTimestamps();
+  } catch (e) {
+    if (isIdbDisconnectError(e)) { await recoverDb(); }
+  }
+
+  const screen = document.createElement('div');
+  screen.className = 'screen';
+
+  const [stuck, fresh, tracks] = await Promise.all([
+    listTodayStuck(),
+    listTodayFresh(),
+    listTracks(),
+  ]);
+  const tracksById = new Map(tracks.map(t => [t.id, t]));
+
+  // Header
+  const header = document.createElement('div');
+  header.className = 'header';
+  const headerRow = document.createElement('div');
+  headerRow.className = 'header-row';
+  const h1 = document.createElement('h1');
+  h1.textContent = greeting();
+  headerRow.append(h1, pagePillNode());
+  const sub = document.createElement('div');
+  sub.className = 'sub';
+  sub.textContent = todaySubtitle(stuck.length, fresh.length);
+  header.append(headerRow, sub);
+  screen.appendChild(header);
+
+  // Stuck blocks
+  if (stuck.length) {
+    const stuckList = document.createElement('div');
+    stuckList.className = 'stuck-list';
+    for (const t of stuck) {
+      stuckList.appendChild(stuckBlockNode(t, tracksById));
+    }
+    screen.appendChild(stuckList);
+  }
+
+  // Fresh section — compact rows (icon + text + check circle)
+  if (fresh.length) {
+    const freshLabel = document.createElement('div');
+    freshLabel.className = 'today-section-label';
+    freshLabel.textContent = 'СВЕЖИЕ · СЕГОДНЯ';
+    screen.appendChild(freshLabel);
+    const freshList = document.createElement('div');
+    freshList.className = 'fresh-list';
+    for (const t of fresh) {
+      freshList.appendChild(freshRowNode(t, tracksById));
+    }
+    screen.appendChild(freshList);
+  }
+
+  // Empty state
+  if (stuck.length === 0 && fresh.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+    empty.textContent = 'На сегодня ничего. Отдыхай.';
+    screen.appendChild(empty);
+  }
+
+  page.appendChild(screen);
+  renderLucide();
 }
 
 // ---------- render: Tracks ----------
