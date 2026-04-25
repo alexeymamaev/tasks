@@ -1605,8 +1605,9 @@ body {
   margin: 14px -14px 0 -14px;
   padding: 0 14px;
   scrollbar-width: none;
-  /* Allow custom 2-finger scroll without pinch-zoom interference */
-  touch-action: pan-y;
+  /* Block native gestures so the pager (1-finger) and our 2-finger
+   * custom scroll handler can coexist without pointercancel races. */
+  touch-action: none;
 }
 .cal-strip-wrap::-webkit-scrollbar { display: none; }
 

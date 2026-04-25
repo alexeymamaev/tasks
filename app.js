@@ -896,7 +896,18 @@ function attachPagerSwipe(el) {
     dragging = false;
   };
   el.addEventListener('pointerup', end);
-  el.addEventListener('pointercancel', end);
+  // pointercancel fires e.g. when the OS hijacks the gesture — its clientX
+  // is not trustworthy, so snap back to the current page rather than computing
+  // dx and accidentally flipping to the wrong neighbour.
+  el.addEventListener('pointercancel', () => {
+    if (!active) return;
+    active = false;
+    if (!dragging) return;
+    dragging = false;
+    el.classList.remove('dragging');
+    el.style.transform = '';
+    setPage(currentPage, true);
+  });
   el.addEventListener('pointerleave', (e) => { if (active && dragging) end(e); });
 }
 
