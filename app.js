@@ -727,6 +727,11 @@ async function renderApp() {
 
   root.appendChild(pagerEl);
 
+  // Floating pill — sits above pager, independent from page swipe.
+  const fixedPill = pagePillNode();
+  fixedPill.classList.add('page-pill-fixed');
+  root.appendChild(fixedPill);
+
   inputBarEl = document.createElement('div');
   inputBarEl.className = 'input-bar';
   root.appendChild(inputBarEl);
@@ -952,7 +957,7 @@ async function renderMorning() {
   headerRow.className = 'header-row';
   const h1 = document.createElement('h1');
   h1.textContent = greeting();
-  headerRow.append(h1, pagePillNode());
+  headerRow.appendChild(h1);
   const sub = document.createElement('div');
   sub.className = 'sub';
   sub.textContent = 'давай займемся делом –';
@@ -1590,7 +1595,7 @@ async function renderToday() {
   headerRow.className = 'header-row';
   const h1 = document.createElement('h1');
   h1.textContent = greeting();
-  headerRow.append(h1, pagePillNode());
+  headerRow.appendChild(h1);
   const sub = document.createElement('div');
   sub.className = 'sub';
   sub.textContent = todaySubtitle(stuck.length, fresh.length);
@@ -1741,7 +1746,7 @@ async function renderCalendar() {
   headerRow.className = 'header-row';
   const h1 = document.createElement('h1');
   h1.textContent = 'Календарь';
-  headerRow.append(h1, pagePillNode());
+  headerRow.appendChild(h1);
   header.appendChild(headerRow);
   const sub = document.createElement('div');
   sub.className = 'sub cal-quote';
@@ -1898,7 +1903,7 @@ async function renderTracks() {
   headerRow.className = 'header-row';
   const h1 = document.createElement('h1');
   h1.textContent = 'Треки';
-  headerRow.append(h1, pagePillNode());
+  headerRow.appendChild(h1);
   const sub = document.createElement('div');
   sub.className = 'sub';
   sub.textContent = 'направления деятельности.';

@@ -108,6 +108,14 @@ body {
   color: #0D0A08;
 }
 
+.page-pill-fixed {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 14px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+}
+
 .screen {
   padding: 0 16px 120px 16px;
   max-width: 560px;
@@ -118,12 +126,12 @@ body {
  * goes directly on the .screen. Morning uses .top-region which already handles it. */
 .page-tracks > .screen,
 .page-today > .screen {
-  padding-top: calc(24px + env(safe-area-inset-top, 0));
+  padding-top: calc(50px + env(safe-area-inset-top, 0));
 }
 
 /* Calendar page has its own narrower screen container */
 .page-calendar > .screen-cal {
-  padding: calc(24px + env(safe-area-inset-top, 0)) 14px 120px 14px;
+  padding: calc(50px + env(safe-area-inset-top, 0)) 14px 120px 14px;
   max-width: 560px;
   margin: 0 auto;
 }
@@ -133,7 +141,7 @@ body {
   flex-direction: column;
   min-height: calc(100vh - 120px);
   min-height: calc(100svh - 120px);
-  padding-top: calc(24px + env(safe-area-inset-top, 0));
+  padding-top: calc(50px + env(safe-area-inset-top, 0));
 }
 .top-region > .active-grid,
 .top-region > .active-grouped,
