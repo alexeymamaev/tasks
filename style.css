@@ -1238,25 +1238,6 @@ body {
   flex: 0 0 11px;
 }
 
-.stuck-more {
-  width: 26px;
-  height: 26px;
-  border: 0;
-  background: transparent;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  flex: 0 0 26px;
-  padding: 0;
-  border-radius: 7px;
-}
-.stuck-more > .icon,
-.stuck-more > svg {
-  width: 14px;
-  height: 14px;
-  color: var(--d-text-dim);
-}
-
 .stuck-segbar {
   display: flex;
   border-top: 1px solid var(--d-card-border);

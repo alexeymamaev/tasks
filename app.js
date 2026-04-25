@@ -1054,18 +1054,7 @@ function stuckBlockNode(task, tracksById) {
     left.appendChild(note);
   }
 
-  // Ellipsis menu — opens edit sheet (where delete lives)
-  const more = document.createElement('button');
-  more.type = 'button';
-  more.className = 'stuck-more';
-  more.setAttribute('aria-label', 'Меню');
-  more.appendChild(iconNode('ellipsis'));
-  more.addEventListener('click', (ev) => {
-    ev.stopPropagation();
-    openSheet({ task });
-  });
-
-  top.append(left, more);
+  top.appendChild(left);
   main.appendChild(top);
 
   // Bottom segmented bar: Блокер · Сдвинуть · Разделить (если нет блокера) · Завершить
