@@ -1197,14 +1197,19 @@ body {
   gap: 5px;
   margin-top: 8px;
   padding: 6px 8px;
+  border: 0;
   border-radius: 8px;
   background: var(--d-note-bg);
   font-size: 11.5px;
   font-style: italic;
+  font-family: inherit;
+  text-align: left;
   color: var(--d-text-dim);
   max-width: 100%;
   min-width: 0;
+  cursor: pointer;
 }
+.stuck-note:active { opacity: 0.7; }
 .stuck-note > .icon,
 .stuck-note > svg {
   width: 11px;
@@ -1237,6 +1242,91 @@ body {
   color: currentColor;
   flex: 0 0 11px;
 }
+
+.stuck-edit-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--d-card-border);
+}
+.stuck-edit-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.stuck-edit-input-row > .icon,
+.stuck-edit-input-row > svg {
+  width: 12px;
+  height: 12px;
+  color: var(--d-text-dim);
+  flex: 0 0 12px;
+}
+.stuck-edit-input-box {
+  flex: 1 1 auto;
+  background: #0D0A08;
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.stuck-edit-input {
+  flex: 1 1 auto;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  font-style: italic;
+  color: var(--d-text);
+  caret-color: var(--d-accent);
+  min-width: 0;
+  padding: 0;
+}
+.stuck-edit-input::placeholder {
+  color: var(--d-text-very-dim);
+  font-style: italic;
+}
+.stuck-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+.stuck-edit-cancel,
+.stuck-edit-save {
+  border: 0;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.stuck-edit-cancel {
+  background: rgba(255,255,255,0.04);
+  color: var(--d-text-dim);
+  font-weight: 500;
+}
+.stuck-edit-save {
+  background: var(--d-accent);
+  color: #2A211C;
+  font-weight: 600;
+  gap: 5px;
+}
+.stuck-edit-save > .icon,
+.stuck-edit-save > svg {
+  width: 12px;
+  height: 12px;
+  color: #2A211C;
+  flex: 0 0 12px;
+}
+.stuck-edit-cancel:active,
+.stuck-edit-save:active { opacity: 0.7; }
 
 .stuck-segbar {
   display: flex;

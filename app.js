@@ -587,6 +587,7 @@ function activeCardNode(task, tracksById) {
 // ---------- undo snackbar ----------
 
 let snackbarTimer = null;
+let editingBlockerTaskId = null;
 
 function showUndoSnackbar(taskId) {
   if (snackbarTimer) { clearTimeout(snackbarTimer); snackbarTimer = null; }
@@ -967,6 +968,7 @@ function stuckBlockNode(task, tracksById) {
     : 1;
   const word = pluralizeDays(days).toUpperCase();
   const track = task.track_id && tracksById ? tracksById.get(task.track_id) : null;
+  const isEditingBlocker = editingBlockerTaskId === task.id;
 
   const el = document.createElement('div');
   el.className = 'stuck-card-d';
@@ -1027,9 +1029,10 @@ function stuckBlockNode(task, tracksById) {
   title.textContent = task.text;
   left.appendChild(title);
 
-  // Optional blocker note
-  if (task.blocker) {
-    const note = document.createElement('div');
+  // Optional blocker chip — hidden during edit (input replaces it)
+  if (task.blocker && !isEditingBlocker) {
+    const note = document.createElement('button');
+    note.type = 'button';
     note.className = 'stuck-note';
     note.appendChild(iconNode('lock'));
     const noteText = document.createElement('span');
@@ -1051,55 +1054,152 @@ function stuckBlockNode(task, tracksById) {
       }
     });
     note.appendChild(xBtn);
+    note.addEventListener('click', (ev) => {
+      if (ev.target.closest('.stuck-note-x')) return;
+      ev.stopPropagation();
+      editingBlockerTaskId = task.id;
+      renderMain().catch(showError);
+    });
     left.appendChild(note);
   }
 
   top.appendChild(left);
   main.appendChild(top);
 
-  // Bottom segmented bar: Блокер · Сдвинуть · Разделить (если нет блокера) · Завершить
-  const segbar = document.createElement('div');
-  segbar.className = 'stuck-segbar';
-  const segs = [
-    { icon: 'lock', label: 'Блокер', onClick: () => {} },        // stage 5
-    { icon: 'calendar', label: 'Сдвинуть', onClick: () => {} },  // stage 4
-    ...(task.blocker ? [] : [{ icon: 'split', label: 'Разделить', onClick: () => {} }]),
-    {
-      icon: 'check', label: 'Завершить', accent: true,
-      onClick: async () => {
-        if (el.classList.contains('stamping') || el.classList.contains('removing')) return;
-        try {
-          await playStampImpact(el, task);
-          await markDone(task.id);
-          showUndoSnackbar(task.id);
-          setTimeout(() => { renderMain().catch(showError); }, 60);
-        } catch (e) {
-          el.classList.remove('stamping');
-          if (isIdbDisconnectError(e)) { await recoverDb(); return; }
-          showError(e);
-        }
+  // Bottom: edit-bar (when editing blocker) OR segmented action bar
+  if (isEditingBlocker) {
+    main.appendChild(buildBlockerEditBar(task));
+  } else {
+    const segbar = document.createElement('div');
+    segbar.className = 'stuck-segbar';
+    const segs = [
+      {
+        icon: 'lock', label: 'Блокер',
+        onClick: () => {
+          editingBlockerTaskId = task.id;
+          renderMain().catch(showError);
+        },
       },
-    },
-  ];
-  segs.forEach((s, i) => {
-    if (i > 0) {
-      const div = document.createElement('div');
-      div.className = 'stuck-seg-divider';
-      segbar.appendChild(div);
-    }
-    segbar.appendChild(stuckSegBtn(s));
-  });
-  main.appendChild(segbar);
+      { icon: 'calendar', label: 'Сдвинуть', onClick: () => {} },  // stage 4
+      ...(task.blocker ? [] : [{ icon: 'split', label: 'Разделить', onClick: () => {} }]),
+      {
+        icon: 'check', label: 'Завершить', accent: true,
+        onClick: async () => {
+          if (el.classList.contains('stamping') || el.classList.contains('removing')) return;
+          try {
+            await playStampImpact(el, task);
+            await markDone(task.id);
+            showUndoSnackbar(task.id);
+            setTimeout(() => { renderMain().catch(showError); }, 60);
+          } catch (e) {
+            el.classList.remove('stamping');
+            if (isIdbDisconnectError(e)) { await recoverDb(); return; }
+            showError(e);
+          }
+        },
+      },
+    ];
+    segs.forEach((s, i) => {
+      if (i > 0) {
+        const div = document.createElement('div');
+        div.className = 'stuck-seg-divider';
+        segbar.appendChild(div);
+      }
+      segbar.appendChild(stuckSegBtn(s));
+    });
+    main.appendChild(segbar);
+  }
 
   el.appendChild(main);
 
-  // Tap outside buttons → open edit sheet
+  // Tap outside buttons → open edit sheet (suspended while editing blocker)
   el.addEventListener('click', (ev) => {
     if (ev.target.closest('button')) return;
+    if (ev.target.closest('.stuck-edit-bar')) return;
+    if (isEditingBlocker) return;
     openSheet({ task });
   });
 
   return el;
+}
+
+function buildBlockerEditBar(task) {
+  const bar = document.createElement('div');
+  bar.className = 'stuck-edit-bar';
+
+  const inputRow = document.createElement('div');
+  inputRow.className = 'stuck-edit-input-row';
+  inputRow.appendChild(iconNode('lock'));
+
+  const inputBox = document.createElement('div');
+  inputBox.className = 'stuck-edit-input-box';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = task.blocker || '';
+  input.placeholder = 'что мешает?';
+  input.className = 'stuck-edit-input';
+  input.maxLength = 120;
+  input.autocomplete = 'off';
+  inputBox.appendChild(input);
+  inputRow.appendChild(inputBox);
+  bar.appendChild(inputRow);
+
+  const actions = document.createElement('div');
+  actions.className = 'stuck-edit-actions';
+
+  const cancel = document.createElement('button');
+  cancel.type = 'button';
+  cancel.className = 'stuck-edit-cancel';
+  cancel.textContent = 'отмена';
+  cancel.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    editingBlockerTaskId = null;
+    renderMain().catch(showError);
+  });
+
+  const save = document.createElement('button');
+  save.type = 'button';
+  save.className = 'stuck-edit-save';
+  save.appendChild(iconNode('check'));
+  const saveLabel = document.createElement('span');
+  saveLabel.textContent = 'сохранить';
+  save.appendChild(saveLabel);
+  const commit = async () => {
+    const value = input.value.trim();
+    try {
+      await db.tasks.update(task.id, { blocker: value || null });
+      editingBlockerTaskId = null;
+      renderMain().catch(showError);
+    } catch (e) {
+      if (isIdbDisconnectError(e)) { await recoverDb(); return; }
+      showError(e);
+    }
+  };
+  save.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    commit();
+  });
+
+  actions.append(cancel, save);
+  bar.appendChild(actions);
+
+  input.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter') {
+      ev.preventDefault();
+      commit();
+    } else if (ev.key === 'Escape') {
+      ev.preventDefault();
+      cancel.click();
+    }
+  });
+
+  setTimeout(() => {
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+    bar.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, 30);
+
+  return bar;
 }
 
 function stuckSegBtn({ icon, label, onClick, accent }) {
