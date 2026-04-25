@@ -588,6 +588,7 @@ function activeCardNode(task, tracksById) {
 
 let snackbarTimer = null;
 let editingBlockerTaskId = null;
+let splittingTaskId = null;
 
 function showSnackbar({ label: labelText, onUndo }) {
   if (snackbarTimer) { clearTimeout(snackbarTimer); snackbarTimer = null; }
@@ -1028,6 +1029,7 @@ function stuckBlockNode(task, tracksById) {
   const word = pluralizeDays(days).toUpperCase();
   const track = task.track_id && tracksById ? tracksById.get(task.track_id) : null;
   const isEditingBlocker = editingBlockerTaskId === task.id;
+  const isSplitting = splittingTaskId === task.id;
 
   const el = document.createElement('div');
   el.className = 'stuck-card-d';
@@ -1088,8 +1090,8 @@ function stuckBlockNode(task, tracksById) {
   title.textContent = task.text;
   left.appendChild(title);
 
-  // Optional blocker chip — hidden during edit (input replaces it)
-  if (task.blocker && !isEditingBlocker) {
+  // Optional blocker chip — hidden during blocker edit or split
+  if (task.blocker && !isEditingBlocker && !isSplitting) {
     const note = document.createElement('button');
     note.type = 'button';
     note.className = 'stuck-note';
@@ -1125,8 +1127,10 @@ function stuckBlockNode(task, tracksById) {
   top.appendChild(left);
   main.appendChild(top);
 
-  // Bottom: edit-bar (when editing blocker) OR segmented action bar
-  if (isEditingBlocker) {
+  // Bottom: split-bar / blocker edit-bar / segmented action bar
+  if (isSplitting) {
+    main.appendChild(buildSplitBar(task));
+  } else if (isEditingBlocker) {
     main.appendChild(buildBlockerEditBar(task));
   } else {
     const segbar = document.createElement('div');
@@ -1140,7 +1144,13 @@ function stuckBlockNode(task, tracksById) {
         },
       },
       { icon: 'calendar', label: 'Сдвинуть', onClick: () => openMoveDatePicker(task) },
-      { icon: 'split', label: 'Разделить', onClick: () => {} },    // future
+      {
+        icon: 'split', label: 'Разделить',
+        onClick: () => {
+          splittingTaskId = task.id;
+          renderMain().catch(showError);
+        },
+      },
       {
         icon: 'check', label: 'Завершить', accent: true,
         onClick: async () => {
@@ -1171,11 +1181,12 @@ function stuckBlockNode(task, tracksById) {
 
   el.appendChild(main);
 
-  // Tap outside buttons → open edit sheet (suspended while editing blocker)
+  // Tap outside buttons → open edit sheet (suspended while editing blocker / splitting)
   el.addEventListener('click', (ev) => {
     if (ev.target.closest('button')) return;
     if (ev.target.closest('.stuck-edit-bar')) return;
-    if (isEditingBlocker) return;
+    if (ev.target.closest('.stuck-split-bar')) return;
+    if (isEditingBlocker || isSplitting) return;
     openSheet({ task });
   });
 
@@ -1255,6 +1266,184 @@ function buildBlockerEditBar(task) {
   setTimeout(() => {
     input.focus();
     input.setSelectionRange(input.value.length, input.value.length);
+    bar.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, 30);
+
+  return bar;
+}
+
+const SPLIT_MAX_ROWS = 5;
+
+function buildSplitBar(task) {
+  const bar = document.createElement('div');
+  bar.className = 'stuck-split-bar';
+
+  const rows = document.createElement('div');
+  rows.className = 'stuck-split-rows';
+  bar.appendChild(rows);
+
+  const plusBtn = document.createElement('button');
+  plusBtn.type = 'button';
+  plusBtn.className = 'stuck-split-plus';
+  plusBtn.appendChild(iconNode('plus'));
+  const plusLbl = document.createElement('span');
+  plusLbl.textContent = 'добавить шаг';
+  plusBtn.appendChild(plusLbl);
+  bar.appendChild(plusBtn);
+
+  const actions = document.createElement('div');
+  actions.className = 'stuck-split-actions';
+  const cancelBtn = document.createElement('button');
+  cancelBtn.type = 'button';
+  cancelBtn.className = 'stuck-edit-cancel';
+  cancelBtn.textContent = 'отмена';
+  const saveBtn = document.createElement('button');
+  saveBtn.type = 'button';
+  saveBtn.className = 'stuck-split-save';
+  saveBtn.appendChild(iconNode('split'));
+  const saveLbl = document.createElement('span');
+  saveLbl.textContent = 'разделить';
+  saveBtn.appendChild(saveLbl);
+  actions.append(cancelBtn, saveBtn);
+  bar.appendChild(actions);
+
+  const updateXVisibility = () => {
+    const count = rows.children.length;
+    [...rows.children].forEach(r => {
+      const x = r.querySelector('.stuck-split-row-x');
+      if (x) x.style.display = count > 2 ? '' : 'none';
+    });
+  };
+  const updatePlusVisibility = () => {
+    plusBtn.style.display = rows.children.length < SPLIT_MAX_ROWS ? '' : 'none';
+  };
+  const updateSaveState = () => {
+    const filled = [...rows.children].filter(r => r.querySelector('input').value.trim()).length;
+    const enabled = filled >= 2;
+    saveBtn.disabled = !enabled;
+    saveBtn.classList.toggle('disabled', !enabled);
+  };
+
+  const cancel = () => {
+    splittingTaskId = null;
+    renderMain().catch(showError);
+  };
+  cancelBtn.addEventListener('click', (ev) => { ev.stopPropagation(); cancel(); });
+
+  const doSave = async () => {
+    if (saveBtn.disabled) return;
+    const values = [...rows.children]
+      .map(r => r.querySelector('input').value.trim())
+      .filter(Boolean);
+    if (values.length < 2) return;
+    try {
+      const orig = await db.tasks.get(task.id);
+      if (!orig) { splittingTaskId = null; await renderMain(); return; }
+      const newIds = [];
+      const now = Date.now();
+      await db.transaction('rw', db.tasks, async () => {
+        for (const text of values) {
+          const id = await db.tasks.add({
+            icon: orig.icon || DEFAULT_ICON,
+            text,
+            notes: '',
+            deadline: orig.deadline || null,
+            track_id: orig.track_id || null,
+            created_at: now,
+            done_at: 0,
+            first_stuck_at: null,
+            bump_count: 0,
+            blocker: null,
+          });
+          newIds.push(id);
+        }
+        await db.tasks.delete(task.id);
+      });
+      splittingTaskId = null;
+      showSnackbar({
+        label: `Разделено на ${values.length}`,
+        onUndo: async () => {
+          await db.transaction('rw', db.tasks, async () => {
+            for (const id of newIds) {
+              try { await db.tasks.delete(id); } catch {}
+            }
+            await db.tasks.add(orig);
+          });
+          await renderMain();
+        },
+      });
+      await renderMain();
+    } catch (e) {
+      if (isIdbDisconnectError(e)) { await recoverDb(); return; }
+      showError(e);
+    }
+  };
+  saveBtn.addEventListener('click', (ev) => { ev.stopPropagation(); doSave(); });
+
+  const addRow = (focus = false) => {
+    if (rows.children.length >= SPLIT_MAX_ROWS) return null;
+    const row = document.createElement('div');
+    row.className = 'stuck-split-row';
+
+    const inputBox = document.createElement('div');
+    inputBox.className = 'stuck-split-input-box';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'stuck-split-input';
+    input.placeholder = rows.children.length === 0 ? 'что сделать сначала?' : 'дальше…';
+    input.maxLength = 120;
+    input.autocomplete = 'off';
+    inputBox.appendChild(input);
+    row.appendChild(inputBox);
+
+    const xBtn = document.createElement('button');
+    xBtn.type = 'button';
+    xBtn.className = 'stuck-split-row-x';
+    xBtn.setAttribute('aria-label', 'Удалить шаг');
+    xBtn.appendChild(iconNode('x'));
+    xBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      row.remove();
+      updateXVisibility();
+      updatePlusVisibility();
+      updateSaveState();
+    });
+    row.appendChild(xBtn);
+
+    input.addEventListener('input', updateSaveState);
+    input.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        const isLast = row === rows.lastElementChild;
+        if (isLast) {
+          if (rows.children.length < SPLIT_MAX_ROWS) {
+            addRow(true);
+          } else {
+            doSave();
+          }
+        } else {
+          row.nextElementSibling.querySelector('input').focus();
+        }
+      } else if (ev.key === 'Escape') {
+        ev.preventDefault();
+        cancel();
+      }
+    });
+
+    rows.appendChild(row);
+    updateXVisibility();
+    updatePlusVisibility();
+    updateSaveState();
+    if (focus) setTimeout(() => input.focus(), 30);
+    return input;
+  };
+  plusBtn.addEventListener('click', (ev) => { ev.stopPropagation(); addRow(true); });
+
+  const firstInput = addRow();
+  addRow();
+
+  setTimeout(() => {
+    if (firstInput) firstInput.focus();
     bar.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }, 30);
 

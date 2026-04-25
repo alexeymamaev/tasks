@@ -1328,6 +1328,125 @@ body {
 .stuck-edit-cancel:active,
 .stuck-edit-save:active { opacity: 0.7; }
 
+.stuck-split-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--d-card-border);
+}
+.stuck-split-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.stuck-split-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.stuck-split-input-box {
+  flex: 1 1 auto;
+  background: #0D0A08;
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.stuck-split-input {
+  flex: 1 1 auto;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--d-text);
+  caret-color: var(--d-accent);
+  min-width: 0;
+  padding: 0;
+}
+.stuck-split-input::placeholder {
+  color: var(--d-text-very-dim);
+  font-style: italic;
+}
+.stuck-split-row-x {
+  border: 0;
+  background: transparent;
+  padding: 4px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  border-radius: 6px;
+  flex: 0 0 auto;
+}
+.stuck-split-row-x > .icon,
+.stuck-split-row-x > svg {
+  width: 12px;
+  height: 12px;
+  color: var(--d-text-very-dim);
+  flex: 0 0 12px;
+}
+.stuck-split-row-x:active { opacity: 0.6; }
+.stuck-split-plus {
+  border: 0;
+  background: transparent;
+  padding: 4px 0 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--d-text-dim);
+  align-self: flex-start;
+}
+.stuck-split-plus > .icon,
+.stuck-split-plus > svg {
+  width: 12px;
+  height: 12px;
+  color: currentColor;
+  flex: 0 0 12px;
+}
+.stuck-split-plus:active { opacity: 0.7; }
+.stuck-split-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  padding-top: 4px;
+}
+.stuck-split-save {
+  border: 0;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: var(--d-accent);
+  color: #2A211C;
+}
+.stuck-split-save > .icon,
+.stuck-split-save > svg {
+  width: 12px;
+  height: 12px;
+  color: #2A211C;
+  flex: 0 0 12px;
+}
+.stuck-split-save:disabled,
+.stuck-split-save.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.stuck-split-save:not(:disabled):active { opacity: 0.7; }
+
 .stuck-segbar {
   display: flex;
   border-top: 1px solid var(--d-card-border);
