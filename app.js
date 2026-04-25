@@ -1035,6 +1035,22 @@ function stuckBlockNode(task, tracksById) {
     const noteText = document.createElement('span');
     noteText.textContent = task.blocker;
     note.appendChild(noteText);
+    const xBtn = document.createElement('button');
+    xBtn.type = 'button';
+    xBtn.className = 'stuck-note-x';
+    xBtn.setAttribute('aria-label', 'Снять блокер');
+    xBtn.appendChild(iconNode('x'));
+    xBtn.addEventListener('click', async (ev) => {
+      ev.stopPropagation();
+      try {
+        await db.tasks.update(task.id, { blocker: null });
+        renderMain().catch(showError);
+      } catch (e) {
+        if (isIdbDisconnectError(e)) { await recoverDb(); return; }
+        showError(e);
+      }
+    });
+    note.appendChild(xBtn);
     left.appendChild(note);
   }
 
@@ -1052,13 +1068,13 @@ function stuckBlockNode(task, tracksById) {
   top.append(left, more);
   main.appendChild(top);
 
-  // Bottom segmented bar: Блокер · Сдвинуть · Разделить · Завершить
+  // Bottom segmented bar: Блокер · Сдвинуть · Разделить (если нет блокера) · Завершить
   const segbar = document.createElement('div');
   segbar.className = 'stuck-segbar';
   const segs = [
     { icon: 'lock', label: 'Блокер', onClick: () => {} },        // stage 5
     { icon: 'calendar', label: 'Сдвинуть', onClick: () => {} },  // stage 4
-    { icon: 'split', label: 'Разделить', onClick: () => {} },    // future
+    ...(task.blocker ? [] : [{ icon: 'split', label: 'Разделить', onClick: () => {} }]),
     {
       icon: 'check', label: 'Завершить', accent: true,
       onClick: async () => {

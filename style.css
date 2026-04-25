@@ -19,7 +19,7 @@
   --blocker-bg: #3A2E26;
   --blocker-fg: #C4998A;
   /* D-card design tokens (pencil/01.pen variant D) */
-  --d-card: #2A201A;
+  --d-card: #493A32;
   --d-card-border: rgba(255,255,255,0.06);
   --d-text: #F4ECE4;
   --d-text-dim: rgba(244,236,228,0.55);
@@ -1216,6 +1216,26 @@ body {
   word-break: break-word;
   overflow-wrap: anywhere;
   min-width: 0;
+}
+.stuck-note-x {
+  margin: -4px -4px -4px 2px;
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex: 0 0 auto;
+  border-radius: 6px;
+  color: var(--d-text-dim);
+}
+.stuck-note-x:active { opacity: 0.6; }
+.stuck-note-x > .icon,
+.stuck-note-x > svg {
+  width: 11px;
+  height: 11px;
+  color: currentColor;
+  flex: 0 0 11px;
 }
 
 .stuck-more {
