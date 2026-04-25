@@ -589,7 +589,7 @@ function activeCardNode(task, tracksById) {
 let snackbarTimer = null;
 let editingBlockerTaskId = null;
 
-function showUndoSnackbar(taskId) {
+function showSnackbar({ label: labelText, onUndo }) {
   if (snackbarTimer) { clearTimeout(snackbarTimer); snackbarTimer = null; }
   document.querySelectorAll('.snackbar').forEach(el => el.remove());
 
@@ -598,7 +598,7 @@ function showUndoSnackbar(taskId) {
 
   const label = document.createElement('span');
   label.className = 'snackbar-label';
-  label.textContent = 'Задача выполнена';
+  label.textContent = labelText;
 
   const btn = document.createElement('button');
   btn.type = 'button';
@@ -608,8 +608,7 @@ function showUndoSnackbar(taskId) {
     if (snackbarTimer) { clearTimeout(snackbarTimer); snackbarTimer = null; }
     sb.classList.remove('open');
     try {
-      await undoDone(taskId);
-      await renderMain();
+      await onUndo();
     } catch (e) {
       if (isIdbDisconnectError(e)) { await recoverDb(); return; }
       showError(e);
@@ -627,6 +626,66 @@ function showUndoSnackbar(taskId) {
     setTimeout(() => sb.remove(), 220);
     snackbarTimer = null;
   }, 4000);
+}
+
+function showUndoSnackbar(taskId) {
+  showSnackbar({
+    label: 'Задача выполнена',
+    onUndo: async () => {
+      await undoDone(taskId);
+      await renderMain();
+    },
+  });
+}
+
+function openMoveDatePicker(task) {
+  const input = document.createElement('input');
+  input.type = 'date';
+  input.value = task.deadline || todayISO();
+  input.style.position = 'fixed';
+  input.style.left = '50%';
+  input.style.top = '50%';
+  input.style.opacity = '0';
+  input.style.pointerEvents = 'none';
+  input.style.width = '0';
+  input.style.height = '0';
+  document.body.appendChild(input);
+
+  let resolved = false;
+  const cleanup = () => { if (input.parentNode) input.remove(); };
+
+  input.addEventListener('change', async () => {
+    if (resolved) return;
+    resolved = true;
+    const next = input.value;
+    cleanup();
+    if (!next || next === task.deadline) return;
+    const prev = task.deadline || null;
+    try {
+      await db.tasks.update(task.id, { deadline: next });
+      showSnackbar({
+        label: 'Перенесено',
+        onUndo: async () => {
+          await db.tasks.update(task.id, { deadline: prev });
+          await renderMain();
+        },
+      });
+      await renderMain();
+    } catch (e) {
+      if (isIdbDisconnectError(e)) { await recoverDb(); return; }
+      showError(e);
+    }
+  });
+
+  // Safari fires `cancel` on dismiss (16.4+). Other browsers fall back to blur.
+  input.addEventListener('cancel', () => { if (!resolved) { resolved = true; cleanup(); } });
+  input.addEventListener('blur', () => { setTimeout(() => { if (!resolved) cleanup(); }, 200); });
+
+  if (typeof input.showPicker === 'function') {
+    try { input.showPicker(); return; } catch {}
+  }
+  input.focus();
+  input.click();
 }
 
 function checkBadgeSvg() {
@@ -1080,7 +1139,7 @@ function stuckBlockNode(task, tracksById) {
           renderMain().catch(showError);
         },
       },
-      { icon: 'calendar', label: 'Сдвинуть', onClick: () => {} },  // stage 4
+      { icon: 'calendar', label: 'Сдвинуть', onClick: () => openMoveDatePicker(task) },
       { icon: 'split', label: 'Разделить', onClick: () => {} },    // future
       {
         icon: 'check', label: 'Завершить', accent: true,
