@@ -1870,9 +1870,9 @@ async function renderCalendar() {
   renderLucide();
 }
 
-// Сдвиг скролла, чтобы у левого края торчали 10px вчерашней колонки
-// (4px gap между колонками + 10px видимого края = 14px).
-const TODAY_PEEK_OFFSET = 14;
+// Сдвиг скролла, чтобы у левого края торчали 13px вчерашней колонки
+// (4px gap между колонками + 13px видимого края = 17px).
+const TODAY_PEEK_OFFSET = 17;
 
 function scrollCalendarToToday() {
   const wrap = document.querySelector('.page-calendar .cal-strip-wrap');
