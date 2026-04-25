@@ -699,11 +699,11 @@ function journalCardNode(task, tracksById) {
   return el;
 }
 
-// ---------- pager (Сегодня ↔ Morning ↔ Tracks) ----------
+// ---------- pager (Сегодня ↔ Morning ↔ Calendar ↔ Tracks) ----------
 
-const PAGE_COUNT = 3;
-const PAGE_WIDTH_PCT = 100 / PAGE_COUNT; // 33.3333
-let currentPage = 1; // 0 = сегодня, 1 = morning (default), 2 = tracks
+const PAGE_COUNT = 4;
+const PAGE_WIDTH_PCT = 100 / PAGE_COUNT; // 25
+let currentPage = 1; // 0 = сегодня, 1 = morning (default), 2 = calendar, 3 = tracks
 let pagerEl = null;
 let inputBarEl = null;
 
@@ -719,9 +719,11 @@ async function renderApp() {
   pToday.className = 'page page-today';
   const pMorning = document.createElement('section');
   pMorning.className = 'page page-morning';
+  const pCalendar = document.createElement('section');
+  pCalendar.className = 'page page-calendar';
   const pTracks = document.createElement('section');
   pTracks.className = 'page page-tracks';
-  pagerEl.append(pToday, pMorning, pTracks);
+  pagerEl.append(pToday, pMorning, pCalendar, pTracks);
 
   root.appendChild(pagerEl);
 
@@ -730,7 +732,7 @@ async function renderApp() {
   root.appendChild(inputBarEl);
 
   attachPagerSwipe(pagerEl);
-  await Promise.all([renderToday(), renderMorning(), renderTracks()]);
+  await Promise.all([renderToday(), renderMorning(), renderCalendar(), renderTracks()]);
   setPage(currentPage, false);
 }
 
@@ -746,8 +748,8 @@ function setPage(idx, animate = true) {
 function updateInputBar() {
   if (!inputBarEl) return;
   inputBarEl.replaceChildren();
-  if (currentPage === 0) {
-    // Сегодня — no bottom CTA (read-only diagnostic screen)
+  if (currentPage === 0 || currentPage === 2) {
+    // Сегодня и Календарь — read-only, без input-bar
     inputBarEl.style.display = 'none';
     return;
   }
@@ -788,7 +790,7 @@ function pagePillNode() {
     el.addEventListener('click', () => setPage(idx));
     return el;
   };
-  wrap.append(mkHalf('Сегодня', 0), mkHalf('Задачи', 1), mkHalf('Треки', 2));
+  wrap.append(mkHalf('Сегодня', 0), mkHalf('Задачи', 1), mkHalf('План', 2), mkHalf('Треки', 3));
   return wrap;
 }
 
@@ -962,9 +964,9 @@ async function renderMorning() {
 }
 
 // Existing task-mutation call sites use renderMain() after the mutation.
-// It now refreshes both pages so track stats stay in sync with task state.
+// It now refreshes all four pages so cards/stats stay in sync.
 async function renderMain() {
-  await Promise.all([renderToday(), renderMorning(), renderTracks()]);
+  await Promise.all([renderToday(), renderMorning(), renderCalendar(), renderTracks()]);
 }
 
 // ---------- render: Сегодня ----------
@@ -1572,6 +1574,213 @@ async function renderToday() {
   }
 
   page.appendChild(screen);
+  renderLucide();
+}
+
+// ---------- render: Calendar ----------
+
+function isoFromMs(ms) {
+  const d = new Date(ms);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function isoToDate(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function isoFromDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+const CAL_MONTHS = ['ЯНВ','ФЕВ','МАР','АПР','МАЙ','ИЮН','ИЮЛ','АВГ','СЕН','ОКТ','НОЯ','ДЕК'];
+
+function calDayLabel(iso, todayIso) {
+  if (iso === todayIso) return 'СЕГОДНЯ';
+  const today = isoToDate(todayIso);
+  const d = isoToDate(iso);
+  const diff = Math.round((d - today) / 86400000);
+  if (diff === -1) return 'ВЧЕРА';
+  if (diff === 1) return 'ЗАВТРА';
+  return `${d.getDate()} ${CAL_MONTHS[d.getMonth()]}`;
+}
+
+function calCardNode(task, isClosed, todayIso) {
+  const el = document.createElement('div');
+  el.className = 'cal-card' + (isClosed ? ' is-closed' : '');
+  el.dataset.id = String(task.id);
+
+  const iconRow = document.createElement('div');
+  iconRow.className = 'icon-row';
+  iconRow.appendChild(iconNode(task.icon || DEFAULT_ICON));
+  if (task.notes) {
+    const notes = document.createElement('span');
+    notes.className = 'notes-mark';
+    notes.appendChild(iconNode('notebook-pen'));
+    iconRow.appendChild(notes);
+  }
+  el.appendChild(iconRow);
+
+  const text = document.createElement('div');
+  text.className = 'text';
+  text.textContent = task.text;
+  el.appendChild(text);
+
+  const pill = document.createElement('div');
+  pill.className = 'deadline';
+  if (isClosed) {
+    const d = new Date(task.done_at);
+    pill.textContent = `${d.getDate()} ${CAL_MONTHS[d.getMonth()].toLowerCase()}`;
+    el.appendChild(pill);
+    const badge = document.createElement('div');
+    badge.className = 'check-badge';
+    const rot = -16 + ((task.id * 7) % 16);
+    badge.style.setProperty('--rot', `${rot}deg`);
+    badge.appendChild(iconNode('check'));
+    el.appendChild(badge);
+  } else {
+    const dl = task.deadline;
+    if (dl === todayIso) {
+      pill.textContent = 'сегодня';
+      pill.classList.add('today');
+      el.appendChild(pill);
+    } else if (dl && dl < todayIso) {
+      pill.textContent = 'overdue';
+      pill.classList.add('overdue');
+      el.appendChild(pill);
+    } else if (dl) {
+      const d = isoToDate(dl);
+      pill.textContent = `${d.getDate()} ${CAL_MONTHS[d.getMonth()].toLowerCase()}`;
+      el.appendChild(pill);
+    }
+  }
+
+  el.addEventListener('click', () => openSheet({ task }));
+  return el;
+}
+
+async function renderCalendar() {
+  const page = document.querySelector('.page-calendar');
+  if (!page) return;
+  page.replaceChildren();
+
+  const screen = document.createElement('div');
+  screen.className = 'screen-cal';
+
+  // Header
+  const header = document.createElement('div');
+  header.className = 'header';
+  const headerRow = document.createElement('div');
+  headerRow.className = 'header-row';
+  const h1 = document.createElement('h1');
+  h1.textContent = 'Календарь';
+  headerRow.append(h1, pagePillNode());
+  header.appendChild(headerRow);
+  const sub = document.createElement('div');
+  sub.className = 'sub cal-quote';
+  sub.textContent = 'Меня не интересует почему «нет», меня интересует, что вы сделали, чтобы было «да».';
+  header.appendChild(sub);
+  screen.appendChild(header);
+
+  // Buckets
+  const [active, allDone] = await Promise.all([listActive(), listAllDone()]);
+  const today = todayISO();
+  const now = new Date();
+  const buckets = new Map();
+  const ensure = iso => {
+    if (!buckets.has(iso)) buckets.set(iso, { active: [], closed: [] });
+    return buckets.get(iso);
+  };
+  for (const t of active) {
+    let bucketDate;
+    if (!t.deadline || isStuckNow(t, now)) bucketDate = today;
+    else bucketDate = t.deadline;
+    ensure(bucketDate).active.push(t);
+  }
+  for (const t of allDone) {
+    if (!t.done_at) continue;
+    ensure(isoFromMs(t.done_at)).closed.push(t);
+  }
+
+  // Date range: at least today ±7, expanded to cover all buckets
+  const todayDate = isoToDate(today);
+  let minDate = new Date(todayDate); minDate.setDate(minDate.getDate() - 7);
+  let maxDate = new Date(todayDate); maxDate.setDate(maxDate.getDate() + 7);
+  for (const k of buckets.keys()) {
+    const d = isoToDate(k);
+    if (d < minDate) minDate = d;
+    if (d > maxDate) maxDate = d;
+  }
+  const days = [];
+  for (let d = new Date(minDate); d <= maxDate; d.setDate(d.getDate() + 1)) {
+    days.push(isoFromDate(d));
+  }
+
+  // Strip
+  const stripWrap = document.createElement('div');
+  stripWrap.className = 'cal-strip-wrap';
+  const strip = document.createElement('div');
+  strip.className = 'cal-strip';
+
+  let todayColEl = null;
+  for (let i = 0; i < days.length; i++) {
+    const dateIso = days[i];
+    const col = document.createElement('div');
+    col.className = 'cal-col' + (dateIso === today ? ' is-today' : '');
+    if (dateIso === today) todayColEl = col;
+
+    const title = document.createElement('div');
+    title.className = 'cal-day-title';
+    title.textContent = calDayLabel(dateIso, today);
+    col.appendChild(title);
+
+    const headerHd = document.createElement('div');
+    headerHd.className = 'cal-hdiv';
+    col.appendChild(headerHd);
+
+    const bucket = buckets.get(dateIso);
+    if (bucket) {
+      // Active first, then closed
+      bucket.active.sort((a, b) => a.created_at - b.created_at);
+      bucket.closed.sort((a, b) => b.done_at - a.done_at);
+      const items = [...bucket.active, ...bucket.closed.map(t => ({ ...t, _closed: true }))];
+      items.forEach((t, idx) => {
+        if (idx > 0) {
+          const hd = document.createElement('div');
+          hd.className = 'cal-hdiv';
+          col.appendChild(hd);
+        }
+        col.appendChild(calCardNode(t, t._closed === true || t.done_at > 0, today));
+      });
+    }
+
+    strip.appendChild(col);
+
+    if (i < days.length - 1) {
+      const vd = document.createElement('div');
+      vd.className = 'cal-vdiv';
+      strip.appendChild(vd);
+    }
+  }
+  stripWrap.appendChild(strip);
+  screen.appendChild(stripWrap);
+
+  page.appendChild(screen);
+
+  if (todayColEl) {
+    requestAnimationFrame(() => {
+      const colLeft = todayColEl.offsetLeft;
+      const colW = todayColEl.offsetWidth;
+      stripWrap.scrollLeft = colLeft - (stripWrap.clientWidth - colW) / 2;
+    });
+  }
+
   renderLucide();
 }
 
