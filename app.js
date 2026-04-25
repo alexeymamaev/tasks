@@ -824,10 +824,14 @@ function sectionDivider(label, opts) {
 function attachPagerSwipe(el) {
   let startX = 0, startY = 0, dragging = false, active = false, baseTx = 0;
   let multiTouch = false;
+  // Lock the gesture to the first pointerId so a second finger landing
+  // mid-swipe can't overwrite startX/baseTx and produce a wild dx at end.
+  let trackingId = null;
+  // Remember the dominant direction during drag, so a final stray sample
+  // (palec slightly bouncing back) can't flip the chosen page.
+  let maxRight = 0, maxLeft = 0;
   const W = () => window.innerWidth;
 
-  // 2+ fingers — give up the swipe so the inner element (e.g. Calendar strip)
-  // can claim the gesture for itself.
   el.addEventListener('touchstart', (e) => {
     if (e.touches.length >= 2) {
       multiTouch = true;
@@ -836,7 +840,6 @@ function attachPagerSwipe(el) {
         if (dragging) {
           dragging = false;
           el.classList.remove('dragging');
-          el.style.transform = '';
           el.style.transform = `translateX(${-currentPage * PAGE_WIDTH_PCT}%)`;
         }
       }
@@ -849,15 +852,19 @@ function attachPagerSwipe(el) {
   el.addEventListener('pointerdown', (e) => {
     if (multiTouch) return;
     if (e.target.closest('[data-no-swipe]')) return;
+    if (trackingId !== null) return;
+    trackingId = e.pointerId;
+    try { el.setPointerCapture(e.pointerId); } catch {}
     active = true;
     dragging = false;
     startX = e.clientX;
     startY = e.clientY;
-    // Pager width is 200% of parent (2*W). translateX(-50%) shifts it by 1*W px.
-    // So at page N, px-equivalent of "-50*N %" is -W*N.
+    maxRight = 0;
+    maxLeft = 0;
     baseTx = -currentPage * W();
   });
   el.addEventListener('pointermove', (e) => {
+    if (e.pointerId !== trackingId) return;
     if (multiTouch) { active = false; return; }
     if (!active) return;
     const dx = e.clientX - startX;
@@ -872,34 +879,44 @@ function attachPagerSwipe(el) {
         return;
       }
     }
-    // Clamp past bounds with resistance so you can't drag beyond end pages.
+    if (dx > maxRight) maxRight = dx;
+    if (-dx > maxLeft) maxLeft = -dx;
     let tx = baseTx + dx;
     const maxTx = 0;
-    const minTx = -W() * (PAGE_COUNT - 1); // max shift for last page
+    const minTx = -W() * (PAGE_COUNT - 1);
     if (tx > maxTx) tx = maxTx + (tx - maxTx) * 0.3;
     if (tx < minTx) tx = minTx + (tx - minTx) * 0.3;
     el.style.transform = `translateX(${tx}px)`;
   });
   const end = (e) => {
+    if (e.pointerId !== trackingId) return;
+    trackingId = null;
+    try { el.releasePointerCapture(e.pointerId); } catch {}
     if (!active) return;
     active = false;
     if (!dragging) return;
     el.classList.remove('dragging');
-    const dx = e.clientX - startX;
+    const dxFinal = e.clientX - startX;
     const threshold = W() * 0.2;
+    // Pick page based on the dominant direction during the gesture, not
+    // just the final sample. If the user dragged 80px right then bounced
+    // back 5px, the choice should still be "right".
     let next = currentPage;
-    if (dx < -threshold && currentPage < PAGE_COUNT - 1) next = currentPage + 1;
-    else if (dx > threshold && currentPage > 0) next = currentPage - 1;
-    // Reset transform to % (setPage uses %)
+    const dominant = maxRight > maxLeft ? maxRight : -maxLeft;
+    const decisive = Math.abs(dominant) > threshold ? dominant : dxFinal;
+    if (decisive < -threshold && currentPage < PAGE_COUNT - 1) next = currentPage + 1;
+    else if (decisive > threshold && currentPage > 0) next = currentPage - 1;
     el.style.transform = '';
     setPage(next, true);
     dragging = false;
   };
   el.addEventListener('pointerup', end);
-  // pointercancel fires e.g. when the OS hijacks the gesture — its clientX
-  // is not trustworthy, so snap back to the current page rather than computing
-  // dx and accidentally flipping to the wrong neighbour.
-  el.addEventListener('pointercancel', () => {
+  // pointercancel fires when the OS hijacks the gesture — its clientX is
+  // not trustworthy, so snap back rather than computing dx.
+  el.addEventListener('pointercancel', (e) => {
+    if (e.pointerId !== trackingId) return;
+    trackingId = null;
+    try { el.releasePointerCapture(e.pointerId); } catch {}
     if (!active) return;
     active = false;
     if (!dragging) return;
@@ -908,7 +925,10 @@ function attachPagerSwipe(el) {
     el.style.transform = '';
     setPage(currentPage, true);
   });
-  el.addEventListener('pointerleave', (e) => { if (active && dragging) end(e); });
+  el.addEventListener('pointerleave', (e) => {
+    if (e.pointerId !== trackingId) return;
+    if (active && dragging) end(e);
+  });
 }
 
 // ---------- render: Morning (main) ----------
