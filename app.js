@@ -1654,6 +1654,7 @@ function isoFromDate(d) {
 }
 
 const CAL_MONTHS = ['ЯНВ','ФЕВ','МАР','АПР','МАЙ','ИЮН','ИЮЛ','АВГ','СЕН','ОКТ','НОЯ','ДЕК'];
+const CAL_WEEKDAYS = ['ВС','ПН','ВТ','СР','ЧТ','ПТ','СБ'];
 
 function calDayLabel(iso, todayIso) {
   if (iso === todayIso) return 'СЕГОДНЯ';
@@ -1663,6 +1664,10 @@ function calDayLabel(iso, todayIso) {
   if (diff === -1) return 'ВЧЕРА';
   if (diff === 1) return 'ЗАВТРА';
   return `${d.getDate()} ${CAL_MONTHS[d.getMonth()]}`;
+}
+
+function calWeekday(iso) {
+  return CAL_WEEKDAYS[isoToDate(iso).getDay()];
 }
 
 function calCardNode(task, isClosed, todayIso) {
@@ -1815,6 +1820,11 @@ async function renderCalendar() {
     title.className = 'cal-day-title';
     title.textContent = calDayLabel(dateIso, today);
     col.appendChild(title);
+
+    const sub = document.createElement('div');
+    sub.className = 'cal-day-sub';
+    sub.textContent = calWeekday(dateIso);
+    col.appendChild(sub);
 
     const headerHd = document.createElement('div');
     headerHd.className = 'cal-hdiv';
