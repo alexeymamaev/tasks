@@ -639,54 +639,23 @@ function showUndoSnackbar(taskId) {
   });
 }
 
-function openMoveDatePicker(task) {
-  const input = document.createElement('input');
-  input.type = 'date';
-  input.value = task.deadline || todayISO();
-  input.style.position = 'fixed';
-  input.style.left = '50%';
-  input.style.top = '50%';
-  input.style.opacity = '0';
-  input.style.pointerEvents = 'none';
-  input.style.width = '0';
-  input.style.height = '0';
-  document.body.appendChild(input);
-
-  let resolved = false;
-  const cleanup = () => { if (input.parentNode) input.remove(); };
-
-  input.addEventListener('change', async () => {
-    if (resolved) return;
-    resolved = true;
-    const next = input.value;
-    cleanup();
-    if (!next || next === task.deadline) return;
-    const prev = task.deadline || null;
-    try {
-      await db.tasks.update(task.id, { deadline: next });
-      showSnackbar({
-        label: 'Перенесено',
-        onUndo: async () => {
-          await db.tasks.update(task.id, { deadline: prev });
-          await renderMain();
-        },
-      });
-      await renderMain();
-    } catch (e) {
-      if (isIdbDisconnectError(e)) { await recoverDb(); return; }
-      showError(e);
-    }
-  });
-
-  // Safari fires `cancel` on dismiss (16.4+). Other browsers fall back to blur.
-  input.addEventListener('cancel', () => { if (!resolved) { resolved = true; cleanup(); } });
-  input.addEventListener('blur', () => { setTimeout(() => { if (!resolved) cleanup(); }, 200); });
-
-  if (typeof input.showPicker === 'function') {
-    try { input.showPicker(); return; } catch {}
+async function commitMoveDeadline(task, next) {
+  if (!next || next === task.deadline) return;
+  const prev = task.deadline || null;
+  try {
+    await db.tasks.update(task.id, { deadline: next });
+    showSnackbar({
+      label: 'Перенесено',
+      onUndo: async () => {
+        await db.tasks.update(task.id, { deadline: prev });
+        await renderMain();
+      },
+    });
+    await renderMain();
+  } catch (e) {
+    if (isIdbDisconnectError(e)) { await recoverDb(); return; }
+    showError(e);
   }
-  input.focus();
-  input.click();
 }
 
 function checkBadgeSvg() {
@@ -1143,7 +1112,11 @@ function stuckBlockNode(task, tracksById) {
           renderMain().catch(showError);
         },
       },
-      { icon: 'calendar', label: 'Сдвинуть', onClick: () => openMoveDatePicker(task) },
+      {
+        icon: 'calendar', label: 'Сдвинуть', kind: 'date',
+        value: task.deadline || todayISO(),
+        onChange: (next) => commitMoveDeadline(task, next),
+      },
       {
         icon: 'split', label: 'Разделить',
         onClick: () => {
@@ -1174,7 +1147,7 @@ function stuckBlockNode(task, tracksById) {
         div.className = 'stuck-seg-divider';
         segbar.appendChild(div);
       }
-      segbar.appendChild(stuckSegBtn(s));
+      segbar.appendChild(s.kind === 'date' ? stuckSegDateBtn(s) : stuckSegBtn(s));
     });
     main.appendChild(segbar);
   }
@@ -1184,6 +1157,7 @@ function stuckBlockNode(task, tracksById) {
   // Tap outside buttons → open edit sheet (suspended while editing blocker / splitting)
   el.addEventListener('click', (ev) => {
     if (ev.target.closest('button')) return;
+    if (ev.target.closest('.stuck-seg')) return;
     if (ev.target.closest('.stuck-edit-bar')) return;
     if (ev.target.closest('.stuck-split-bar')) return;
     if (isEditingBlocker || isSplitting) return;
@@ -1448,6 +1422,27 @@ function buildSplitBar(task) {
   }, 30);
 
   return bar;
+}
+
+function stuckSegDateBtn({ icon, label, value, onChange }) {
+  const wrap = document.createElement('label');
+  wrap.className = 'stuck-seg stuck-seg-date';
+  wrap.appendChild(iconNode(icon));
+  const lbl = document.createElement('span');
+  lbl.className = 'stuck-seg-label';
+  lbl.textContent = label;
+  wrap.appendChild(lbl);
+  const input = document.createElement('input');
+  input.type = 'date';
+  input.className = 'stuck-seg-date-input';
+  input.value = value || '';
+  input.addEventListener('click', (ev) => ev.stopPropagation());
+  input.addEventListener('change', (ev) => {
+    ev.stopPropagation();
+    if (input.value) onChange(input.value);
+  });
+  wrap.appendChild(input);
+  return wrap;
 }
 
 function stuckSegBtn({ icon, label, onClick, accent }) {
