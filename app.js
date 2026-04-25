@@ -1081,7 +1081,7 @@ function stuckBlockNode(task, tracksById) {
         },
       },
       { icon: 'calendar', label: 'Сдвинуть', onClick: () => {} },  // stage 4
-      ...(task.blocker ? [] : [{ icon: 'split', label: 'Разделить', onClick: () => {} }]),
+      { icon: 'split', label: 'Разделить', onClick: () => {} },    // future
       {
         icon: 'check', label: 'Завершить', accent: true,
         onClick: async () => {
