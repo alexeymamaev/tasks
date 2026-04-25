@@ -1605,6 +1605,8 @@ body {
   margin: 14px -14px 0 -14px;
   padding: 0 14px;
   scrollbar-width: none;
+  /* Allow custom 2-finger scroll without pinch-zoom interference */
+  touch-action: pan-y;
 }
 .cal-strip-wrap::-webkit-scrollbar { display: none; }
 

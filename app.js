@@ -823,9 +823,31 @@ function sectionDivider(label, opts) {
 // stopPropagation to own their gestures.
 function attachPagerSwipe(el) {
   let startX = 0, startY = 0, dragging = false, active = false, baseTx = 0;
+  let multiTouch = false;
   const W = () => window.innerWidth;
 
+  // 2+ fingers — give up the swipe so the inner element (e.g. Calendar strip)
+  // can claim the gesture for itself.
+  el.addEventListener('touchstart', (e) => {
+    if (e.touches.length >= 2) {
+      multiTouch = true;
+      if (active) {
+        active = false;
+        if (dragging) {
+          dragging = false;
+          el.classList.remove('dragging');
+          el.style.transform = '';
+          el.style.transform = `translateX(${-currentPage * PAGE_WIDTH_PCT}%)`;
+        }
+      }
+    }
+  }, { passive: true });
+  const releaseMulti = (e) => { if (e.touches.length === 0) multiTouch = false; };
+  el.addEventListener('touchend', releaseMulti, { passive: true });
+  el.addEventListener('touchcancel', releaseMulti, { passive: true });
+
   el.addEventListener('pointerdown', (e) => {
+    if (multiTouch) return;
     if (e.target.closest('[data-no-swipe]')) return;
     active = true;
     dragging = false;
@@ -836,6 +858,7 @@ function attachPagerSwipe(el) {
     baseTx = -currentPage * W();
   });
   el.addEventListener('pointermove', (e) => {
+    if (multiTouch) { active = false; return; }
     if (!active) return;
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
@@ -1725,6 +1748,28 @@ async function renderCalendar() {
   // Strip
   const stripWrap = document.createElement('div');
   stripWrap.className = 'cal-strip-wrap';
+
+  // Two-finger horizontal scroll. The pager owns 1-finger horizontal swipes,
+  // so we expose Calendar scroll on the 2-finger gesture. preventDefault
+  // disables pinch-zoom on the strip while two fingers are down.
+  let csActive = false, csStartX = 0, csStartScroll = 0;
+  stripWrap.addEventListener('touchstart', (e) => {
+    if (e.touches.length >= 2) {
+      csActive = true;
+      csStartX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      csStartScroll = stripWrap.scrollLeft;
+    }
+  }, { passive: true });
+  stripWrap.addEventListener('touchmove', (e) => {
+    if (!csActive || e.touches.length < 2) return;
+    e.preventDefault();
+    const x = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+    stripWrap.scrollLeft = csStartScroll - (x - csStartX);
+  }, { passive: false });
+  const csEnd = (e) => { if (e.touches.length < 2) csActive = false; };
+  stripWrap.addEventListener('touchend', csEnd, { passive: true });
+  stripWrap.addEventListener('touchcancel', csEnd, { passive: true });
+
   const strip = document.createElement('div');
   strip.className = 'cal-strip';
 
