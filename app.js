@@ -743,6 +743,8 @@ function setPage(idx, animate = true) {
   if (!animate) requestAnimationFrame(() => pagerEl.classList.remove('no-anim'));
   updateInputBar();
   updatePagePill();
+  // Calendar always opens with today as the leftmost visible column
+  if (currentPage === 2) requestAnimationFrame(scrollCalendarToToday);
 }
 
 function updateInputBar() {
@@ -1861,13 +1863,19 @@ async function renderCalendar() {
 
   if (todayColEl) {
     requestAnimationFrame(() => {
-      const colLeft = todayColEl.offsetLeft;
-      const colW = todayColEl.offsetWidth;
-      stripWrap.scrollLeft = colLeft - (stripWrap.clientWidth - colW) / 2;
+      stripWrap.scrollLeft = todayColEl.offsetLeft;
     });
   }
 
   renderLucide();
+}
+
+function scrollCalendarToToday() {
+  const wrap = document.querySelector('.page-calendar .cal-strip-wrap');
+  if (!wrap) return;
+  const today = wrap.querySelector('.cal-col.is-today');
+  if (!today) return;
+  wrap.scrollLeft = today.offsetLeft;
 }
 
 // ---------- render: Tracks ----------
