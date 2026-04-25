@@ -946,13 +946,6 @@ function formatDateShort(iso) {
   return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }).replace('.', '');
 }
 
-function formatStuckDuration(firstStuckAt) {
-  if (!firstStuckAt) return 'висит сегодня';
-  const days = daysBetweenIso(firstStuckAt, todayISO());
-  if (days <= 0) return 'висит сегодня';
-  return 'висит ' + days + ' ' + pluralizeDays(days);
-}
-
 function todaySubtitle(stuckCount, freshCount) {
   if (stuckCount === 0 && freshCount === 0) return 'на сегодня пусто.';
   const parts = [];
@@ -961,123 +954,139 @@ function todaySubtitle(stuckCount, freshCount) {
   return parts.join(' · ');
 }
 
-function metaDotNode() {
-  const s = document.createElement('span');
-  s.className = 'meta-dot';
-  s.textContent = '·';
-  return s;
-}
-
-function metaTextNode(txt, cls = 'meta-text') {
-  const s = document.createElement('span');
-  s.className = cls;
-  s.textContent = txt;
-  return s;
+function ageColorVar(days) {
+  if (days >= 8) return 'var(--age-4)';
+  if (days >= 4) return 'var(--age-3)';
+  if (days >= 2) return 'var(--age-2)';
+  return 'var(--age-1)';
 }
 
 function stuckBlockNode(task, tracksById) {
-  const el = document.createElement('div');
-  el.className = 'stuck-block';
-  el.dataset.id = String(task.id);
-
-  // Top row: icon + title + right (готово + trash)
-  const top = document.createElement('div');
-  top.className = 'stuck-top';
-  const topIcon = iconNode(task.icon || DEFAULT_ICON);
-  const title = document.createElement('div');
-  title.className = 'stuck-title';
-  title.textContent = task.text;
-
-  const right = document.createElement('div');
-  right.className = 'stuck-right';
-
-  const gotovo = document.createElement('button');
-  gotovo.type = 'button';
-  gotovo.className = 'gotovo-circle';
-  gotovo.setAttribute('aria-label', 'Завершить');
-  gotovo.appendChild(iconNode('check'));
-  gotovo.addEventListener('click', async (ev) => {
-    ev.stopPropagation();
-    if (el.classList.contains('stamping') || el.classList.contains('removing')) return;
-    try {
-      await playStampImpact(el, task);
-      await markDone(task.id);
-      showUndoSnackbar(task.id);
-      setTimeout(() => { renderMain().catch(showError); }, 60);
-    } catch (e) {
-      el.classList.remove('stamping');
-      if (isIdbDisconnectError(e)) { await recoverDb(); return; }
-      showError(e);
-    }
-  });
-
-  const trash = document.createElement('button');
-  trash.type = 'button';
-  trash.className = 'stuck-trash';
-  trash.setAttribute('aria-label', 'Удалить');
-  trash.appendChild(iconNode('trash-2'));
-  trash.addEventListener('click', async (ev) => {
-    ev.stopPropagation();
-    if (!confirm(`Удалить задачу «${task.text}»?`)) return;
-    try {
-      await db.tasks.delete(task.id);
-      await renderMain();
-    } catch (e) {
-      if (isIdbDisconnectError(e)) { await recoverDb(); return; }
-      showError(e);
-    }
-  });
-
-  right.append(gotovo, trash);
-  top.append(topIcon, title, right);
-  el.appendChild(top);
-
-  // Blocker chip (if present)
-  if (task.blocker) {
-    const chip = document.createElement('div');
-    chip.className = 'stuck-blocker-chip';
-    chip.appendChild(iconNode('lock'));
-    chip.appendChild(metaTextNode(task.blocker, 'blocker-text'));
-    el.appendChild(chip);
-  }
-
-  // Actions row (Блокер · Сдвинуть) — stage 4-5 will wire tap handlers
-  const actions = document.createElement('div');
-  actions.className = 'stuck-actions';
-  const blokBtn = compoundActionBtn('lock', 'Блокер', () => {
-    /* stage 5 */
-  });
-  const sdvBtn = compoundActionBtn('calendar-arrow-down', 'Сдвинуть', () => {
-    /* stage 4 */
-  });
-  actions.append(blokBtn, sdvBtn);
-  el.appendChild(actions);
-
-  // Footer: hairline + meta (висит coral · дата · трек)
-  const footer = document.createElement('div');
-  footer.className = 'stuck-footer';
-  const hairline = document.createElement('div');
-  hairline.className = 'stuck-hairline';
-  const meta = document.createElement('div');
-  meta.className = 'stuck-meta';
-  meta.appendChild(metaTextNode(formatStuckDuration(task.first_stuck_at), 'meta-stuck'));
-  if (task.deadline) {
-    meta.appendChild(metaDotNode());
-    const dIcon = iconNode('calendar-clock');
-    dIcon.classList.add('meta-icon');
-    meta.appendChild(dIcon);
-    meta.appendChild(metaTextNode(formatDateShort(task.deadline)));
-  }
+  const days = task.first_stuck_at
+    ? Math.max(1, daysBetweenIso(task.first_stuck_at, todayISO()))
+    : 1;
+  const word = pluralizeDays(days).toUpperCase();
   const track = task.track_id && tracksById ? tracksById.get(task.track_id) : null;
-  if (track) {
-    meta.appendChild(metaDotNode());
-    const tIcon = iconNode(track.icon || DEFAULT_ICON);
-    tIcon.classList.add('meta-icon');
-    meta.appendChild(tIcon);
-    meta.appendChild(metaTextNode(track.name));
+
+  const el = document.createElement('div');
+  el.className = 'stuck-card-d';
+  el.dataset.id = String(task.id);
+  el.style.setProperty('--card-age', ageColorVar(days));
+
+  // Left: 4px age stripe
+  const stripe = document.createElement('div');
+  stripe.className = 'stuck-stripe';
+  el.appendChild(stripe);
+
+  // Age block: number + word + flame
+  const ageBlock = document.createElement('div');
+  ageBlock.className = 'stuck-age-block';
+  const num = document.createElement('div');
+  num.className = 'stuck-age-num';
+  num.textContent = String(days);
+  const wordEl = document.createElement('div');
+  wordEl.className = 'stuck-age-word';
+  wordEl.textContent = word;
+  const flame = iconNode('flame');
+  flame.classList.add('stuck-age-flame');
+  ageBlock.append(num, wordEl, flame);
+  el.appendChild(ageBlock);
+
+  // Main column
+  const main = document.createElement('div');
+  main.className = 'stuck-main';
+
+  // Top section: meta + title (+ optional note) on left, ellipsis on right
+  const top = document.createElement('div');
+  top.className = 'stuck-top-d';
+  const left = document.createElement('div');
+  left.className = 'stuck-left-d';
+
+  // Meta line: date · project (только то, что есть)
+  const meta = document.createElement('div');
+  meta.className = 'stuck-meta-d';
+  const metaParts = [];
+  if (task.deadline) metaParts.push(formatDateShort(task.deadline));
+  if (track) metaParts.push(track.name);
+  metaParts.forEach((txt, i) => {
+    if (i > 0) {
+      const dot = document.createElement('span');
+      dot.className = 'meta-d-dot';
+      dot.textContent = '·';
+      meta.appendChild(dot);
+    }
+    const span = document.createElement('span');
+    span.textContent = txt;
+    meta.appendChild(span);
+  });
+  if (metaParts.length) left.appendChild(meta);
+
+  // Title
+  const title = document.createElement('div');
+  title.className = 'stuck-title-d';
+  title.textContent = task.text;
+  left.appendChild(title);
+
+  // Optional blocker note
+  if (task.blocker) {
+    const note = document.createElement('div');
+    note.className = 'stuck-note';
+    note.appendChild(iconNode('lock'));
+    const noteText = document.createElement('span');
+    noteText.textContent = task.blocker;
+    note.appendChild(noteText);
+    left.appendChild(note);
   }
-  footer.append(hairline, meta);
-  el.appendChild(footer);
+
+  // Ellipsis menu — opens edit sheet (where delete lives)
+  const more = document.createElement('button');
+  more.type = 'button';
+  more.className = 'stuck-more';
+  more.setAttribute('aria-label', 'Меню');
+  more.appendChild(iconNode('ellipsis'));
+  more.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    openSheet({ task });
+  });
+
+  top.append(left, more);
+  main.appendChild(top);
+
+  // Bottom segmented bar: Блокер · Сдвинуть · Разделить · Завершить
+  const segbar = document.createElement('div');
+  segbar.className = 'stuck-segbar';
+  const segs = [
+    { icon: 'lock', label: 'Блокер', onClick: () => {} },        // stage 5
+    { icon: 'calendar', label: 'Сдвинуть', onClick: () => {} },  // stage 4
+    { icon: 'split', label: 'Разделить', onClick: () => {} },    // future
+    {
+      icon: 'check', label: 'Завершить', accent: true,
+      onClick: async () => {
+        if (el.classList.contains('stamping') || el.classList.contains('removing')) return;
+        try {
+          await playStampImpact(el, task);
+          await markDone(task.id);
+          showUndoSnackbar(task.id);
+          setTimeout(() => { renderMain().catch(showError); }, 60);
+        } catch (e) {
+          el.classList.remove('stamping');
+          if (isIdbDisconnectError(e)) { await recoverDb(); return; }
+          showError(e);
+        }
+      },
+    },
+  ];
+  segs.forEach((s, i) => {
+    if (i > 0) {
+      const div = document.createElement('div');
+      div.className = 'stuck-seg-divider';
+      segbar.appendChild(div);
+    }
+    segbar.appendChild(stuckSegBtn(s));
+  });
+  main.appendChild(segbar);
+
+  el.appendChild(main);
 
   // Tap outside buttons → open edit sheet
   el.addEventListener('click', (ev) => {
@@ -1086,6 +1095,22 @@ function stuckBlockNode(task, tracksById) {
   });
 
   return el;
+}
+
+function stuckSegBtn({ icon, label, onClick, accent }) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'stuck-seg' + (accent ? ' stuck-seg-accent' : '');
+  btn.appendChild(iconNode(icon));
+  const lbl = document.createElement('span');
+  lbl.className = 'stuck-seg-label';
+  lbl.textContent = label;
+  btn.appendChild(lbl);
+  btn.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    onClick();
+  });
+  return btn;
 }
 
 function freshRowNode(task, tracksById) {
@@ -1128,24 +1153,6 @@ function freshRowNode(task, tracksById) {
     openSheet({ task });
   });
   return el;
-}
-
-function compoundActionBtn(iconName, label, onClick) {
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'stuck-action-compound';
-  const circle = document.createElement('span');
-  circle.className = 'action-circle';
-  circle.appendChild(iconNode(iconName));
-  const lbl = document.createElement('span');
-  lbl.className = 'action-label';
-  lbl.textContent = label;
-  btn.append(circle, lbl);
-  btn.addEventListener('click', (ev) => {
-    ev.stopPropagation();
-    onClick();
-  });
-  return btn;
 }
 
 async function renderToday() {

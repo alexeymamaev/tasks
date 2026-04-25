@@ -1,4 +1,4 @@
-const CACHE = 'tasks-v1-38';
+const CACHE = 'tasks-v1-39';
 const ASSETS = [
   './',
   'index.html',
