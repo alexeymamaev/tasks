@@ -1863,19 +1863,23 @@ async function renderCalendar() {
 
   if (todayColEl) {
     requestAnimationFrame(() => {
-      stripWrap.scrollLeft = todayColEl.offsetLeft;
+      stripWrap.scrollLeft = todayColEl.offsetLeft - TODAY_PEEK_OFFSET;
     });
   }
 
   renderLucide();
 }
 
+// Сдвиг скролла, чтобы у левого края торчали 5px вчерашней колонки
+// (4px gap между колонками + 5px видимого края = 9px).
+const TODAY_PEEK_OFFSET = 9;
+
 function scrollCalendarToToday() {
   const wrap = document.querySelector('.page-calendar .cal-strip-wrap');
   if (!wrap) return;
   const today = wrap.querySelector('.cal-col.is-today');
   if (!today) return;
-  wrap.scrollLeft = today.offsetLeft;
+  wrap.scrollLeft = today.offsetLeft - TODAY_PEEK_OFFSET;
 }
 
 // ---------- render: Tracks ----------
