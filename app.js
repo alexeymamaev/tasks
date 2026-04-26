@@ -720,7 +720,10 @@ function checkBadgeSvg() {
   return svg;
 }
 
-function journalCardNode(task, tracksById) {
+// Shared builder for done-cards. Used by the Morning journal grid (with the
+// `removing` guard so a held-down card can't fire undoDone twice) and by the
+// History sheet (passes its own onTap/onLongPress).
+function doneCardNode(task, tracksById, { onTap, onLongPress }) {
   const el = cardBase(task, tracksById);
   el.classList.add('done');
   const badge = document.createElement('div');
@@ -729,22 +732,28 @@ function journalCardNode(task, tracksById) {
   badge.style.setProperty('--rot', rot + 'deg');
   badge.appendChild(checkBadgeSvg());
   el.appendChild(badge);
-  attachLongPress(el, {
+  attachLongPress(el, { onTap, onLongPress });
+  return el;
+}
+
+function journalCardNode(task, tracksById) {
+  let card;
+  card = doneCardNode(task, tracksById, {
     onTap: () => openSheet({ task }),
     onLongPress: async () => {
-      if (el.classList.contains('removing')) return;
-      el.classList.add('removing');
+      if (card.classList.contains('removing')) return;
+      card.classList.add('removing');
       try {
         await undoDone(task.id);
         setTimeout(() => { renderMain().catch(showError); }, 200);
       } catch (e) {
-        el.classList.remove('removing');
+        card.classList.remove('removing');
         if (isIdbDisconnectError(e)) { await recoverDb(); return; }
         showError(e);
       }
     },
   });
-  return el;
+  return card;
 }
 
 // ---------- pager (Сегодня ↔ Morning ↔ Calendar ↔ Tracks) ----------
@@ -2109,6 +2118,52 @@ function trackStripNode(track, stats) {
 
 let sheetOpen = false;
 
+// Stateless leaf builders for openSheet — extracted to keep the main function
+// focused on draft state + commit orchestration.
+
+function buildDeadlineRow(initialIso, onChange) {
+  const row = document.createElement('div');
+  row.className = 'sheet-dl-row';
+  const label = document.createElement('div');
+  label.className = 'label';
+  label.textContent = 'Дедлайн';
+  const input = document.createElement('input');
+  input.type = 'date';
+  input.className = 'sheet-deadline';
+  input.autocomplete = 'off';
+  if (initialIso) input.value = initialIso;
+  input.addEventListener('change', () => onChange(input.value || null));
+  row.append(label, input);
+  return row;
+}
+
+function buildEditFooter({ onFinish, onDelete }) {
+  const frag = document.createDocumentFragment();
+
+  const finish = document.createElement('button');
+  finish.type = 'button';
+  finish.className = 'sheet-finish';
+  finish.appendChild(iconNode('check'));
+  const finishLbl = document.createElement('span');
+  finishLbl.textContent = 'Завершить';
+  finish.appendChild(finishLbl);
+  finish.addEventListener('click', onFinish);
+  frag.appendChild(finish);
+
+  const dvd = document.createElement('hr');
+  dvd.className = 'sheet-divider';
+  frag.appendChild(dvd);
+
+  const del = document.createElement('button');
+  del.type = 'button';
+  del.className = 'sheet-delete';
+  del.textContent = 'Удалить задачу';
+  del.addEventListener('click', onDelete);
+  frag.appendChild(del);
+
+  return frag;
+}
+
 function openSheet({ task }) {
   if (sheetOpen) return;
   sheetOpen = true;
@@ -2386,62 +2441,30 @@ function openSheet({ task }) {
   notesWrap.appendChild(notesInput);
   sheet.append(notesLabel, notesWrap);
 
-  // deadline row: "Дедлайн" label on the left, small date-input pill on the right
-  const dlRow = document.createElement('div');
-  dlRow.className = 'sheet-dl-row';
-  const dlLabel = document.createElement('div');
-  dlLabel.className = 'label';
-  dlLabel.textContent = 'Дедлайн';
-  const dlInput = document.createElement('input');
-  dlInput.type = 'date';
-  dlInput.className = 'sheet-deadline';
-  dlInput.autocomplete = 'off';
-  if (draft.deadline) dlInput.value = draft.deadline;
-  dlInput.addEventListener('change', () => {
-    draft.deadline = dlInput.value || null;
-  });
-  dlRow.append(dlLabel, dlInput);
-  sheet.appendChild(dlRow);
+  sheet.appendChild(buildDeadlineRow(draft.deadline, (next) => { draft.deadline = next; }));
 
-  // finish + delete (edit mode only) — divider between them for clear separation
   if (isEdit) {
-    const finish = document.createElement('button');
-    finish.type = 'button';
-    finish.className = 'sheet-finish';
-    finish.appendChild(iconNode('check'));
-    const finishLbl = document.createElement('span');
-    finishLbl.textContent = 'Завершить';
-    finish.appendChild(finishLbl);
-    finish.addEventListener('click', async () => {
-      sheetOpen = false;
-      try {
-        await markDone(task.id);
-        showUndoSnackbar(task.id);
-      } catch (e) {
-        if (isIdbDisconnectError(e)) await recoverDb();
-        else showError(e);
-      }
-      closeSheet(backdrop, { skipCommit: true });
-    });
-    sheet.appendChild(finish);
-
-    const dvd = document.createElement('hr');
-    dvd.className = 'sheet-divider';
-    sheet.appendChild(dvd);
-
-    const del = document.createElement('button');
-    del.type = 'button';
-    del.className = 'sheet-delete';
-    del.textContent = 'Удалить задачу';
-    del.addEventListener('click', async () => {
-      sheetOpen = false;
-      try { await db.tasks.delete(task.id); } catch (e) {
-        if (isIdbDisconnectError(e)) await recoverDb();
-        else showError(e);
-      }
-      closeSheet(backdrop, { skipCommit: true });
-    });
-    sheet.appendChild(del);
+    sheet.appendChild(buildEditFooter({
+      onFinish: async () => {
+        sheetOpen = false;
+        try {
+          await markDone(task.id);
+          showUndoSnackbar(task.id);
+        } catch (e) {
+          if (isIdbDisconnectError(e)) await recoverDb();
+          else showError(e);
+        }
+        closeSheet(backdrop, { skipCommit: true });
+      },
+      onDelete: async () => {
+        sheetOpen = false;
+        try { await db.tasks.delete(task.id); } catch (e) {
+          if (isIdbDisconnectError(e)) await recoverDb();
+          else showError(e);
+        }
+        closeSheet(backdrop, { skipCommit: true });
+      },
+    }));
   }
 
   const commit = async () => {
@@ -2661,15 +2684,7 @@ function openHistorySheet() {
       const grid = document.createElement('div');
       grid.className = 'grid journal-grid';
       g.tasks.forEach(t => {
-        const card = cardBase(t, tracksById);
-        card.classList.add('done');
-        const badge = document.createElement('div');
-        badge.className = 'check-badge';
-        const rot = ((t.id * 13) % 15) - 7;
-        badge.style.setProperty('--rot', rot + 'deg');
-        badge.appendChild(checkBadgeSvg());
-        card.appendChild(badge);
-        attachLongPress(card, {
+        grid.appendChild(doneCardNode(t, tracksById, {
           onTap: () => { close(); setTimeout(() => openSheet({ task: t }), 220); },
           onLongPress: async () => {
             try {
@@ -2681,8 +2696,7 @@ function openHistorySheet() {
               showError(e);
             }
           },
-        });
-        grid.appendChild(card);
+        }));
       });
       gWrap.appendChild(grid);
       content.appendChild(gWrap);
