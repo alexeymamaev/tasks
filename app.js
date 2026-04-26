@@ -365,14 +365,6 @@ const TRACK_CATEGORY_LABELS = { work: 'Работа', personal: 'Личное', 
 
 // ---------- render ----------
 
-function greeting() {
-  const h = new Date().getHours();
-  if (h >= 6 && h < 11) return 'Доброе утро!';
-  if (h >= 11 && h < 18) return 'Добрый день!';
-  if (h >= 18 && h < 23) return 'Добрый вечер!';
-  return 'Доброй ночи!';
-}
-
 const DEFAULT_ICON = 'circle-dashed';
 
 // Match task text against config/icons.js ICON_KEYWORDS. Returns up to `limit`
@@ -1044,7 +1036,7 @@ async function renderMorning() {
   const headerRow = document.createElement('div');
   headerRow.className = 'header-row';
   const h1 = document.createElement('h1');
-  h1.textContent = greeting();
+  h1.textContent = 'Задачи';
   headerRow.appendChild(h1);
   const sub = document.createElement('div');
   sub.className = 'sub';
@@ -1687,7 +1679,7 @@ async function renderToday() {
   const headerRow = document.createElement('div');
   headerRow.className = 'header-row';
   const h1 = document.createElement('h1');
-  h1.textContent = greeting();
+  h1.textContent = 'Сегодня';
   headerRow.appendChild(h1);
   const sub = document.createElement('div');
   sub.className = 'sub';
@@ -1838,7 +1830,7 @@ async function renderCalendar() {
   const headerRow = document.createElement('div');
   headerRow.className = 'header-row';
   const h1 = document.createElement('h1');
-  h1.textContent = 'Календарь';
+  h1.textContent = 'План';
   headerRow.appendChild(h1);
   header.appendChild(headerRow);
   const sub = document.createElement('div');
