@@ -762,7 +762,8 @@ const PAGE_COUNT = 4;
 const PAGE_WIDTH_PCT = 100 / PAGE_COUNT; // 25
 let currentPage = 1; // 0 = сегодня, 1 = morning (default), 2 = calendar, 3 = tracks
 let pagerEl = null;
-let inputBarEl = null;
+let tabbarEl = null;
+let plusBtnEl = null;
 
 // Dirty-tracking — invalidatePages() marks all four as needing a refresh, but
 // only the visible page is rendered immediately. Off-screen pages are
@@ -800,14 +801,15 @@ async function renderApp() {
 
   root.appendChild(pagerEl);
 
-  // Floating pill — sits above pager, independent from page swipe.
-  const fixedPill = pagePillNode();
-  fixedPill.classList.add('page-pill-fixed');
-  root.appendChild(fixedPill);
+  // Floating tabbar (Liquid Glass capsule + coral plus button) — sits above
+  // the pager, doesn't move on swipe. Plus is shown only on Tasks/Tracks
+  // pages where adding makes sense; on read-only pages (Today/Calendar) it
+  // fades out, capsule stays put for muscle memory.
+  tabbarEl = tabbarNode();
+  root.appendChild(tabbarEl);
 
-  inputBarEl = document.createElement('div');
-  inputBarEl.className = 'input-bar';
-  root.appendChild(inputBarEl);
+  plusBtnEl = plusBtnNode();
+  root.appendChild(plusBtnEl);
 
   attachPagerSwipe(pagerEl);
   // Render only the initial page; mark the rest as dirty so they refresh on
@@ -822,8 +824,8 @@ function setPage(idx, animate = true) {
   if (!animate) pagerEl.classList.add('no-anim');
   pagerEl.style.transform = `translateX(${-currentPage * PAGE_WIDTH_PCT}%)`;
   if (!animate) requestAnimationFrame(() => pagerEl.classList.remove('no-anim'));
-  updateInputBar();
-  updatePagePill();
+  updateTabbarActive();
+  updatePlusButton();
   if (pagesDirty[currentPage]) {
     renderPage(currentPage).catch(showError);
   } else if (currentPage === 2) {
@@ -833,53 +835,58 @@ function setPage(idx, animate = true) {
   }
 }
 
-function updateInputBar() {
-  if (!inputBarEl) return;
-  inputBarEl.replaceChildren();
-  if (currentPage === 0 || currentPage === 2) {
-    // Сегодня и Календарь — read-only, без input-bar
-    inputBarEl.style.display = 'none';
-    return;
+const TABBAR_TABS = [
+  { idx: 0, icon: 'sun',       label: 'Сегодня' },
+  { idx: 1, icon: 'list-todo', label: 'Задачи' },
+  { idx: 2, icon: 'calendar',  label: 'План' },
+  { idx: 3, icon: 'target',    label: 'Треки' },
+];
+
+function tabbarNode() {
+  const wrap = document.createElement('div');
+  wrap.className = 'tabbar-capsule';
+  wrap.setAttribute('data-no-swipe', '');
+  for (const t of TABBAR_TABS) {
+    const tab = document.createElement('button');
+    tab.type = 'button';
+    tab.className = 'tabbar-tab' + (t.idx === currentPage ? ' active' : '');
+    tab.dataset.page = String(t.idx);
+    tab.appendChild(iconNode(t.icon));
+    const lbl = document.createElement('span');
+    lbl.textContent = t.label;
+    tab.appendChild(lbl);
+    tab.addEventListener('click', () => setPage(t.idx));
+    wrap.appendChild(tab);
   }
-  inputBarEl.style.display = '';
-  const wrap = document.createElement('button');
-  wrap.className = 'wrap';
-  wrap.type = 'button';
-  wrap.append(iconNode('plus'));
-  const label = document.createElement('span');
-  if (currentPage === 1) {
-    label.textContent = 'Добавить задачу';
-    wrap.addEventListener('click', () => openSheet({ task: null }));
-  } else {
-    label.textContent = 'Добавить трек';
-    wrap.addEventListener('click', () => openTrackSheet({ track: null }));
-  }
-  wrap.append(label);
-  inputBarEl.appendChild(wrap);
   renderLucide();
+  return wrap;
 }
 
-function updatePagePill() {
-  document.querySelectorAll('.page-pill-half').forEach(el => {
-    el.classList.toggle('active', Number(el.dataset.page) === currentPage);
+function plusBtnNode() {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'tabbar-plus';
+  btn.setAttribute('data-no-swipe', '');
+  btn.appendChild(iconNode('plus'));
+  btn.addEventListener('click', () => {
+    if (currentPage === 1) openSheet({ task: null });
+    else if (currentPage === 3) openTrackSheet({ track: null });
+  });
+  renderLucide();
+  return btn;
+}
+
+function updateTabbarActive() {
+  if (!tabbarEl) return;
+  tabbarEl.querySelectorAll('.tabbar-tab').forEach(t => {
+    t.classList.toggle('active', Number(t.dataset.page) === currentPage);
   });
 }
 
-function pagePillNode() {
-  const wrap = document.createElement('div');
-  wrap.className = 'page-pill';
-  wrap.setAttribute('data-no-swipe', '');
-  const mkHalf = (label, idx) => {
-    const el = document.createElement('button');
-    el.type = 'button';
-    el.className = 'page-pill-half' + (idx === currentPage ? ' active' : '');
-    el.textContent = label;
-    el.dataset.page = String(idx);
-    el.addEventListener('click', () => setPage(idx));
-    return el;
-  };
-  wrap.append(mkHalf('Сегодня', 0), mkHalf('Задачи', 1), mkHalf('План', 2), mkHalf('Треки', 3));
-  return wrap;
+function updatePlusButton() {
+  if (!plusBtnEl) return;
+  const visible = currentPage === 1 || currentPage === 3;
+  plusBtnEl.classList.toggle('visible', visible);
 }
 
 function sectionDivider(label, opts) {

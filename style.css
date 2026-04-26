@@ -78,46 +78,84 @@ body {
   touch-action: pan-y;
 }
 
-.page-pill {
-  display: flex;
-  height: 20px;
-  border-radius: 999px;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-.page-pill-half {
+/* ---------- floating tabbar (Liquid Glass) ---------- */
+
+.tabbar-capsule {
+  position: absolute;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  left: 20px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  height: 100%;
-  padding: 0 8px;
-  border: 0;
-  font-family: inherit;
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.2px;
-  background: #f7bba5;
-  color: rgba(13, 10, 8, 0.55);
-  cursor: pointer;
-  user-select: none;
-  -webkit-user-select: none;
-  transition: background 160ms ease, color 160ms ease;
-}
-.page-pill-half.active {
-  background: var(--accent);
-  color: #0D0A08;
-}
-
-.page-pill-fixed {
-  position: absolute;
-  top: calc(env(safe-area-inset-top, 0px) + 14px);
-  left: 50%;
-  transform: translateX(-50%);
+  gap: 16px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(42, 32, 24, 0.5);
+  backdrop-filter: blur(30px) saturate(140%);
+  -webkit-backdrop-filter: blur(30px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   z-index: 10;
 }
 
+.tabbar-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1px;
+  border-radius: 999px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background 200ms ease, color 200ms ease, padding 200ms ease;
+}
+.tabbar-tab .icon,
+.tabbar-tab svg { width: 18px; height: 18px; }
+.tabbar-tab.active {
+  background: rgba(255, 148, 120, 0.14);
+  color: var(--accent);
+  font-weight: 600;
+  padding: 6px 15px;
+}
+.tabbar-tab:active { transform: scale(0.96); }
+
+.tabbar-plus {
+  position: absolute;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  opacity: 0;
+  transform: scale(0.8);
+  pointer-events: none;
+  transition: opacity 180ms ease-out, transform 180ms ease-out;
+}
+.tabbar-plus.visible {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+.tabbar-plus:active { transform: scale(0.94); }
+.tabbar-plus .icon,
+.tabbar-plus svg { width: 20px; height: 20px; color: #0D0A08; }
+
 .screen {
-  padding: 0 16px 120px 16px;
+  padding: 0 16px 100px 16px;
   max-width: 560px;
   margin: 0 auto;
 }
@@ -126,12 +164,12 @@ body {
  * goes directly on the .screen. Morning uses .top-region which already handles it. */
 .page-tracks > .screen,
 .page-today > .screen {
-  padding-top: calc(50px + env(safe-area-inset-top, 0));
+  padding-top: calc(env(safe-area-inset-top, 0) + 24px);
 }
 
 /* Calendar page has its own narrower screen container */
 .page-calendar > .screen-cal {
-  padding: calc(50px + env(safe-area-inset-top, 0)) 14px 120px 14px;
+  padding: calc(env(safe-area-inset-top, 0) + 24px) 14px 100px 14px;
   max-width: 560px;
   margin: 0 auto;
 }
@@ -139,9 +177,9 @@ body {
 .top-region {
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 120px);
-  min-height: calc(100svh - 120px);
-  padding-top: calc(50px + env(safe-area-inset-top, 0));
+  min-height: calc(100vh - 100px);
+  min-height: calc(100svh - 100px);
+  padding-top: calc(env(safe-area-inset-top, 0) + 24px);
 }
 .top-region > .active-grid,
 .top-region > .active-grouped,
