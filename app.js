@@ -322,10 +322,9 @@ async function addTrack({ name, icon, category = 'personal' }) {
 async function deleteTrack(id) {
   await db.transaction('rw', db.tracks, db.tasks, async () => {
     await db.tracks.delete(id);
-    const linked = await db.tasks.where('track_id').equals(id).toArray();
-    for (const t of linked) {
-      await db.tasks.update(t.id, { track_id: null });
-    }
+    // Bulk-clear track_id on all linked tasks in one collection-modify pass
+    // instead of N individual updates.
+    await db.tasks.where('track_id').equals(id).modify({ track_id: null });
   });
 }
 
@@ -2851,16 +2850,17 @@ function dropIndexAt(category, y) {
 async function commitDragDrop(strip, targetCat, targetIndex) {
   const trackId = Number(strip.dataset.id);
   const tracks = await listTracks();
-  // Build target category list, excluding the dragged track
+  const dragged = tracks.find(t => t.id === trackId);
+  if (!dragged) return;
   const inCat = tracks.filter(t => (t.category || 'personal') === targetCat && t.id !== trackId);
-  // Insert at targetIndex
-  const reorder = inCat.slice(0, targetIndex).concat([{ id: trackId }]).concat(inCat.slice(targetIndex));
-  await db.transaction('rw', db.tracks, async () => {
-    await db.tracks.update(trackId, { category: targetCat });
-    for (let i = 0; i < reorder.length; i++) {
-      await db.tracks.update(reorder[i].id, { position: i + 1 });
-    }
-  });
+  const reorder = inCat.slice(0, targetIndex).concat([dragged]).concat(inCat.slice(targetIndex));
+  // bulkPut in one round-trip instead of (1 + N) updates inside a transaction.
+  const updated = reorder.map((t, i) => ({
+    ...t,
+    category: t.id === trackId ? targetCat : t.category,
+    position: i + 1,
+  }));
+  await db.tracks.bulkPut(updated);
 }
 
 // ---------- track sheet (create / edit) ----------
