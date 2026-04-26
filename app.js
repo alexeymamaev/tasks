@@ -312,6 +312,13 @@ async function listTasksByTrack(trackId) {
   return db.tasks.where('track_id').equals(trackId).toArray();
 }
 
+// Active tasks with no track. Dexie indexes don't include null/undefined,
+// so we pull active and filter in JS — fine for the small dataset.
+async function listUnassignedActive() {
+  const active = await db.tasks.where('done_at').equals(0).toArray();
+  return active.filter(t => !t.track_id).sort((a, b) => b.created_at - a.created_at);
+}
+
 const TRACK_CATEGORIES = ['work', 'personal', 'inactive'];
 const TRACK_CATEGORY_LABELS = { work: 'Работа', personal: 'Личное', inactive: 'Неактивные' };
 
@@ -2891,48 +2898,106 @@ function openTrackSheet({ track }) {
     suggTimer = setTimeout(renderSuggestions, 250);
   });
 
-  // Tasks list (edit mode) — active + done-today, tap = open task sheet
+  // Tasks list (edit mode) — active + done-today + БЕЗ ТРЕКА section
   if (isEdit) {
     const tasksLabel = document.createElement('div');
     tasksLabel.className = 'sheet-label';
-    tasksLabel.textContent = 'ЗАДАЧИ';
     sheet.appendChild(tasksLabel);
 
     const tasksBlock = document.createElement('div');
     tasksBlock.className = 'track-tasks-list';
     sheet.appendChild(tasksBlock);
 
-    (async () => {
-      const all = await listTasksByTrack(track.id);
+    const unassignedLabel = document.createElement('div');
+    unassignedLabel.className = 'sheet-label';
+    sheet.appendChild(unassignedLabel);
+
+    const unassignedBlock = document.createElement('div');
+    unassignedBlock.className = 'track-tasks-list';
+    sheet.appendChild(unassignedBlock);
+
+    const makeTaskRow = (t, action) => {
+      const row = document.createElement('div');
+      row.className = 'track-task-row' + (t.done_at ? ' done' : '');
+
+      const main = document.createElement('button');
+      main.type = 'button';
+      main.className = 'track-task-main';
+      const ib = document.createElement('span');
+      ib.className = 'track-task-icon';
+      ib.appendChild(iconNode(t.icon || DEFAULT_ICON));
+      const tx = document.createElement('span');
+      tx.className = 'track-task-text';
+      tx.textContent = t.text;
+      main.append(ib, tx);
+      main.addEventListener('click', () => {
+        closeTrackSheet(backdrop, { skipCommit: true });
+        setTimeout(() => openSheet({ task: t }), 220);
+      });
+
+      const actBtn = document.createElement('button');
+      actBtn.type = 'button';
+      actBtn.className = 'track-task-action ' + (action === 'detach' ? 'detach' : 'attach');
+      actBtn.appendChild(iconNode(action === 'detach' ? 'x' : 'plus'));
+      actBtn.setAttribute('aria-label', action === 'detach' ? 'Отвязать от трека' : 'Прикрепить к треку');
+      actBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const prevTrackId = t.track_id ?? null;
+        const nextTrackId = action === 'detach' ? null : track.id;
+        try { await db.tasks.update(t.id, { track_id: nextTrackId }); }
+        catch (err) {
+          if (isIdbDisconnectError(err)) await recoverDb();
+          else { showError(err); return; }
+        }
+        showSnackbar({
+          label: action === 'detach' ? 'Задача отвязана' : 'Прикреплено',
+          onUndo: async () => {
+            try { await db.tasks.update(t.id, { track_id: prevTrackId }); }
+            catch (err) { showError(err); }
+            await renderTrackTasksSections();
+          },
+        });
+        await renderTrackTasksSections();
+      });
+
+      row.append(main, actBtn);
+      return row;
+    };
+
+    const renderTrackTasksSections = async () => {
+      const [currentAll, unassigned] = await Promise.all([
+        listTasksByTrack(track.id),
+        listUnassignedActive(),
+      ]);
       const todayStart = startOfTodayMs();
-      const filtered = all.filter(t => !t.done_at || t.done_at >= todayStart);
-      filtered.sort((a, b) => (a.done_at ? a.done_at : Infinity) - (b.done_at ? b.done_at : Infinity));
-      if (filtered.length === 0) {
+      const current = currentAll.filter(t => !t.done_at || t.done_at >= todayStart);
+      current.sort((a, b) => (a.done_at ? a.done_at : Infinity) - (b.done_at ? b.done_at : Infinity));
+
+      tasksLabel.textContent = current.length ? `ЗАДАЧИ · ${current.length}` : 'ЗАДАЧИ';
+      tasksBlock.replaceChildren();
+      if (current.length === 0) {
         const empty = document.createElement('div');
         empty.className = 'track-tasks-empty';
         empty.textContent = 'Пока нет задач в этом треке.';
         tasksBlock.appendChild(empty);
       } else {
-        filtered.forEach(t => {
-          const row = document.createElement('button');
-          row.type = 'button';
-          row.className = 'track-task-row' + (t.done_at ? ' done' : '');
-          const ib = document.createElement('span');
-          ib.className = 'track-task-icon';
-          ib.appendChild(iconNode(t.icon || DEFAULT_ICON));
-          const tx = document.createElement('span');
-          tx.className = 'track-task-text';
-          tx.textContent = t.text;
-          row.append(ib, tx);
-          row.addEventListener('click', () => {
-            closeTrackSheet(backdrop, { skipCommit: true });
-            setTimeout(() => openSheet({ task: t }), 220);
-          });
-          tasksBlock.appendChild(row);
-        });
+        current.forEach(t => tasksBlock.appendChild(makeTaskRow(t, 'detach')));
+      }
+
+      if (unassigned.length === 0) {
+        unassignedLabel.style.display = 'none';
+        unassignedBlock.style.display = 'none';
+      } else {
+        unassignedLabel.style.display = '';
+        unassignedBlock.style.display = '';
+        unassignedLabel.textContent = `БЕЗ ТРЕКА · ${unassigned.length}`;
+        unassignedBlock.replaceChildren();
+        unassigned.forEach(t => unassignedBlock.appendChild(makeTaskRow(t, 'attach')));
       }
       renderLucide();
-    })().catch(showError);
+    };
+
+    renderTrackTasksSections().catch(showError);
 
     const dvd = document.createElement('hr');
     dvd.className = 'sheet-divider';

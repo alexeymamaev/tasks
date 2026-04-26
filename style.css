@@ -1049,6 +1049,15 @@ body {
 .track-task-row {
   display: flex;
   align-items: center;
+  gap: 4px;
+}
+.track-task-row.done .track-task-text {
+  color: var(--text-dim);
+}
+.track-task-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
   gap: 10px;
   padding: 8px 0;
   border: 0;
@@ -1057,10 +1066,27 @@ body {
   text-align: left;
   cursor: pointer;
   font: 500 14px -apple-system, system-ui, sans-serif;
+  min-width: 0;
 }
-.track-task-row.done .track-task-text {
-  color: var(--text-dim);
+.track-task-action {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 0;
 }
+.track-task-action svg,
+.track-task-action .icon { width: 16px; height: 16px; }
+.track-task-action.detach { color: var(--text-muted); }
+.track-task-action.attach { color: var(--accent); }
+.track-task-action.attach svg,
+.track-task-action.attach .icon { width: 18px; height: 18px; }
+.track-task-action:active { opacity: 0.55; }
 .track-task-icon {
   width: 24px;
   height: 24px;
