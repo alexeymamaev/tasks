@@ -264,21 +264,6 @@ function groupByDay(tasks) {
   return [...groups.entries()].map(([ts, items]) => ({ ts, label: dayLabel(ts), tasks: items }));
 }
 
-async function addTask(text) {
-  return db.tasks.add({
-    icon: 'circle-dashed',
-    text,
-    notes: '',
-    deadline: null,
-    track_id: null,
-    created_at: Date.now(),
-    done_at: 0,
-    first_stuck_at: null,
-    bump_count: 0,
-    blocker: null,
-  });
-}
-
 async function markDone(id) {
   await db.tasks.update(id, { done_at: Date.now(), first_stuck_at: null });
 }
@@ -1478,7 +1463,6 @@ function buildSplitBar(task) {
             created_at: now,
             done_at: 0,
             first_stuck_at: null,
-            bump_count: 0,
             blocker: null,
           });
           newIds.push(id);
@@ -2196,13 +2180,15 @@ function openSheet({ task }) {
   textInput.autocomplete = 'off';
   textInput.setAttribute('autocorrect', 'off');
   textInput.spellcheck = false;
-  textInput.addEventListener('input', () => { draft.text = textInput.value; });
   // auto-grow up to max-height (CSS clamps, JS sets precise height)
   const autoResize = () => {
     textInput.style.height = 'auto';
     textInput.style.height = Math.min(textInput.scrollHeight, 94) + 'px';
   };
-  textInput.addEventListener('input', autoResize);
+  textInput.addEventListener('input', () => {
+    draft.text = textInput.value;
+    autoResize();
+  });
   inputWrap.appendChild(textInput);
 
   inputRow.append(iconBox, inputWrap);
