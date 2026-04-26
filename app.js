@@ -65,6 +65,21 @@ db.version(2).stores({
   tasks: '++id, done_at, created_at, track_id',
   tracks: '++id, category',
 });
+db.version(3).stores({
+  tasks: '++id, done_at, created_at, track_id',
+  tracks: '++id, category, last_used_at',
+}).upgrade(async tx => {
+  const tasks = await tx.table('tasks').toArray();
+  const lastUsed = new Map();
+  for (const t of tasks) {
+    if (!t.track_id) continue;
+    const cur = lastUsed.get(t.track_id) || 0;
+    if (t.created_at > cur) lastUsed.set(t.track_id, t.created_at);
+  }
+  await tx.table('tracks').toCollection().modify(track => {
+    track.last_used_at = lastUsed.get(track.id) ?? track.created_at ?? 0;
+  });
+});
 
 async function ensureDbOpen() {
   if (db.isOpen()) return;
@@ -274,15 +289,35 @@ async function listTracks() {
   return arr;
 }
 
+// Sort by last_used_at desc — drives the chip row in the task sheet so the
+// track you just used floats to the front. Fallback to created_at then 0
+// keeps pre-migration tracks ordered sensibly.
+async function listTracksByRecency() {
+  const arr = await db.tracks.toArray();
+  arr.sort((a, b) => (b.last_used_at ?? b.created_at ?? 0) - (a.last_used_at ?? a.created_at ?? 0));
+  return arr;
+}
+
+async function touchTrack(id) {
+  if (!id) return;
+  try {
+    await db.tracks.update(id, { last_used_at: Date.now() });
+  } catch (e) {
+    if (isIdbDisconnectError(e)) await recoverDb();
+  }
+}
+
 async function addTrack({ name, icon, category = 'personal' }) {
   const all = await db.tracks.toArray();
   const maxPos = all.reduce((m, t) => Math.max(m, t.position ?? 0), 0);
+  const now = Date.now();
   return db.tracks.add({
     name: name.trim(),
     icon: icon || DEFAULT_ICON,
     category,
     position: maxPos + 1,
-    created_at: Date.now(),
+    created_at: now,
+    last_used_at: now,
   });
 }
 
@@ -2193,7 +2228,7 @@ function openSheet({ task }) {
   const renderTrackChips = async () => {
     let tracks = [];
     try {
-      tracks = await listTracks();
+      tracks = await listTracksByRecency();
     } catch (e) {
       if (isIdbDisconnectError(e)) { await recoverDb(); return; }
       showError(e);
@@ -2389,24 +2424,32 @@ function openSheet({ task }) {
         // empty text on existing task = no-op (keep original). Only the Delete
         // button deletes, to keep close-as-autosave non-destructive.
         if (text) {
+          const newTrackId = draft.track_id || null;
           await db.tasks.update(task.id, {
             text,
             icon: draft.icon || DEFAULT_ICON,
             notes,
             deadline: draft.deadline || null,
-            track_id: draft.track_id || null,
+            track_id: newTrackId,
           });
+          // Recency signal only on actual track change — re-saving an unchanged
+          // task shouldn't shuffle the chip row.
+          if (newTrackId && newTrackId !== task.track_id) {
+            await touchTrack(newTrackId);
+          }
         }
       } else if (text) {
+        const newTrackId = draft.track_id || null;
         await db.tasks.add({
           icon: draft.icon || DEFAULT_ICON,
           text,
           notes,
           deadline: draft.deadline || null,
-          track_id: draft.track_id || null,
+          track_id: newTrackId,
           created_at: Date.now(),
           done_at: 0,
         });
+        if (newTrackId) await touchTrack(newTrackId);
       }
     } catch (e) {
       if (isIdbDisconnectError(e)) await recoverDb();
