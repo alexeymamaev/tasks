@@ -1639,10 +1639,10 @@ body {
   margin: 14px -14px 0 -14px;
   padding: 0 14px;
   scrollbar-width: none;
-  /* Allow native vertical pan to bubble to .page-calendar (overflow-y:auto).
-   * Horizontal stays in JS: pager owns 1-finger swipes, custom 2-finger
-   * handler scrolls the strip. */
-  touch-action: pan-y;
+  /* Block native gestures so the pager (1-finger horizontal) and our
+   * 2-finger horizontal scroll can coexist without pointercancel races.
+   * 1-finger vertical scroll is delegated to a JS handler below. */
+  touch-action: none;
 }
 .cal-strip-wrap::-webkit-scrollbar { display: none; }
 

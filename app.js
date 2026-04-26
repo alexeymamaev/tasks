@@ -1820,6 +1820,39 @@ async function renderCalendar() {
   stripWrap.addEventListener('touchend', csEnd, { passive: true });
   stripWrap.addEventListener('touchcancel', csEnd, { passive: true });
 
+  // 1-finger vertical scroll. touch-action:none blocks native scroll so the
+  // pager can claim horizontal swipes without pointercancel races. We
+  // emulate vertical pan in JS, scrolling the parent .page-calendar. Lock
+  // direction after first 8px so a horizontal-leaning gesture stays free
+  // for the pager to pick up via bubbling pointer events.
+  let vsActive = false, vsLocked = null, vsStartY = 0, vsStartX = 0, vsStartScroll = 0;
+  stripWrap.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) return;
+    vsActive = true;
+    vsLocked = null;
+    vsStartY = e.touches[0].clientY;
+    vsStartX = e.touches[0].clientX;
+    const pageEl = stripWrap.closest('.page');
+    vsStartScroll = pageEl ? pageEl.scrollTop : 0;
+  }, { passive: true });
+  stripWrap.addEventListener('touchmove', (e) => {
+    if (!vsActive || e.touches.length !== 1) return;
+    const dy = e.touches[0].clientY - vsStartY;
+    const dx = e.touches[0].clientX - vsStartX;
+    if (vsLocked === null) {
+      if (Math.abs(dy) < 8 && Math.abs(dx) < 8) return;
+      vsLocked = Math.abs(dy) > Math.abs(dx) * 1.3 ? 'y' : 'x';
+    }
+    if (vsLocked === 'y') {
+      e.preventDefault();
+      const pageEl = stripWrap.closest('.page');
+      if (pageEl) pageEl.scrollTop = vsStartScroll - dy;
+    }
+  }, { passive: false });
+  const vsEnd = () => { vsActive = false; vsLocked = null; };
+  stripWrap.addEventListener('touchend', vsEnd, { passive: true });
+  stripWrap.addEventListener('touchcancel', vsEnd, { passive: true });
+
   const strip = document.createElement('div');
   strip.className = 'cal-strip';
 
