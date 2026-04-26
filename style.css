@@ -82,12 +82,12 @@ body {
 
 .tabbar-capsule {
   position: absolute;
-  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-  left: 20px;
+  bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  left: 16px;
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 4px 10px;
+  gap: 18px;
+  padding: 6px 12px;
   border-radius: 999px;
   background: rgba(42, 32, 24, 0.5);
   backdrop-filter: blur(30px) saturate(140%);
@@ -101,13 +101,13 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  padding: 6px 8px;
+  gap: 3px;
+  padding: 8px 10px;
   border: 0;
   background: transparent;
   color: var(--text-dim);
   font-family: inherit;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.1px;
   border-radius: 999px;
@@ -117,21 +117,21 @@ body {
   transition: background 200ms ease, color 200ms ease, padding 200ms ease;
 }
 .tabbar-tab .icon,
-.tabbar-tab svg { width: 18px; height: 18px; }
+.tabbar-tab svg { width: 22px; height: 22px; }
 .tabbar-tab.active {
   background: rgba(255, 148, 120, 0.14);
   color: var(--accent);
   font-weight: 600;
-  padding: 6px 15px;
+  padding: 8px 18px;
 }
 .tabbar-tab:active { transform: scale(0.96); }
 
 .tabbar-plus {
   position: absolute;
-  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-  right: 20px;
-  width: 48px;
-  height: 48px;
+  bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  right: 16px;
+  width: 60px;
+  height: 60px;
   border: 0;
   border-radius: 999px;
   background: var(--accent);
@@ -152,7 +152,7 @@ body {
 }
 .tabbar-plus:active { transform: scale(0.94); }
 .tabbar-plus .icon,
-.tabbar-plus svg { width: 20px; height: 20px; color: #0D0A08; }
+.tabbar-plus svg { width: 26px; height: 26px; color: #0D0A08; }
 
 .screen {
   padding: 0 16px 100px 16px;
