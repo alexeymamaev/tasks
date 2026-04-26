@@ -755,6 +755,22 @@ let currentPage = 1; // 0 = сегодня, 1 = morning (default), 2 = calendar,
 let pagerEl = null;
 let inputBarEl = null;
 
+// Dirty-tracking — invalidatePages() marks all four as needing a refresh, but
+// only the visible page is rendered immediately. Off-screen pages are
+// re-rendered lazily when the user swipes to them. Cuts work after every
+// task mutation from "render 4 pages" to "render 1 page now + 0..3 later".
+const pagesDirty = [false, false, false, false];
+
+async function renderPage(idx) {
+  pagesDirty[idx] = false;
+  switch (idx) {
+    case 0: return renderToday();
+    case 1: return renderMorning();
+    case 2: return renderCalendar();
+    case 3: return renderTracks();
+  }
+}
+
 async function renderApp() {
   const root = document.getElementById('app');
   root.replaceChildren();
@@ -785,7 +801,10 @@ async function renderApp() {
   root.appendChild(inputBarEl);
 
   attachPagerSwipe(pagerEl);
-  await Promise.all([renderToday(), renderMorning(), renderCalendar(), renderTracks()]);
+  // Render only the initial page; mark the rest as dirty so they refresh on
+  // first swipe-in. Boot is faster, off-screen DOM is tiny until needed.
+  for (let i = 0; i < PAGE_COUNT; i++) pagesDirty[i] = i !== currentPage;
+  await renderPage(currentPage);
   setPage(currentPage, false);
 }
 
@@ -796,8 +815,13 @@ function setPage(idx, animate = true) {
   if (!animate) requestAnimationFrame(() => pagerEl.classList.remove('no-anim'));
   updateInputBar();
   updatePagePill();
-  // Calendar always opens with today as the leftmost visible column
-  if (currentPage === 2) requestAnimationFrame(scrollCalendarToToday);
+  if (pagesDirty[currentPage]) {
+    renderPage(currentPage).catch(showError);
+  } else if (currentPage === 2) {
+    // Calendar always opens with today as the leftmost visible column. Skip
+    // when we just rendered (renderCalendar handles the scroll itself).
+    requestAnimationFrame(scrollCalendarToToday);
+  }
 }
 
 function updateInputBar() {
@@ -1073,9 +1097,11 @@ async function renderMorning() {
 }
 
 // Existing task-mutation call sites use renderMain() after the mutation.
-// It now refreshes all four pages so cards/stats stay in sync.
+// It marks all four pages dirty but only re-renders the visible one; the
+// other three refresh lazily on first swipe-in. See pagesDirty above.
 async function renderMain() {
-  await Promise.all([renderToday(), renderMorning(), renderCalendar(), renderTracks()]);
+  for (let i = 0; i < PAGE_COUNT; i++) pagesDirty[i] = true;
+  await renderPage(currentPage);
 }
 
 // ---------- render: Сегодня ----------
