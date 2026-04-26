@@ -168,9 +168,11 @@ function daysBetweenIso(fromIso, toIso) {
   return Math.round((b - a) / 86400000);
 }
 
-async function listTodayStuck() {
-  const active = await listActive();
-  const now = new Date();
+// Pure derivations from a pre-loaded active list — renderToday calls listActive
+// once and feeds the result through these instead of re-scanning the table per
+// section.
+
+function stuckFromActive(active, now = new Date()) {
   return active.filter(t => isStuckNow(t, now))
     .sort((a, b) => {
       // Oldest first_stuck_at first (most stuck on top)
@@ -182,9 +184,7 @@ async function listTodayStuck() {
     });
 }
 
-async function listTodayFresh() {
-  const active = await listActive();
-  const now = new Date();
+function freshFromActive(active, now = new Date()) {
   return active.filter(t => isFreshForToday(t, now))
     .sort((a, b) => a.created_at - b.created_at);
 }
@@ -193,9 +193,7 @@ async function listTodayFresh() {
 // into stuck state. Sweep on every Today render to catch newly-stuck tasks.
 // Also: clean up misfired "first_stuck_at=today" for tasks that turned out fresh
 // (e.g., created today but briefly misclassified by a buggy earlier rule).
-async function sweepStuckTimestamps() {
-  const active = await listActive();
-  const now = new Date();
+async function sweepStuckTimestamps(active, now = new Date()) {
   const today = todayISO();
   const updates = [];
   for (const t of active) {
@@ -335,12 +333,20 @@ async function updateTrack(id, patch) {
   await db.tracks.update(id, patch);
 }
 
-// Progress for a track = done / (done + active) over the track's lifetime.
-async function trackStats(trackId) {
-  const linked = await db.tasks.where('track_id').equals(trackId).toArray();
-  let done = 0;
-  for (const t of linked) if (t.done_at) done++;
-  return { done, total: linked.length };
+// Progress per track = done / (done + active) over the track's lifetime.
+// Single-scan version: one toArray over tasks, group by track_id. Replaces an
+// N+1 pattern (trackStats per track) on the Tracks page.
+async function trackStatsAll() {
+  const tasks = await db.tasks.toArray();
+  const stats = new Map();
+  for (const t of tasks) {
+    if (!t.track_id) continue;
+    let s = stats.get(t.track_id);
+    if (!s) { s = { done: 0, total: 0 }; stats.set(t.track_id, s); }
+    s.total += 1;
+    if (t.done_at) s.done += 1;
+  }
+  return stats;
 }
 
 async function listTasksByTrack(trackId) {
@@ -1613,21 +1619,25 @@ async function renderToday() {
   if (!page) return;
   page.replaceChildren();
 
-  // Sweep first_stuck_at for newly-stuck tasks
-  try {
-    await sweepStuckTimestamps();
-  } catch (e) {
-    if (isIdbDisconnectError(e)) { await recoverDb(); }
-  }
-
   const screen = document.createElement('div');
   screen.className = 'screen';
 
-  const [stuck, fresh, tracks] = await Promise.all([
-    listTodayStuck(),
-    listTodayFresh(),
-    listTracks(),
-  ]);
+  const now = new Date();
+  let active, tracks;
+  try {
+    [active, tracks] = await Promise.all([listActive(), listTracks()]);
+    // Sweep transitions into/out of stuck *after* we've got the list — the
+    // helpers below re-derive from the same `active`, so any DB updates the
+    // sweep makes apply on the next render. This avoids a flicker where a
+    // task changes section between sweep and read.
+    await sweepStuckTimestamps(active, now);
+  } catch (e) {
+    if (isIdbDisconnectError(e)) { await recoverDb(); return; }
+    showError(e);
+    return;
+  }
+  const stuck = stuckFromActive(active, now);
+  const fresh = freshFromActive(active, now);
   const tracksById = new Map(tracks.map(t => [t.id, t]));
 
   // Header
@@ -1992,11 +2002,7 @@ async function renderTracks() {
     byCat[cat].push(t);
   });
 
-  // compute stats for all in parallel
-  const statsMap = new Map();
-  await Promise.all(tracks.map(async t => {
-    statsMap.set(t.id, await trackStats(t.id));
-  }));
+  const statsMap = await trackStatsAll();
 
   if (tracks.length === 0) {
     const empty = document.createElement('div');
