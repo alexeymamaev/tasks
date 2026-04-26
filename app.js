@@ -94,7 +94,11 @@ async function recoverDb() {
   try {
     try { db.close(); } catch {}
     await db.open();
-    showBanner('База снова на связи. Повтори действие.', { variant: 'ok', autoHide: 4000 });
+    showBanner('База снова на связи.', { variant: 'ok', autoHide: 2500 });
+    // Refresh the visible page — DOM was likely showing stale data from the
+    // dropped connection, and the user shouldn't have to "повтори действие"
+    // just to see the world again.
+    renderMain().catch(() => {});
   } catch (e) {
     showError(e);
   } finally {
@@ -163,8 +167,12 @@ function isFreshForToday(task, now = new Date()) {
 }
 
 function daysBetweenIso(fromIso, toIso) {
-  const toDate = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
-  const a = toDate(fromIso), b = toDate(toIso);
+  // Use UTC math: local-time subtraction breaks by ±1h on DST transitions
+  // and Math.round usually saves us, but UTC removes the failure mode entirely.
+  const [y1, m1, d1] = fromIso.split('-').map(Number);
+  const [y2, m2, d2] = toIso.split('-').map(Number);
+  const a = Date.UTC(y1, m1 - 1, d1);
+  const b = Date.UTC(y2, m2 - 1, d2);
   return Math.round((b - a) / 86400000);
 }
 
@@ -289,10 +297,18 @@ async function listTracks() {
 
 // Sort by last_used_at desc — drives the chip row in the task sheet so the
 // track you just used floats to the front. Fallback to created_at then 0
-// keeps pre-migration tracks ordered sensibly.
+// keeps pre-migration tracks ordered sensibly. Stable tiebreaker on id keeps
+// the chip order from flickering when two tracks share a timestamp (common
+// just after the v3 backfill, where last_used_at = created_at and several
+// tracks were created in the same ms).
 async function listTracksByRecency() {
   const arr = await db.tracks.toArray();
-  arr.sort((a, b) => (b.last_used_at ?? b.created_at ?? 0) - (a.last_used_at ?? a.created_at ?? 0));
+  arr.sort((a, b) => {
+    const tsA = a.last_used_at ?? a.created_at ?? 0;
+    const tsB = b.last_used_at ?? b.created_at ?? 0;
+    if (tsA !== tsB) return tsB - tsA;
+    return b.id - a.id;
+  });
   return arr;
 }
 
@@ -2456,31 +2472,39 @@ function openSheet({ task }) {
         // button deletes, to keep close-as-autosave non-destructive.
         if (text) {
           const newTrackId = draft.track_id || null;
-          await db.tasks.update(task.id, {
-            text,
-            icon: draft.icon || DEFAULT_ICON,
-            notes,
-            deadline: draft.deadline || null,
-            track_id: newTrackId,
+          // Single transaction so a parallel reader never sees the task
+          // attached to a track whose last_used_at hasn't been bumped yet.
+          await db.transaction('rw', db.tasks, db.tracks, async () => {
+            await db.tasks.update(task.id, {
+              text,
+              icon: draft.icon || DEFAULT_ICON,
+              notes,
+              deadline: draft.deadline || null,
+              track_id: newTrackId,
+            });
+            // Recency signal only on actual track change — re-saving an
+            // unchanged task shouldn't shuffle the chip row.
+            if (newTrackId && newTrackId !== task.track_id) {
+              await db.tracks.update(newTrackId, { last_used_at: Date.now() });
+            }
           });
-          // Recency signal only on actual track change — re-saving an unchanged
-          // task shouldn't shuffle the chip row.
-          if (newTrackId && newTrackId !== task.track_id) {
-            await touchTrack(newTrackId);
-          }
         }
       } else if (text) {
         const newTrackId = draft.track_id || null;
-        await db.tasks.add({
-          icon: draft.icon || DEFAULT_ICON,
-          text,
-          notes,
-          deadline: draft.deadline || null,
-          track_id: newTrackId,
-          created_at: Date.now(),
-          done_at: 0,
+        await db.transaction('rw', db.tasks, db.tracks, async () => {
+          await db.tasks.add({
+            icon: draft.icon || DEFAULT_ICON,
+            text,
+            notes,
+            deadline: draft.deadline || null,
+            track_id: newTrackId,
+            created_at: Date.now(),
+            done_at: 0,
+          });
+          if (newTrackId) {
+            await db.tracks.update(newTrackId, { last_used_at: Date.now() });
+          }
         });
-        if (newTrackId) await touchTrack(newTrackId);
       }
     } catch (e) {
       if (isIdbDisconnectError(e)) await recoverDb();
