@@ -81,8 +81,8 @@ body {
 /* ---------- floating tabbar (Liquid Glass) ---------- */
 
 .tabbar-capsule {
-  position: absolute;
-  bottom: 4px;
+  position: fixed;
+  bottom: calc(4px + env(safe-area-inset-bottom, 0));
   left: 16px;
   display: flex;
   align-items: center;
@@ -127,8 +127,8 @@ body {
 .tabbar-tab:active { transform: scale(0.96); }
 
 .tabbar-plus {
-  position: absolute;
-  bottom: 4px;
+  position: fixed;
+  bottom: calc(4px + env(safe-area-inset-bottom, 0));
   right: 16px;
   width: 60px;
   height: 60px;
