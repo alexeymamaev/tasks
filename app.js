@@ -3297,13 +3297,14 @@ function openSettings() {
 }
 
 // Edge-swipe from the left to dismiss Settings (iOS push-page convention).
-// Touch must start within 30px of the left edge; horizontal drag wins over
-// vertical only if the X delta is dominant. Drag follows the finger 1:1;
-// release past 80px (or with quick rightward velocity) closes, otherwise
-// snaps back. Doesn't fight content scroll because we only engage on
-// near-edge touches.
+// Listeners go on `document` so child elements (back button, scrollable
+// content, sheets) can't swallow the gesture. The overlay sets
+// `touch-action: pan-y` so the browser doesn't claim the horizontal axis
+// as a native pan. Edge zone (≤32px from the left edge) plus
+// horizontal-dominant motion gates the drag; release past 80px or with
+// rightward velocity > 0.5 px/ms closes, otherwise snaps back.
 function attachSettingsSwipeBack(overlay) {
-  const EDGE = 30;
+  const EDGE = 32;
   const DIST_THRESHOLD = 80;
   const VELOCITY_THRESHOLD = 0.5; // px/ms
 
@@ -3312,7 +3313,11 @@ function attachSettingsSwipeBack(overlay) {
   let pointerId = null;
 
   const onDown = (e) => {
+    if (!document.body.contains(overlay)) return;
     if (e.clientX > EDGE) return;
+    // Don't engage if the touch starts on the settings sheets layered over
+    // Settings — those have their own dismissal.
+    if (e.target.closest('.settings-sheet-backdrop')) return;
     pointerId = e.pointerId;
     startX = e.clientX;
     startY = e.clientY;
@@ -3327,14 +3332,13 @@ function attachSettingsSwipeBack(overlay) {
     const dy = e.clientY - startY;
     if (!dragging) {
       if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
-      // Horizontal must dominate, otherwise let vertical scroll win.
       if (Math.abs(dx) <= Math.abs(dy)) { active = false; return; }
       dragging = true;
       overlay.classList.add('dragging');
-      try { overlay.setPointerCapture(pointerId); } catch {}
     }
     const offset = Math.max(0, dx);
     overlay.style.transform = `translateX(${offset}px)`;
+    e.preventDefault();
   };
 
   const onUp = (e) => {
@@ -3342,9 +3346,10 @@ function attachSettingsSwipeBack(overlay) {
     const dx = Math.max(0, e.clientX - startX);
     const dt = Math.max(1, performance.now() - startT);
     const v = dx / dt;
+    const wasDragging = dragging;
     overlay.classList.remove('dragging');
     overlay.style.transform = '';
-    if (dragging && (dx > DIST_THRESHOLD || v > VELOCITY_THRESHOLD)) {
+    if (wasDragging && (dx > DIST_THRESHOLD || v > VELOCITY_THRESHOLD)) {
       closeSettings(overlay);
     }
     active = false;
@@ -3352,10 +3357,22 @@ function attachSettingsSwipeBack(overlay) {
     pointerId = null;
   };
 
-  overlay.addEventListener('pointerdown', onDown);
-  overlay.addEventListener('pointermove', onMove);
-  overlay.addEventListener('pointerup', onUp);
-  overlay.addEventListener('pointercancel', onUp);
+  document.addEventListener('pointerdown', onDown);
+  document.addEventListener('pointermove', onMove, { passive: false });
+  document.addEventListener('pointerup', onUp);
+  document.addEventListener('pointercancel', onUp);
+
+  // Detach when the overlay is removed from the DOM.
+  const observer = new MutationObserver(() => {
+    if (!document.body.contains(overlay)) {
+      document.removeEventListener('pointerdown', onDown);
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      document.removeEventListener('pointercancel', onUp);
+      observer.disconnect();
+    }
+  });
+  observer.observe(document.body, { childList: true });
 }
 
 function closeSettings(overlay) {
