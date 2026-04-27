@@ -1038,6 +1038,13 @@ async function renderMorning() {
   const h1 = document.createElement('h1');
   h1.textContent = 'Задачи';
   headerRow.appendChild(h1);
+  const gear = document.createElement('button');
+  gear.type = 'button';
+  gear.className = 'header-gear';
+  gear.setAttribute('aria-label', 'Настройки');
+  gear.appendChild(iconNode('settings'));
+  gear.addEventListener('click', () => openSettings());
+  headerRow.appendChild(gear);
   const sub = document.createElement('div');
   sub.className = 'sub';
   sub.textContent = 'давай займемся делом –';
@@ -3188,6 +3195,528 @@ async function closeTrackSheet(backdrop, { commit, skipCommit } = {}) {
     backdrop.remove();
     renderMain().catch(showError);
   }, 200);
+}
+
+// ---------- settings ----------
+
+async function readVersion() {
+  try {
+    if (!('caches' in window)) return '?';
+    const keys = await caches.keys();
+    const c = keys.find(k => k.startsWith('tasks-v'));
+    if (!c) return '?';
+    return c.replace('tasks-v', '').replace('-', '.');
+  } catch {
+    return '?';
+  }
+}
+
+let settingsOpen = false;
+function openSettings() {
+  if (settingsOpen) return;
+  settingsOpen = true;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'settings-overlay';
+
+  const navbar = document.createElement('div');
+  navbar.className = 'settings-navbar';
+  const back = document.createElement('button');
+  back.type = 'button';
+  back.className = 'settings-back';
+  back.setAttribute('aria-label', 'Назад');
+  back.appendChild(iconNode('arrow-left'));
+  back.addEventListener('click', () => closeSettings(overlay));
+  const title = document.createElement('div');
+  title.className = 'settings-title';
+  title.textContent = 'Настройки';
+  const spacer = document.createElement('div');
+  spacer.className = 'settings-back-spacer';
+  navbar.append(back, title, spacer);
+  overlay.appendChild(navbar);
+
+  const content = document.createElement('div');
+  content.className = 'settings-content';
+
+  // Section: ДАННЫЕ
+  const dataSec = settingsSection('ДАННЫЕ');
+  const dataCard = settingsCard();
+  dataCard.appendChild(settingsRow({
+    icon: 'download',
+    label: 'Экспорт в JSON',
+    chevron: true,
+    onClick: openExportSheet,
+  }));
+  dataCard.appendChild(settingsDivider());
+  dataCard.appendChild(settingsRow({
+    icon: 'upload',
+    label: 'Импорт из JSON',
+    chevron: true,
+    onClick: openImportSheet,
+  }));
+  dataSec.appendChild(dataCard);
+  const hint = document.createElement('div');
+  hint.className = 'settings-hint';
+  hint.textContent = 'Полная резервная копия. Перенести между устройствами или восстановить.';
+  dataSec.appendChild(hint);
+  content.appendChild(dataSec);
+
+  // Section: ВНЕШНИЙ ВИД
+  const themeSec = settingsSection('ВНЕШНИЙ ВИД');
+  const themeCard = settingsCard();
+  themeCard.appendChild(settingsRow({
+    icon: 'palette',
+    label: 'Тема',
+    rightText: 'Тёмная',
+    chevron: true,
+    onClick: () => {},
+  }));
+  themeSec.appendChild(themeCard);
+  content.appendChild(themeSec);
+
+  // Section: О ПРИЛОЖЕНИИ
+  const aboutSec = settingsSection('О ПРИЛОЖЕНИИ');
+  const aboutCard = settingsCard();
+  const versionRow = settingsRow({ label: 'Версия', rightText: '…' });
+  aboutCard.appendChild(versionRow);
+  aboutSec.appendChild(aboutCard);
+  content.appendChild(aboutSec);
+
+  overlay.appendChild(content);
+
+  document.body.appendChild(overlay);
+  renderLucide();
+  requestAnimationFrame(() => overlay.classList.add('open'));
+
+  readVersion().then(v => {
+    const right = versionRow.querySelector('.settings-row-right');
+    if (right) right.textContent = v;
+  });
+}
+
+function closeSettings(overlay) {
+  if (!settingsOpen) return;
+  settingsOpen = false;
+  overlay.classList.remove('open');
+  setTimeout(() => overlay.remove(), 240);
+}
+
+function settingsSection(label) {
+  const sec = document.createElement('div');
+  sec.className = 'settings-section';
+  const lbl = document.createElement('div');
+  lbl.className = 'settings-section-label';
+  lbl.textContent = label;
+  sec.appendChild(lbl);
+  return sec;
+}
+
+function settingsCard() {
+  const card = document.createElement('div');
+  card.className = 'settings-card';
+  return card;
+}
+
+function settingsDivider() {
+  const d = document.createElement('div');
+  d.className = 'settings-row-divider';
+  return d;
+}
+
+function settingsRow({ icon, label, rightText, chevron, onClick }) {
+  const row = document.createElement(onClick ? 'button' : 'div');
+  if (onClick) row.type = 'button';
+  row.className = 'settings-row';
+  if (onClick) row.addEventListener('click', onClick);
+
+  const left = document.createElement('div');
+  left.className = 'settings-row-left';
+  if (icon) left.appendChild(iconNode(icon));
+  const lbl = document.createElement('div');
+  lbl.className = 'settings-row-label';
+  lbl.textContent = label;
+  left.appendChild(lbl);
+  row.appendChild(left);
+
+  const right = document.createElement('div');
+  right.className = 'settings-row-right-wrap';
+  if (rightText !== undefined) {
+    const rt = document.createElement('span');
+    rt.className = 'settings-row-right';
+    rt.textContent = rightText;
+    right.appendChild(rt);
+  }
+  if (chevron) {
+    const ch = iconNode('chevron-right');
+    ch.classList.add('settings-row-chevron');
+    right.appendChild(ch);
+  }
+  row.appendChild(right);
+
+  return row;
+}
+
+// ---------- export / import ----------
+
+function todayFilenameISO() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+
+async function buildExportPayload() {
+  const [tasks, tracks] = await Promise.all([
+    db.tasks.toArray(),
+    db.tracks.toArray(),
+  ]);
+  return {
+    schema: 'tasks-v1',
+    exported_at: Date.now(),
+    tasks,
+    tracks,
+  };
+}
+
+async function openExportSheet() {
+  const backdrop = document.createElement('div');
+  backdrop.className = 'picker-backdrop settings-sheet-backdrop';
+
+  const sheet = document.createElement('div');
+  sheet.className = 'picker-sheet settings-sheet';
+  backdrop.appendChild(sheet);
+
+  const handle = document.createElement('div');
+  handle.className = 'sheet-handle';
+  sheet.appendChild(handle);
+
+  const head = document.createElement('div');
+  head.className = 'settings-sheet-head';
+  const h = document.createElement('div');
+  h.className = 'settings-sheet-title';
+  h.textContent = 'Экспорт';
+  const sub = document.createElement('div');
+  sub.className = 'settings-sheet-sub';
+  sub.textContent = 'Полная резервная копия в JSON';
+  head.append(h, sub);
+  sheet.appendChild(head);
+
+  const counts = document.createElement('div');
+  counts.className = 'settings-counts';
+  sheet.appendChild(counts);
+
+  const fileRow = document.createElement('div');
+  fileRow.className = 'settings-file-row';
+  const fileIcon = iconNode('file-text');
+  const fileName = document.createElement('span');
+  fileName.textContent = `tasks-${todayFilenameISO()}.json`;
+  fileRow.append(fileIcon, fileName);
+  sheet.appendChild(fileRow);
+
+  const cta = document.createElement('button');
+  cta.type = 'button';
+  cta.className = 'sheet-finish';
+  cta.appendChild(iconNode('download'));
+  const ctaLabel = document.createElement('span');
+  ctaLabel.textContent = 'Скачать';
+  cta.appendChild(ctaLabel);
+  sheet.appendChild(cta);
+
+  const close = () => {
+    backdrop.classList.remove('open');
+    setTimeout(() => backdrop.remove(), 200);
+  };
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
+
+  const payload = await buildExportPayload();
+  const journalCount = payload.tasks.filter(t => t.done_at && t.done_at > 0).length;
+  counts.replaceChildren(
+    countRow('Задачи', String(payload.tasks.length - journalCount)),
+    countDivider(),
+    countRow('Треки', String(payload.tracks.length)),
+    countDivider(),
+    countRow('Журнал выполненного', String(journalCount)),
+  );
+
+  cta.addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tasks-${todayFilenameISO()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    close();
+  });
+
+  document.body.appendChild(backdrop);
+  renderLucide();
+  requestAnimationFrame(() => backdrop.classList.add('open'));
+}
+
+function countRow(label, value) {
+  const r = document.createElement('div');
+  r.className = 'settings-count-row';
+  const l = document.createElement('span');
+  l.textContent = label;
+  const v = document.createElement('span');
+  v.className = 'settings-count-value';
+  v.textContent = value;
+  r.append(l, v);
+  return r;
+}
+
+function countDivider() {
+  const d = document.createElement('div');
+  d.className = 'settings-count-divider';
+  return d;
+}
+
+async function openImportSheet() {
+  const backdrop = document.createElement('div');
+  backdrop.className = 'picker-backdrop settings-sheet-backdrop';
+
+  const sheet = document.createElement('div');
+  sheet.className = 'picker-sheet settings-sheet';
+  backdrop.appendChild(sheet);
+
+  const close = () => {
+    backdrop.classList.remove('open');
+    setTimeout(() => backdrop.remove(), 200);
+  };
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
+
+  const renderPick = () => {
+    sheet.replaceChildren();
+
+    const handle = document.createElement('div');
+    handle.className = 'sheet-handle';
+    sheet.appendChild(handle);
+
+    const head = document.createElement('div');
+    head.className = 'settings-sheet-head';
+    const h = document.createElement('div');
+    h.className = 'settings-sheet-title';
+    h.textContent = 'Импорт';
+    const sub = document.createElement('div');
+    sub.className = 'settings-sheet-sub';
+    sub.textContent = 'Восстановить из резервной копии JSON';
+    head.append(h, sub);
+    sheet.appendChild(head);
+
+    const warn = document.createElement('div');
+    warn.className = 'settings-warning';
+    warn.appendChild(iconNode('triangle-alert'));
+    const w = document.createElement('span');
+    w.textContent = 'Импорт заменит все текущие задачи и треки. Это действие нельзя отменить.';
+    warn.appendChild(w);
+    sheet.appendChild(warn);
+
+    const cta = document.createElement('button');
+    cta.type = 'button';
+    cta.className = 'sheet-finish';
+    cta.appendChild(iconNode('file-up'));
+    const lbl = document.createElement('span');
+    lbl.textContent = 'Выбрать файл';
+    cta.appendChild(lbl);
+    sheet.appendChild(cta);
+
+    const cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.className = 'settings-cancel';
+    cancel.textContent = 'Отмена';
+    cancel.addEventListener('click', close);
+    sheet.appendChild(cancel);
+
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.json,application/json';
+    fileInput.style.display = 'none';
+    sheet.appendChild(fileInput);
+
+    cta.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', async () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const parsed = JSON.parse(text);
+        if (!parsed || !Array.isArray(parsed.tasks) || !Array.isArray(parsed.tracks)) {
+          throw new Error('Неверный формат файла');
+        }
+        const current = await buildExportPayload();
+        renderPreview(file, parsed, current);
+      } catch (e) {
+        renderError(e.message || String(e));
+      }
+    });
+
+    renderLucide();
+  };
+
+  const renderError = (msg) => {
+    sheet.replaceChildren();
+
+    const handle = document.createElement('div');
+    handle.className = 'sheet-handle';
+    sheet.appendChild(handle);
+
+    const head = document.createElement('div');
+    head.className = 'settings-sheet-head';
+    const h = document.createElement('div');
+    h.className = 'settings-sheet-title';
+    h.textContent = 'Не получилось';
+    head.appendChild(h);
+    sheet.appendChild(head);
+
+    const warn = document.createElement('div');
+    warn.className = 'settings-warning';
+    warn.appendChild(iconNode('triangle-alert'));
+    const w = document.createElement('span');
+    w.textContent = msg;
+    warn.appendChild(w);
+    sheet.appendChild(warn);
+
+    const cta = document.createElement('button');
+    cta.type = 'button';
+    cta.className = 'sheet-finish';
+    const lbl = document.createElement('span');
+    lbl.textContent = 'Выбрать другой файл';
+    cta.appendChild(lbl);
+    cta.addEventListener('click', renderPick);
+    sheet.appendChild(cta);
+
+    const cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.className = 'settings-cancel';
+    cancel.textContent = 'Отмена';
+    cancel.addEventListener('click', close);
+    sheet.appendChild(cancel);
+
+    renderLucide();
+  };
+
+  const renderPreview = (file, parsed, current) => {
+    sheet.replaceChildren();
+
+    const handle = document.createElement('div');
+    handle.className = 'sheet-handle';
+    sheet.appendChild(handle);
+
+    const head = document.createElement('div');
+    head.className = 'settings-sheet-head';
+    const h = document.createElement('div');
+    h.className = 'settings-sheet-title';
+    h.textContent = 'Импорт';
+    const sub = document.createElement('div');
+    sub.className = 'settings-sheet-sub';
+    const exportedAt = parsed.exported_at ? new Date(parsed.exported_at) : null;
+    sub.textContent = exportedAt
+      ? `Резервная копия от ${exportedAt.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}`
+      : 'Резервная копия';
+    head.append(h, sub);
+    sheet.appendChild(head);
+
+    const chip = document.createElement('div');
+    chip.className = 'settings-file-chip';
+    chip.appendChild(iconNode('file-text'));
+    const cn = document.createElement('span');
+    cn.textContent = file.name;
+    chip.appendChild(cn);
+    const xBtn = document.createElement('button');
+    xBtn.type = 'button';
+    xBtn.className = 'settings-file-chip-x';
+    xBtn.appendChild(iconNode('x'));
+    xBtn.addEventListener('click', renderPick);
+    chip.appendChild(xBtn);
+    sheet.appendChild(chip);
+
+    const compare = document.createElement('div');
+    compare.className = 'settings-compare';
+
+    const curJournal = current.tasks.filter(t => t.done_at && t.done_at > 0).length;
+    const fileJournal = parsed.tasks.filter(t => t.done_at && t.done_at > 0).length;
+
+    compare.appendChild(compareCol('СЕЙЧАС', false, [
+      `${current.tasks.length - curJournal} ${plzTask(current.tasks.length - curJournal)}`,
+      `${current.tracks.length} ${plzTrack(current.tracks.length)}`,
+      `${curJournal} в журнале`,
+    ]));
+    compare.appendChild(compareCol('В ФАЙЛЕ', true, [
+      `${parsed.tasks.length - fileJournal} ${plzTask(parsed.tasks.length - fileJournal)}`,
+      `${parsed.tracks.length} ${plzTrack(parsed.tracks.length)}`,
+      `${fileJournal} в журнале`,
+    ]));
+    sheet.appendChild(compare);
+
+    const cta = document.createElement('button');
+    cta.type = 'button';
+    cta.className = 'sheet-finish';
+    const lbl = document.createElement('span');
+    lbl.textContent = 'Заменить';
+    cta.appendChild(lbl);
+    cta.addEventListener('click', async () => {
+      try {
+        await db.transaction('rw', db.tasks, db.tracks, async () => {
+          await db.tasks.clear();
+          await db.tracks.clear();
+          if (parsed.tracks.length) await db.tracks.bulkAdd(parsed.tracks);
+          if (parsed.tasks.length) await db.tasks.bulkAdd(parsed.tasks);
+        });
+        location.reload();
+      } catch (e) {
+        renderError('Не удалось записать данные: ' + (e.message || String(e)));
+      }
+    });
+    sheet.appendChild(cta);
+
+    const cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.className = 'settings-cancel';
+    cancel.textContent = 'Отмена';
+    cancel.addEventListener('click', close);
+    sheet.appendChild(cancel);
+
+    renderLucide();
+  };
+
+  document.body.appendChild(backdrop);
+  renderPick();
+  requestAnimationFrame(() => backdrop.classList.add('open'));
+}
+
+function compareCol(label, accent, lines) {
+  const col = document.createElement('div');
+  col.className = 'settings-compare-col' + (accent ? ' accent' : '');
+  const lbl = document.createElement('div');
+  lbl.className = 'settings-compare-label';
+  lbl.textContent = label;
+  col.appendChild(lbl);
+  for (const t of lines) {
+    const row = document.createElement('div');
+    row.className = 'settings-compare-row';
+    row.textContent = t;
+    col.appendChild(row);
+  }
+  return col;
+}
+
+function plzTask(n) {
+  const m10 = n % 10, m100 = n % 100;
+  if (m100 >= 11 && m100 <= 14) return 'задач';
+  if (m10 === 1) return 'задача';
+  if (m10 >= 2 && m10 <= 4) return 'задачи';
+  return 'задач';
+}
+function plzTrack(n) {
+  const m10 = n % 10, m100 = n % 100;
+  if (m100 >= 11 && m100 <= 14) return 'треков';
+  if (m10 === 1) return 'трек';
+  if (m10 >= 2 && m10 <= 4) return 'трека';
+  return 'треков';
 }
 
 // ---------- boot ----------
