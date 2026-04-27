@@ -3296,43 +3296,41 @@ function openSettings() {
   attachSettingsSwipeBack(overlay);
 }
 
-// Edge-swipe from the left to dismiss Settings (iOS push-page convention).
-// Listeners go on `document` so child elements (back button, scrollable
-// content, sheets) can't swallow the gesture. The overlay sets
-// `touch-action: pan-y` so the browser doesn't claim the horizontal axis
-// as a native pan. Edge zone (≤32px from the left edge) plus
-// horizontal-dominant motion gates the drag; release past 80px or with
-// rightward velocity > 0.5 px/ms closes, otherwise snaps back.
+// Swipe-right on Settings to dismiss. Touch events (rather than pointer
+// events) — iOS dispatches them more reliably for this case, especially
+// when the gesture starts near the screen edge or over scrollable
+// content. Horizontal-dominant motion engages drag; once dragging,
+// preventDefault() blocks vertical scroll so the gesture can't be
+// hijacked. Release past 80px or with rightward velocity > 0.5 px/ms
+// closes, otherwise snaps back.
 function attachSettingsSwipeBack(overlay) {
-  const EDGE = 32;
   const DIST_THRESHOLD = 80;
   const VELOCITY_THRESHOLD = 0.5; // px/ms
 
   let startX = 0, startY = 0, startT = 0;
   let active = false, dragging = false;
-  let pointerId = null;
 
-  const onDown = (e) => {
+  const onStart = (e) => {
     if (!document.body.contains(overlay)) return;
-    if (e.clientX > EDGE) return;
-    // Don't engage if the touch starts on the settings sheets layered over
-    // Settings — those have their own dismissal.
+    if (e.touches.length !== 1) { active = false; return; }
     if (e.target.closest('.settings-sheet-backdrop')) return;
-    pointerId = e.pointerId;
-    startX = e.clientX;
-    startY = e.clientY;
+    const t = e.touches[0];
+    startX = t.clientX;
+    startY = t.clientY;
     startT = performance.now();
     active = true;
     dragging = false;
   };
 
   const onMove = (e) => {
-    if (!active || e.pointerId !== pointerId) return;
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
+    if (!active) return;
+    if (e.touches.length !== 1) { active = false; return; }
+    const t = e.touches[0];
+    const dx = t.clientX - startX;
+    const dy = t.clientY - startY;
     if (!dragging) {
-      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
-      if (Math.abs(dx) <= Math.abs(dy)) { active = false; return; }
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      if (dx <= 0 || Math.abs(dx) <= Math.abs(dy)) { active = false; return; }
       dragging = true;
       overlay.classList.add('dragging');
     }
@@ -3341,9 +3339,11 @@ function attachSettingsSwipeBack(overlay) {
     e.preventDefault();
   };
 
-  const onUp = (e) => {
-    if (!active || e.pointerId !== pointerId) return;
-    const dx = Math.max(0, e.clientX - startX);
+  const onEnd = (e) => {
+    if (!active) return;
+    const last = (e.changedTouches && e.changedTouches[0]) || null;
+    const endX = last ? last.clientX : startX;
+    const dx = Math.max(0, endX - startX);
     const dt = Math.max(1, performance.now() - startT);
     const v = dx / dt;
     const wasDragging = dragging;
@@ -3354,25 +3354,12 @@ function attachSettingsSwipeBack(overlay) {
     }
     active = false;
     dragging = false;
-    pointerId = null;
   };
 
-  document.addEventListener('pointerdown', onDown);
-  document.addEventListener('pointermove', onMove, { passive: false });
-  document.addEventListener('pointerup', onUp);
-  document.addEventListener('pointercancel', onUp);
-
-  // Detach when the overlay is removed from the DOM.
-  const observer = new MutationObserver(() => {
-    if (!document.body.contains(overlay)) {
-      document.removeEventListener('pointerdown', onDown);
-      document.removeEventListener('pointermove', onMove);
-      document.removeEventListener('pointerup', onUp);
-      document.removeEventListener('pointercancel', onUp);
-      observer.disconnect();
-    }
-  });
-  observer.observe(document.body, { childList: true });
+  overlay.addEventListener('touchstart', onStart, { passive: true });
+  overlay.addEventListener('touchmove', onMove, { passive: false });
+  overlay.addEventListener('touchend', onEnd);
+  overlay.addEventListener('touchcancel', onEnd);
 }
 
 function closeSettings(overlay) {
