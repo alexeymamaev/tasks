@@ -263,7 +263,8 @@ body {
 .card.removing { opacity: 0; transform: scale(0.9); }
 
 .card.stamping,
-.stuck-card-d.stamping {
+.stuck-card-d.stamping,
+.cal-card.stamping {
   overflow: visible;
   z-index: 2;
   animation: stamp-card-impact 280ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;

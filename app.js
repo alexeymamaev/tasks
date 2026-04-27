@@ -1819,7 +1819,26 @@ function calCardNode(task, isClosed, todayIso) {
     }
   }
 
-  el.addEventListener('click', () => openSheet({ task }));
+  if (isClosed) {
+    el.addEventListener('click', () => openSheet({ task }));
+  } else {
+    attachLongPress(el, {
+      onTap: () => openSheet({ task }),
+      onLongPress: async () => {
+        if (el.classList.contains('stamping')) return;
+        try {
+          await playStampImpact(el, task);
+          await markDone(task.id);
+          showUndoSnackbar(task.id);
+          setTimeout(() => { renderMain().catch(showError); }, 60);
+        } catch (e) {
+          el.classList.remove('stamping');
+          if (isIdbDisconnectError(e)) { await recoverDb(); return; }
+          showError(e);
+        }
+      },
+    });
+  }
   return el;
 }
 
