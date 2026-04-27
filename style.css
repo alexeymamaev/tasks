@@ -1835,6 +1835,7 @@ body {
   padding-top: env(safe-area-inset-top, 0);
 }
 .settings-overlay.open { transform: translateX(0); }
+.settings-overlay.dragging { transition: none; }
 
 .settings-navbar {
   display: flex;

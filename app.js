@@ -3292,6 +3292,70 @@ function openSettings() {
     const right = versionRow.querySelector('.settings-row-right');
     if (right) right.textContent = v;
   });
+
+  attachSettingsSwipeBack(overlay);
+}
+
+// Edge-swipe from the left to dismiss Settings (iOS push-page convention).
+// Touch must start within 30px of the left edge; horizontal drag wins over
+// vertical only if the X delta is dominant. Drag follows the finger 1:1;
+// release past 80px (or with quick rightward velocity) closes, otherwise
+// snaps back. Doesn't fight content scroll because we only engage on
+// near-edge touches.
+function attachSettingsSwipeBack(overlay) {
+  const EDGE = 30;
+  const DIST_THRESHOLD = 80;
+  const VELOCITY_THRESHOLD = 0.5; // px/ms
+
+  let startX = 0, startY = 0, startT = 0;
+  let active = false, dragging = false;
+  let pointerId = null;
+
+  const onDown = (e) => {
+    if (e.clientX > EDGE) return;
+    pointerId = e.pointerId;
+    startX = e.clientX;
+    startY = e.clientY;
+    startT = performance.now();
+    active = true;
+    dragging = false;
+  };
+
+  const onMove = (e) => {
+    if (!active || e.pointerId !== pointerId) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    if (!dragging) {
+      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+      // Horizontal must dominate, otherwise let vertical scroll win.
+      if (Math.abs(dx) <= Math.abs(dy)) { active = false; return; }
+      dragging = true;
+      overlay.classList.add('dragging');
+      try { overlay.setPointerCapture(pointerId); } catch {}
+    }
+    const offset = Math.max(0, dx);
+    overlay.style.transform = `translateX(${offset}px)`;
+  };
+
+  const onUp = (e) => {
+    if (!active || e.pointerId !== pointerId) return;
+    const dx = Math.max(0, e.clientX - startX);
+    const dt = Math.max(1, performance.now() - startT);
+    const v = dx / dt;
+    overlay.classList.remove('dragging');
+    overlay.style.transform = '';
+    if (dragging && (dx > DIST_THRESHOLD || v > VELOCITY_THRESHOLD)) {
+      closeSettings(overlay);
+    }
+    active = false;
+    dragging = false;
+    pointerId = null;
+  };
+
+  overlay.addEventListener('pointerdown', onDown);
+  overlay.addEventListener('pointermove', onMove);
+  overlay.addEventListener('pointerup', onUp);
+  overlay.addEventListener('pointercancel', onUp);
 }
 
 function closeSettings(overlay) {
