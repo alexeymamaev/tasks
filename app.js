@@ -3380,6 +3380,7 @@ async function buildExportPayload() {
 }
 
 async function openExportSheet() {
+  if (document.querySelector('.settings-sheet-backdrop')) return;
   const backdrop = document.createElement('div');
   backdrop.className = 'picker-backdrop settings-sheet-backdrop';
 
@@ -3476,6 +3477,7 @@ function countDivider() {
 }
 
 async function openImportSheet() {
+  if (document.querySelector('.settings-sheet-backdrop')) return;
   const backdrop = document.createElement('div');
   backdrop.className = 'picker-backdrop settings-sheet-backdrop';
 
