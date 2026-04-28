@@ -861,8 +861,8 @@ function plusBtnNode() {
   btn.setAttribute('data-no-swipe', '');
   btn.appendChild(iconNode('plus'));
   btn.addEventListener('click', () => {
-    if (currentPage === 1) openSheet({ task: null });
-    else if (currentPage === 3) openTrackSheet({ track: null });
+    if (currentPage === 3) openTrackSheet({ track: null });
+    else openSheet({ task: null });
   });
   renderLucide();
   return btn;
@@ -877,8 +877,7 @@ function updateTabbarActive() {
 
 function updatePlusButton() {
   if (!plusBtnEl) return;
-  const visible = currentPage === 1 || currentPage === 3;
-  plusBtnEl.classList.toggle('visible', visible);
+  plusBtnEl.classList.add('visible');
 }
 
 function sectionDivider(label, opts) {
@@ -3445,6 +3444,69 @@ function settingsRow({ icon, label, rightText, chevron, onClick }) {
 
 // ---------- export / import ----------
 
+function attachSheetSwipeDown(sheet, close) {
+  let startY = null;
+  let lastDy = 0;
+  let dragging = false;
+  let dragStarted = false;
+  const ACTIVATE_PX = 6;
+  const CLOSE_PX = 80;
+  const isInteractive = (el) => !!(el && el.closest && el.closest('button, input, textarea, a, [role="button"]'));
+
+  sheet.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) return;
+    if (sheet.scrollTop > 0) return;
+    if (isInteractive(e.target)) return;
+    startY = e.touches[0].clientY;
+    lastDy = 0;
+    dragging = true;
+    dragStarted = false;
+  }, { passive: true });
+
+  sheet.addEventListener('touchmove', (e) => {
+    if (!dragging || startY == null) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy <= 0) {
+      if (dragStarted) {
+        sheet.style.transition = '';
+        sheet.style.transform = '';
+        dragStarted = false;
+      }
+      lastDy = 0;
+      return;
+    }
+    if (!dragStarted && dy < ACTIVATE_PX) {
+      lastDy = dy;
+      return;
+    }
+    if (!dragStarted) {
+      dragStarted = true;
+      sheet.style.transition = 'none';
+    }
+    lastDy = dy;
+    sheet.style.transform = `translateY(${dy}px)`;
+  }, { passive: true });
+
+  const finish = () => {
+    if (!dragging) return;
+    dragging = false;
+    if (dragStarted) {
+      sheet.style.transition = '';
+      if (lastDy > CLOSE_PX) {
+        close();
+      } else {
+        sheet.style.transform = '';
+      }
+    }
+    startY = null;
+    lastDy = 0;
+    dragStarted = false;
+  };
+
+  sheet.addEventListener('touchend', finish);
+  sheet.addEventListener('touchcancel', finish);
+}
+
 function todayFilenameISO() {
   const d = new Date();
   const y = d.getFullYear();
@@ -3541,6 +3603,7 @@ async function openExportSheet() {
   });
 
   document.body.appendChild(backdrop);
+  attachSheetSwipeDown(sheet, close);
   renderLucide();
   requestAnimationFrame(() => backdrop.classList.add('open'));
 }
@@ -3773,6 +3836,7 @@ async function openImportSheet() {
   };
 
   document.body.appendChild(backdrop);
+  attachSheetSwipeDown(sheet, close);
   renderPick();
   requestAnimationFrame(() => backdrop.classList.add('open'));
 }
