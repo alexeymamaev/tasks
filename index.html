@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0D0A08">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>Tasks</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
@@ -17,21 +17,6 @@
 <body>
   <div id="app"></div>
   <script>
-    // iOS PWA standalone cold-start: inset:0 is computed against a short
-    // viewport until first touch. Re-touching the viewport meta forces iOS
-    // to recompute viewport-fit=cover and the body snaps to full physical height.
-    function nudgeViewport() {
-      const m = document.querySelector('meta[name="viewport"]');
-      if (!m) return;
-      const c = m.getAttribute('content');
-      m.setAttribute('content', c + ', ');
-      requestAnimationFrame(() => m.setAttribute('content', c));
-    }
-    requestAnimationFrame(nudgeViewport);
-    setTimeout(nudgeViewport, 100);
-    window.addEventListener('pageshow', nudgeViewport);
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) nudgeViewport(); });
-
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
     }
