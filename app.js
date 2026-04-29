@@ -4199,7 +4199,13 @@ async function syncWithWiki() {
   if (added) parts.push(`+${added}`);
   if (downloaded) parts.push(`↓${downloaded}`);
   if (uploaded) parts.push(`↑${uploaded}`);
-  showSnackbar({ label: parts.length ? `Синк: ${parts.join(' ')}` : 'Синк: всё в одном состоянии' });
+  // Use the wide top-banner instead of the bottom snackbar — the snackbar
+  // sits at bottom: 96px and is easy to miss; the banner is full-width with
+  // z-index 9999 and a bright green background for variant: ok.
+  showBanner(
+    parts.length ? `Синк: ${parts.join(' ')}` : 'Синк: всё в одном состоянии',
+    { variant: 'ok', autoHide: 5000 },
+  );
 }
 
 function openWikiTokenSheet(onSaved) {
