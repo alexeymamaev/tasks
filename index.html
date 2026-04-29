@@ -2,10 +2,35 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
+  <script>
+    // iOS PWA standalone cold-start: WebKit reads the layout viewport before
+    // it has reconciled the home-indicator inset, leaving #app short by ~34px
+    // until first touch. Feed #app's height from JS so we can refresh it after
+    // pageshow + double-rAF (the moment WebKit settles standalone insets).
+    (function () {
+      function setH() {
+        var h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+        document.documentElement.style.setProperty('--app-height', h + 'px');
+      }
+      setH();
+      window.addEventListener('resize', setH);
+      window.addEventListener('orientationchange', setH);
+      window.addEventListener('pageshow', setH);
+      window.addEventListener('load', setH);
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', setH);
+        window.visualViewport.addEventListener('scroll', setH);
+      }
+      window.addEventListener('pageshow', function () {
+        requestAnimationFrame(function () { requestAnimationFrame(setH); });
+      });
+    })();
+  </script>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0D0A08">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Tasks">
   <title>Tasks</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">

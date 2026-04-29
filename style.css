@@ -33,22 +33,29 @@
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { margin: 0; padding: 0; height: 100%; }
+html, body { margin: 0; padding: 0; }
+
 html {
   background: var(--bg-bot) linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 55%, var(--bg-bot) 100%);
+  background-attachment: fixed;
+  min-height: 100dvh;
+  min-height: var(--app-height, 100dvh);
 }
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
   color: var(--text);
   background: transparent;
-  overflow: hidden;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: none;
+  min-height: 100dvh;
+  min-height: var(--app-height, 100dvh);
 }
 
-#app { height: 100%; }
+#app { min-height: 100dvh; min-height: var(--app-height, 100dvh); }
+
 #app.app-root {
-  height: 100%;
+  height: var(--app-height, 100dvh);
   overflow: hidden;
   position: relative;
 }

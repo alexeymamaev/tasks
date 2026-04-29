@@ -831,8 +831,13 @@ function setPage(idx, animate = true) {
   if (!animate) requestAnimationFrame(() => pagerEl.classList.remove('no-anim'));
   updateTabbarActive();
   updatePlusButton();
+  // Defer destination-page render past the transform commit. Without this,
+  // a dirty page rebuilds DOM on the same tick as the swipe transform,
+  // blocking paint and stretching tab tap → motion to ~1s.
   if (pagesDirty[currentPage]) {
-    renderPage(currentPage).catch(showError);
+    requestAnimationFrame(() => {
+      renderPage(currentPage).catch(showError);
+    });
   } else if (currentPage === 2) {
     // Calendar always opens with today as the leftmost visible column. Skip
     // when we just rendered (renderCalendar handles the scroll itself).
@@ -860,7 +865,7 @@ function tabbarNode() {
     const lbl = document.createElement('span');
     lbl.textContent = t.label;
     tab.appendChild(lbl);
-    tab.addEventListener('click', () => setPage(t.idx));
+    tab.addEventListener('pointerdown', () => setPage(t.idx));
     wrap.appendChild(tab);
   }
   renderLucide();
