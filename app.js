@@ -183,10 +183,7 @@ function daysBetweenIso(fromIso, toIso) {
 function stuckFromActive(active, now = new Date()) {
   return active.filter(t => isStuckNow(t, now))
     .sort((a, b) => {
-      // Oldest deadline first (most overdue on top). first_stuck_at is unreliable
-      // for ordering: sweep can only set it to "today" when the user first opens
-      // the app, even if the task was overdue much earlier — so a task missed
-      // for a week and a task missed yesterday land on the same day.
+      // Oldest deadline first (most overdue on top).
       const ad = a.deadline || '9999-12-31';
       const bd = b.deadline || '9999-12-31';
       if (ad !== bd) return ad < bd ? -1 : 1;
@@ -197,24 +194,6 @@ function stuckFromActive(active, now = new Date()) {
 function freshFromActive(active, now = new Date()) {
   return active.filter(t => isFreshForToday(t, now))
     .sort((a, b) => a.created_at - b.created_at);
-}
-
-// Interpretation C: sticky first_stuck_at, set once when task first transitions
-// into stuck state. Sweep on every Today render to catch newly-stuck tasks.
-// Also: clean up misfired "first_stuck_at=today" for tasks that turned out fresh
-// (e.g., created today but briefly misclassified by a buggy earlier rule).
-async function sweepStuckTimestamps(active, now = new Date()) {
-  const today = todayISO();
-  const updates = [];
-  for (const t of active) {
-    const stuck = isStuckNow(t, now);
-    if (stuck && !t.first_stuck_at) {
-      updates.push(db.tasks.update(t.id, { first_stuck_at: today }));
-    } else if (!stuck && t.first_stuck_at === today) {
-      updates.push(db.tasks.update(t.id, { first_stuck_at: null }));
-    }
-  }
-  if (updates.length) await Promise.all(updates);
 }
 
 async function listJournal() {
@@ -267,11 +246,11 @@ function groupByDay(tasks) {
 }
 
 async function markDone(id) {
-  await db.tasks.update(id, { done_at: Date.now(), first_stuck_at: null });
+  await db.tasks.update(id, { done_at: Date.now() });
 }
 
 async function undoDone(id) {
-  await db.tasks.update(id, { done_at: 0, first_stuck_at: null });
+  await db.tasks.update(id, { done_at: 0 });
 }
 
 // ---------- tracks ----------
@@ -1145,9 +1124,6 @@ function ageColorVar(days) {
 }
 
 function stuckBlockNode(task, tracksById) {
-  // Days overdue, derived from deadline. first_stuck_at can't be trusted for
-  // display: sweep sets it to "today" the first time the app sees the task as
-  // stuck, which loses the real transition day for tasks missed across days.
   const days = task.deadline
     ? Math.max(1, daysBetweenIso(task.deadline, todayISO()))
     : 1;
@@ -1481,7 +1457,6 @@ function buildSplitBar(task) {
             track_id: orig.track_id || null,
             created_at: now,
             done_at: 0,
-            first_stuck_at: null,
             blocker: null,
           });
           newIds.push(id);
@@ -1670,11 +1645,6 @@ async function renderToday() {
   let active, tracks;
   try {
     [active, tracks] = await Promise.all([listActive(), listTracks()]);
-    // Sweep transitions into/out of stuck *after* we've got the list — the
-    // helpers below re-derive from the same `active`, so any DB updates the
-    // sweep makes apply on the next render. This avoids a flicker where a
-    // task changes section between sweep and read.
-    await sweepStuckTimestamps(active, now);
   } catch (e) {
     if (isIdbDisconnectError(e)) { await recoverDb(); return; }
     showError(e);
