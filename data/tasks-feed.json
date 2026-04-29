@@ -107,10 +107,10 @@
       "track_name": "БТМ: Сайт",
       "deadline": "2026-04-28",
       "created_at": "2026-04-22",
-      "done_at": null,
+      "done_at": "2026-04-29",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1776830685644
+      "updated_at": 1777461307092
     },
     {
       "id": "0cd4fa884d39",
@@ -217,10 +217,10 @@
       "track_name": "Оплата счетов",
       "deadline": "2026-04-28",
       "created_at": "2026-04-25",
-      "done_at": null,
+      "done_at": "2026-04-29",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1777143138536
+      "updated_at": 1777461303807
     },
     {
       "id": "995789b418e1",
@@ -305,10 +305,10 @@
       "track_name": "БТМ: Сайт",
       "deadline": "2026-04-28",
       "created_at": "2026-04-28",
-      "done_at": null,
+      "done_at": "2026-04-29",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1777353309152
+      "updated_at": 1777461308963
     }
   ],
   "tracks": [
