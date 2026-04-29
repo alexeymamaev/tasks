@@ -34,14 +34,18 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; padding: 0; }
-html { background: var(--bg-bot); }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
-  color: var(--text);
+html {
   background: var(--bg-bot) linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 55%, var(--bg-bot) 100%);
   background-attachment: fixed;
   min-height: 100vh;
-  min-height: 100svh;
+  min-height: 100dvh;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  color: var(--text);
+  background: transparent;
+  min-height: 100vh;
+  min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: none;
 }
