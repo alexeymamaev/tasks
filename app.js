@@ -3305,30 +3305,29 @@ function openSettings() {
   });
   wikiCard.appendChild(tokenRow);
   wikiCard.appendChild(settingsDivider());
-  const syncRow = settingsRow({
-    icon: 'refresh-cw',
-    label: 'Синк с вики',
-    chevron: true,
-    onClick: () => {},
-  });
-  const syncLabelEl = syncRow.querySelector('.settings-row-label');
   let syncing = false;
-  syncRow.addEventListener('click', async () => {
+  let syncRow;
+  const handleSyncClick = async () => {
     if (syncing) return;
     syncing = true;
-    const original = syncLabelEl ? syncLabelEl.textContent : 'Синк с вики';
-    if (syncLabelEl) syncLabelEl.textContent = 'Синхронизирую…';
+    const lbl = syncRow ? syncRow.querySelector('.settings-row-label') : null;
+    const original = lbl ? lbl.textContent : 'Синк с вики';
+    if (lbl) lbl.textContent = 'Синхронизирую…';
+    showBanner('Запускаю синк…', { variant: 'info', autoHide: 3000 });
     try {
       await syncWithWiki();
     } catch (e) {
-      // Outer safety net — syncWithWiki has its own showError, but if anything
-      // slips past (e.g. ReferenceError from stale cache), surface it via the
-      // err-bar (z-index 9999, visible above the Settings overlay).
       showError(e);
     } finally {
       syncing = false;
-      if (syncLabelEl) syncLabelEl.textContent = original;
+      if (lbl) lbl.textContent = original;
     }
+  };
+  syncRow = settingsRow({
+    icon: 'refresh-cw',
+    label: 'Синк с вики',
+    chevron: true,
+    onClick: handleSyncClick,
   });
   wikiCard.appendChild(syncRow);
   wikiSec.appendChild(wikiCard);
