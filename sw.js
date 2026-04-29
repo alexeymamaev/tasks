@@ -1,4 +1,4 @@
-const CACHE = 'tasks-v1-85';
+const CACHE = 'tasks-v1-86';
 const ASSETS = [
   './',
   'index.html',
@@ -23,6 +23,10 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
+  // Wiki sync hits api.github.com with auth — never cache, always go to network.
+  // Caching authed responses leaks tokens between sessions and serves stale feeds.
+  const url = new URL(e.request.url);
+  if (url.host === 'api.github.com') return;
   e.respondWith(
     caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
       const copy = res.clone();

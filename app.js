@@ -3290,6 +3290,34 @@ function openSettings() {
   dataSec.appendChild(hint);
   content.appendChild(dataSec);
 
+  // Section: WIKI
+  const wikiSec = settingsSection('WIKI');
+  const wikiCard = settingsCard();
+  const tokenRow = settingsRow({
+    icon: 'key-round',
+    label: 'GitHub токен',
+    rightText: getWikiToken() ? '••••' : 'не задан',
+    chevron: true,
+    onClick: () => openWikiTokenSheet(() => {
+      const r = tokenRow.querySelector('.settings-row-right');
+      if (r) r.textContent = getWikiToken() ? '••••' : 'не задан';
+    }),
+  });
+  wikiCard.appendChild(tokenRow);
+  wikiCard.appendChild(settingsDivider());
+  wikiCard.appendChild(settingsRow({
+    icon: 'refresh-cw',
+    label: 'Синк с вики',
+    chevron: true,
+    onClick: syncWithWiki,
+  }));
+  wikiSec.appendChild(wikiCard);
+  const wikiHint = document.createElement('div');
+  wikiHint.className = 'settings-hint';
+  wikiHint.textContent = 'Двусторонняя синхронизация с daily/daily-tasks.md в вики через GitHub API. Last-write-wins по updated_at.';
+  wikiSec.appendChild(wikiHint);
+  content.appendChild(wikiSec);
+
   // Section: ВНЕШНИЙ ВИД
   const themeSec = settingsSection('ВНЕШНИЙ ВИД');
   const themeCard = settingsCard();
@@ -3881,6 +3909,342 @@ function plzTrack(n) {
   if (m10 === 1) return 'трек';
   if (m10 >= 2 && m10 <= 4) return 'трека';
   return 'треков';
+}
+
+// ---------- wiki sync ----------
+
+const WIKI_REPO = 'alexeymamaev/tasks';
+const WIKI_FEED_PATH = 'data/tasks-feed.json';
+const WIKI_TOKEN_KEY = 'tasks.wiki_pat';
+
+function getWikiToken() {
+  try { return localStorage.getItem(WIKI_TOKEN_KEY) || ''; } catch { return ''; }
+}
+function setWikiToken(v) {
+  try {
+    if (v) localStorage.setItem(WIKI_TOKEN_KEY, v);
+    else localStorage.removeItem(WIKI_TOKEN_KEY);
+  } catch {}
+}
+
+// Track name → kebab-case slug. Mirror of slugify() in scripts/sync_wiki.py;
+// keep both in lockstep or tag↔track resolution breaks.
+function slugifyTrackName(name) {
+  let s = (name || '').trim().toLowerCase();
+  s = s.replace(/[^\p{L}\p{N}\s-]/gu, '');
+  s = s.replace(/[\s_]+/g, '-');
+  s = s.replace(/-+/g, '-').replace(/^-+|-+$/g, '');
+  return s;
+}
+
+// ms timestamp → 'YYYY-MM-DD'. Used for feed-shaped tasks (wiki cares about
+// the day, not the exact moment).
+function msToIsoDate(ms) {
+  if (!ms) return null;
+  const d = new Date(ms);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// 'YYYY-MM-DD' → ms (start of local day). Inverse of msToIsoDate, lossy
+// (drops time of day) — fine since the feed never carried it.
+function isoDateToMs(s) {
+  if (!s) return 0;
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(y, m - 1, d).getTime();
+}
+
+function utf8ToBase64(s) {
+  const bytes = new TextEncoder().encode(s);
+  let bin = '';
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin);
+}
+function base64ToUtf8(b64) {
+  const bin = atob(b64.replace(/\s/g, ''));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+
+// Convert a feed task (canonical, ISO dates) into a local Dexie record.
+function feedToLocal(fe, trackByName) {
+  const track = fe.track_name ? trackByName.get(fe.track_name) : null;
+  return {
+    icon: matchIcons(fe.text, 1)[0]?.name || DEFAULT_ICON,
+    text: fe.text,
+    notes: fe.notes || '',
+    deadline: fe.deadline || null,
+    track_id: track ? track.id : null,
+    created_at: isoDateToMs(fe.created_at) || Date.now(),
+    done_at: isoDateToMs(fe.done_at) || 0,
+    deleted_at: isoDateToMs(fe.deleted_at) || 0,
+    blocker: null,
+    external_id: fe.id,
+    updated_at: fe.updated_at || Date.now(),
+  };
+}
+
+// Same shape, returned as a partial patch for db.tasks.update().
+function feedToLocalPatch(fe, trackByName) {
+  const track = fe.track_name ? trackByName.get(fe.track_name) : null;
+  return {
+    text: fe.text,
+    notes: fe.notes || '',
+    deadline: fe.deadline || null,
+    track_id: track ? track.id : null,
+    done_at: isoDateToMs(fe.done_at) || 0,
+    deleted_at: isoDateToMs(fe.deleted_at) || 0,
+    external_id: fe.id,
+    updated_at: fe.updated_at || Date.now(),
+  };
+}
+
+// Local Dexie record → feed-shaped task. Used when PWA-side wins.
+function localToFeed(lo, tracksById) {
+  const track = lo.track_id ? tracksById.get(lo.track_id) : null;
+  return {
+    id: lo.external_id,
+    text: lo.text,
+    track_name: track ? track.name : null,
+    deadline: lo.deadline || null,
+    created_at: msToIsoDate(lo.created_at) || msToIsoDate(Date.now()),
+    done_at: msToIsoDate(lo.done_at) || null,
+    deleted_at: msToIsoDate(lo.deleted_at) || null,
+    notes: lo.notes || '',
+    updated_at: lo.updated_at || lo.created_at || Date.now(),
+  };
+}
+
+// Stable-from-text fallback id (matches sync_wiki.py.stable_id_from_text).
+async function sha1Hex12(s) {
+  const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 12);
+}
+
+async function syncWithWiki() {
+  const pat = getWikiToken();
+  if (!pat) {
+    showError(new Error('Сначала задай GitHub токен в Settings → WIKI'));
+    return;
+  }
+  const apiUrl = `https://api.github.com/repos/${WIKI_REPO}/contents/${WIKI_FEED_PATH}`;
+  let getRes;
+  try {
+    getRes = await fetch(apiUrl, {
+      headers: {
+        Authorization: `Bearer ${pat}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+    });
+  } catch (e) {
+    showError(new Error('Сеть: ' + e.message));
+    return;
+  }
+  if (!getRes.ok) {
+    showError(new Error(`GET feed: ${getRes.status} ${getRes.statusText}`));
+    return;
+  }
+  const meta = await getRes.json();
+  let feed;
+  try {
+    feed = JSON.parse(base64ToUtf8(meta.content));
+  } catch (e) {
+    showError(new Error('Неверный JSON фида: ' + e.message));
+    return;
+  }
+  const feedSha = meta.sha;
+
+  // Load local raw (no isLive filter — we sync tombstones too)
+  const [localTasks, localTracks] = await Promise.all([
+    db.tasks.toArray(),
+    db.tracks.toArray(),
+  ]);
+  const tracksByName = new Map(localTracks.map(t => [t.name, t]));
+  const tracksById = new Map(localTracks.map(t => [t.id, t]));
+
+  // Stamp external_id on any local task missing one (legacy v3 record).
+  for (const t of localTasks) {
+    if (!t.external_id && t.text) {
+      t.external_id = await sha1Hex12(t.text);
+    }
+  }
+
+  const localByExt = new Map();
+  for (const t of localTasks) {
+    if (t.external_id) localByExt.set(t.external_id, t);
+  }
+
+  const feedTasksOut = [];
+  const localOps = []; // { kind, id?, task?, patch? }
+  let added = 0, downloaded = 0, uploaded = 0;
+  const seenExt = new Set();
+
+  for (const fe of (feed.tasks || [])) {
+    seenExt.add(fe.id);
+    const lo = localByExt.get(fe.id);
+    if (!lo) {
+      added++;
+      localOps.push({ kind: 'add', task: feedToLocal(fe, tracksByName) });
+      feedTasksOut.push(fe);
+      continue;
+    }
+    const lu = lo.updated_at || lo.created_at || 0;
+    const fu = fe.updated_at || 0;
+    if (fu > lu) {
+      downloaded++;
+      localOps.push({ kind: 'update', id: lo.id, patch: feedToLocalPatch(fe, tracksByName) });
+      feedTasksOut.push(fe);
+    } else if (lu > fu) {
+      uploaded++;
+      feedTasksOut.push(localToFeed(lo, tracksById));
+    } else {
+      feedTasksOut.push(fe);
+    }
+  }
+
+  // Local tasks not represented in feed → push, and stamp external_id back
+  for (const lo of localTasks) {
+    if (!lo.external_id) continue;
+    if (seenExt.has(lo.external_id)) continue;
+    uploaded++;
+    feedTasksOut.push(localToFeed(lo, tracksById));
+    if (lo.external_id) {
+      localOps.push({
+        kind: 'update',
+        id: lo.id,
+        patch: { external_id: lo.external_id, updated_at: lo.updated_at || Date.now() },
+      });
+    }
+  }
+
+  // Apply local ops
+  try {
+    await db.transaction('rw', db.tasks, async () => {
+      for (const op of localOps) {
+        if (op.kind === 'add') await db.tasks.add(op.task);
+        else await db.tasks.update(op.id, op.patch);
+      }
+    });
+  } catch (e) {
+    if (isIdbDisconnectError(e)) await recoverDb();
+    else showError(e);
+    return;
+  }
+
+  // Build new feed payload
+  const newFeed = {
+    schema: 1,
+    generated_at: new Date().toISOString().slice(0, 10),
+    tasks: feedTasksOut,
+    tracks: localTracks.map(t => ({
+      name: t.name,
+      category: t.category || 'personal',
+      icon: t.icon || null,
+      position: t.position || 0,
+    })),
+  };
+
+  // PUT updated feed (only if anything changed)
+  const changed = uploaded > 0 || added > 0 || downloaded > 0;
+  if (changed) {
+    const putBody = {
+      message: 'PWA sync',
+      content: utf8ToBase64(JSON.stringify(newFeed, null, 2) + '\n'),
+      sha: feedSha,
+    };
+    let putRes;
+    try {
+      putRes = await fetch(apiUrl, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${pat}`,
+          Accept: 'application/vnd.github+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(putBody),
+      });
+    } catch (e) {
+      showError(new Error('Сеть PUT: ' + e.message));
+      return;
+    }
+    if (!putRes.ok) {
+      const text = await putRes.text().catch(() => '');
+      showError(new Error(`PUT feed: ${putRes.status} ${putRes.statusText} ${text}`));
+      return;
+    }
+  }
+
+  await renderMain();
+  const parts = [];
+  if (added) parts.push(`+${added}`);
+  if (downloaded) parts.push(`↓${downloaded}`);
+  if (uploaded) parts.push(`↑${uploaded}`);
+  showSnackbar({ label: parts.length ? `Синк: ${parts.join(' ')}` : 'Синк: всё в одном состоянии' });
+}
+
+function openWikiTokenSheet(onSaved) {
+  if (document.querySelector('.settings-sheet-backdrop')) return;
+  const backdrop = document.createElement('div');
+  backdrop.className = 'picker-backdrop settings-sheet-backdrop';
+  const sheet = document.createElement('div');
+  sheet.className = 'picker-sheet settings-sheet';
+  backdrop.appendChild(sheet);
+
+  const handle = document.createElement('div');
+  handle.className = 'sheet-handle';
+  sheet.appendChild(handle);
+
+  const head = document.createElement('div');
+  head.className = 'settings-sheet-head';
+  const h = document.createElement('div');
+  h.className = 'settings-sheet-title';
+  h.textContent = 'GitHub токен';
+  const sub = document.createElement('div');
+  sub.className = 'settings-sheet-sub';
+  sub.textContent = `Personal Access Token со scope «repo» — для чтения и записи ${WIKI_FEED_PATH}.`;
+  head.append(h, sub);
+  sheet.appendChild(head);
+
+  const inputWrap = document.createElement('div');
+  inputWrap.className = 'sheet-input-wrap';
+  inputWrap.style.margin = '0 16px';
+  const input = document.createElement('input');
+  input.type = 'password';
+  input.autocomplete = 'off';
+  input.spellcheck = false;
+  input.placeholder = 'ghp_…';
+  input.value = getWikiToken();
+  input.className = 'sheet-text';
+  inputWrap.appendChild(input);
+  sheet.appendChild(inputWrap);
+
+  const cta = document.createElement('button');
+  cta.type = 'button';
+  cta.className = 'sheet-finish';
+  const label = document.createElement('span');
+  label.textContent = 'Сохранить';
+  cta.appendChild(label);
+  sheet.appendChild(cta);
+
+  const close = () => {
+    backdrop.classList.remove('open');
+    setTimeout(() => backdrop.remove(), 200);
+  };
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
+  cta.addEventListener('click', () => {
+    setWikiToken(input.value.trim());
+    if (typeof onSaved === 'function') onSaved();
+    close();
+  });
+
+  document.body.appendChild(backdrop);
+  attachSheetSwipeDown(sheet, close);
+  renderLucide();
+  requestAnimationFrame(() => {
+    backdrop.classList.add('open');
+    input.focus();
+  });
 }
 
 // ---------- boot ----------
