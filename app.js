@@ -80,6 +80,31 @@ db.version(3).stores({
     track.last_used_at = lastUsed.get(track.id) ?? track.created_at ?? 0;
   });
 });
+// v4: wiki sync — external_id (correlation), updated_at (last-write-wins),
+// deleted_at (soft-delete tombstone, propagated to wiki on next sync).
+db.version(4).stores({
+  tasks: '++id, done_at, created_at, track_id, external_id, deleted_at',
+  tracks: '++id, category, last_used_at',
+}).upgrade(async tx => {
+  await tx.table('tasks').toCollection().modify(t => {
+    if (t.updated_at == null) t.updated_at = t.created_at || Date.now();
+    if (t.deleted_at == null) t.deleted_at = 0;
+  });
+});
+
+// Auto-bump updated_at on every task mutation. Sync code passes an explicit
+// updated_at to skip the bump (so inbound merges don't loop back as outbound
+// changes on the next sync).
+db.tasks.hook('creating', (_primKey, obj) => {
+  if (obj.updated_at == null) obj.updated_at = Date.now();
+  if (obj.deleted_at == null) obj.deleted_at = 0;
+});
+db.tasks.hook('updating', (mods) => {
+  if (!('updated_at' in mods)) {
+    return { ...mods, updated_at: Date.now() };
+  }
+  return mods;
+});
 
 async function ensureDbOpen() {
   if (db.isOpen()) return;
@@ -113,8 +138,13 @@ window.addEventListener('pageshow', () => { ensureDbOpen().catch(() => {}); });
 
 // ---------- data ops ----------
 
+// Soft-deleted tasks are kept in the table as tombstones for sync but excluded
+// from every UI read path. Once sync confirms the deletion has propagated to
+// wiki, a future cleanup job can prune old tombstones.
+const isLive = t => !t.deleted_at;
+
 async function listActive() {
-  const arr = await db.tasks.where('done_at').equals(0).toArray();
+  const arr = await db.tasks.where('done_at').equals(0).filter(isLive).toArray();
   arr.sort((a, b) => {
     const ad = a.deadline || '';
     const bd = b.deadline || '';
@@ -200,20 +230,22 @@ async function listJournal() {
   const start = startOfTodayMs();
   const arr = await db.tasks
     .where('done_at').above(0)
-    .filter(t => t.done_at >= start)
+    .filter(t => isLive(t) && t.done_at >= start)
     .toArray();
   arr.sort((a, b) => b.done_at - a.done_at);
   return arr;
 }
 
 async function listAllDone() {
-  const arr = await db.tasks.where('done_at').above(0).toArray();
+  const arr = await db.tasks.where('done_at').above(0).filter(isLive).toArray();
   arr.sort((a, b) => b.done_at - a.done_at);
   return arr;
 }
 
 async function deleteAllDone() {
-  await db.tasks.where('done_at').above(0).delete();
+  // Soft-delete so wiki sync propagates the removal. Hook bumps updated_at.
+  const now = Date.now();
+  await db.tasks.where('done_at').above(0).modify({ deleted_at: now });
 }
 
 function dayKey(ts) {
@@ -318,7 +350,7 @@ async function updateTrack(id, patch) {
 // Single-scan version: one toArray over tasks, group by track_id. Replaces an
 // N+1 pattern (trackStats per track) on the Tracks page.
 async function trackStatsAll() {
-  const tasks = await db.tasks.toArray();
+  const tasks = await db.tasks.filter(isLive).toArray();
   const stats = new Map();
   for (const t of tasks) {
     if (!t.track_id) continue;
@@ -331,13 +363,13 @@ async function trackStatsAll() {
 }
 
 async function listTasksByTrack(trackId) {
-  return db.tasks.where('track_id').equals(trackId).toArray();
+  return db.tasks.where('track_id').equals(trackId).filter(isLive).toArray();
 }
 
 // Active tasks with no track. Dexie indexes don't include null/undefined,
 // so we pull active and filter in JS — fine for the small dataset.
 async function listUnassignedActive() {
-  const active = await db.tasks.where('done_at').equals(0).toArray();
+  const active = await db.tasks.where('done_at').equals(0).filter(isLive).toArray();
   return active.filter(t => !t.track_id).sort((a, b) => b.created_at - a.created_at);
 }
 
@@ -1461,17 +1493,19 @@ function buildSplitBar(task) {
           });
           newIds.push(id);
         }
-        await db.tasks.delete(task.id);
+        await db.tasks.update(task.id, { deleted_at: now });
       });
       splittingTaskId = null;
       showSnackbar({
         label: `Разделено на ${values.length}`,
         onUndo: async () => {
+          const undoTs = Date.now();
           await db.transaction('rw', db.tasks, async () => {
             for (const id of newIds) {
-              try { await db.tasks.delete(id); } catch {}
+              try { await db.tasks.update(id, { deleted_at: undoTs }); } catch {}
             }
-            await db.tasks.add(orig);
+            // Restore the original by clearing its tombstone instead of re-adding.
+            await db.tasks.update(orig.id, { deleted_at: 0 });
           });
           await renderMain();
         },
@@ -2457,7 +2491,9 @@ function openSheet({ task }) {
       },
       onDelete: async () => {
         sheetOpen = false;
-        try { await db.tasks.delete(task.id); } catch (e) {
+        try {
+          await db.tasks.update(task.id, { deleted_at: Date.now() });
+        } catch (e) {
           if (isIdbDisconnectError(e)) await recoverDb();
           else showError(e);
         }
