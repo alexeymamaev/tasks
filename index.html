@@ -17,6 +17,23 @@
 <body>
   <div id="app"></div>
   <script>
+    // iOS PWA standalone cold-start: window.innerHeight is sometimes ~50px
+    // short on first paint and snaps to correct value only after a touch.
+    // Pin body to the live innerHeight, re-fit on every event that can change it.
+    function fitToViewport() {
+      document.body.style.height = window.innerHeight + 'px';
+    }
+    fitToViewport();
+    window.addEventListener('load', fitToViewport);
+    window.addEventListener('pageshow', fitToViewport);
+    window.addEventListener('resize', fitToViewport);
+    window.addEventListener('orientationchange', () => requestAnimationFrame(fitToViewport));
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) fitToViewport(); });
+    // Cold-start retries — iOS sometimes reports wrong innerHeight until next frame
+    requestAnimationFrame(fitToViewport);
+    setTimeout(fitToViewport, 100);
+    setTimeout(fitToViewport, 500);
+
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
     }
