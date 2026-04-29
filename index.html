@@ -3,13 +3,18 @@
 <head>
   <meta charset="utf-8">
   <script>
-    // iOS PWA standalone cold-start: WebKit reads the layout viewport before
-    // it has reconciled the home-indicator inset, leaving #app short by ~34px
-    // until first touch. Feed #app's height from JS so we can refresh it after
-    // pageshow + double-rAF (the moment WebKit settles standalone insets).
+    // iOS PWA standalone cold-start: WebKit's layout viewport reads short by
+    // ~34px (home-indicator inset) until first touch. innerHeight and
+    // visualViewport.height both inherit this short value. screen.height
+    // bypasses that — it's the device's physical CSS-pixel height and is
+    // stable from first paint. We use the larger of the two for --app-height
+    // so #app is never short on cold-start; once WebKit settles, measured
+    // climbs to match screen.height and the value stops moving.
     (function () {
       function setH() {
-        var h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+        var measured = (window.visualViewport && window.visualViewport.height) || window.innerHeight || 0;
+        var screenH = (window.screen && window.screen.height) || 0;
+        var h = Math.max(measured, screenH);
         document.documentElement.style.setProperty('--app-height', h + 'px');
       }
       setH();
@@ -17,12 +22,28 @@
       window.addEventListener('orientationchange', setH);
       window.addEventListener('pageshow', setH);
       window.addEventListener('load', setH);
+      window.addEventListener('touchstart', setH, { passive: true, once: true });
       if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', setH);
         window.visualViewport.addEventListener('scroll', setH);
       }
-      window.addEventListener('pageshow', function () {
-        requestAnimationFrame(function () { requestAnimationFrame(setH); });
+      // After WebKit's load+pageshow settle, force a tiny programmatic scroll
+      // on a temporarily-tall body. This kicks WebKit into reconciling the
+      // standalone layout viewport BEFORE the user has to pull, so position:
+      // fixed elements (the tab bar) anchor to the correct bottom edge from
+      // the first paint a human will see.
+      function nudgeScroll() {
+        var prev = document.body.style.minHeight;
+        document.body.style.minHeight = '200vh';
+        window.scrollTo(0, 1);
+        requestAnimationFrame(function () {
+          window.scrollTo(0, 0);
+          document.body.style.minHeight = prev;
+          setH();
+        });
+      }
+      window.addEventListener('load', function () {
+        requestAnimationFrame(function () { requestAnimationFrame(nudgeScroll); });
       });
     })();
   </script>
