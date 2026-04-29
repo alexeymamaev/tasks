@@ -108,7 +108,7 @@ body {
    * is short — leaving the bar floating above the actual screen bottom until
    * first touch. Top-positioned with --app-height (= screen.height) is stable
    * from first paint. */
-  top: calc(var(--app-height, 100dvh) - 71px);
+  top: calc(var(--app-height, 100dvh) - 86px);
   left: 16px;
   display: flex;
   align-items: center;
@@ -160,7 +160,7 @@ body {
   position: fixed;
   /* Same reasoning as .tabbar-capsule: anchor via top + --app-height to escape
    * the cold-start layout-viewport short-read. 60px height + 8px gap = 68px. */
-  top: calc(var(--app-height, 100dvh) - 68px);
+  top: calc(var(--app-height, 100dvh) - 83px);
   right: 16px;
   width: 60px;
   height: 60px;
