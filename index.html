@@ -17,22 +17,20 @@
 <body>
   <div id="app"></div>
   <script>
-    // iOS PWA standalone cold-start: window.innerHeight is sometimes ~50px
-    // short on first paint and snaps to correct value only after a touch.
-    // Pin body to the live innerHeight, re-fit on every event that can change it.
-    function fitToViewport() {
-      document.body.style.height = window.innerHeight + 'px';
+    // iOS PWA standalone cold-start: inset:0 is computed against a short
+    // viewport until first touch. Re-touching the viewport meta forces iOS
+    // to recompute viewport-fit=cover and the body snaps to full physical height.
+    function nudgeViewport() {
+      const m = document.querySelector('meta[name="viewport"]');
+      if (!m) return;
+      const c = m.getAttribute('content');
+      m.setAttribute('content', c + ', ');
+      requestAnimationFrame(() => m.setAttribute('content', c));
     }
-    fitToViewport();
-    window.addEventListener('load', fitToViewport);
-    window.addEventListener('pageshow', fitToViewport);
-    window.addEventListener('resize', fitToViewport);
-    window.addEventListener('orientationchange', () => requestAnimationFrame(fitToViewport));
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) fitToViewport(); });
-    // Cold-start retries — iOS sometimes reports wrong innerHeight until next frame
-    requestAnimationFrame(fitToViewport);
-    setTimeout(fitToViewport, 100);
-    setTimeout(fitToViewport, 500);
+    requestAnimationFrame(nudgeViewport);
+    setTimeout(nudgeViewport, 100);
+    window.addEventListener('pageshow', nudgeViewport);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) nudgeViewport(); });
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
