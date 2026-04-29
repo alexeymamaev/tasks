@@ -36,24 +36,22 @@
 html, body { margin: 0; padding: 0; }
 html {
   background: var(--bg-bot) linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 55%, var(--bg-bot) 100%);
-  background-attachment: fixed;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100%;
 }
 body {
+  position: fixed;
+  inset: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
   color: var(--text);
   background: transparent;
-  min-height: 100vh;
-  min-height: 100dvh;
+  overflow: hidden;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: none;
 }
 
-#app { min-height: 100vh; min-height: 100svh; }
+#app { height: 100%; }
 #app.app-root {
-  height: 100vh;
-  height: 100svh;
+  height: 100%;
   overflow: hidden;
   position: relative;
 }
@@ -189,8 +187,7 @@ body {
 .top-region {
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 100px);
-  min-height: calc(100svh - 100px);
+  min-height: calc(100% - 100px);
   padding-top: calc(env(safe-area-inset-top, 0) + 24px);
 }
 .top-region > .active-grid,
