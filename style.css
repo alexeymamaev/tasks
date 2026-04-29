@@ -36,8 +36,7 @@
 html, body { margin: 0; padding: 0; }
 
 html {
-  background: var(--bg-bot) linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 55%, var(--bg-bot) 100%);
-  background-attachment: fixed;
+  background: var(--bg-bot);
   min-height: 100dvh;
   min-height: var(--app-height, 100dvh);
 }
@@ -50,6 +49,22 @@ body {
   overscroll-behavior-y: none;
   min-height: 100dvh;
   min-height: var(--app-height, 100dvh);
+}
+
+/* Gradient lives on its own fixed element with EXPLICIT height = --app-height
+ * (sourced from screen.height when the layout viewport reads short on iOS PWA
+ * cold-start). This bypasses background-attachment: fixed, which on iOS would
+ * anchor to the short layout viewport and leave the bottom unpainted until
+ * WebKit reconciles after first touch. */
+.bg-fill {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: var(--app-height, 100dvh);
+  background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 55%, var(--bg-bot) 100%);
+  z-index: -1;
+  pointer-events: none;
 }
 
 #app { min-height: 100dvh; min-height: var(--app-height, 100dvh); }
@@ -88,7 +103,12 @@ body {
 
 .tabbar-capsule {
   position: fixed;
-  bottom: 4px;
+  /* Anchor to physical screen bottom via --app-height instead of bottom:4px.
+   * `bottom` resolves against the layout viewport, which on iOS PWA cold-start
+   * is short — leaving the bar floating above the actual screen bottom until
+   * first touch. Top-positioned with --app-height (= screen.height) is stable
+   * from first paint. */
+  top: calc(var(--app-height, 100dvh) - 71px);
   left: 16px;
   display: flex;
   align-items: center;
@@ -138,7 +158,9 @@ body {
 
 .tabbar-plus {
   position: fixed;
-  bottom: 8px;
+  /* Same reasoning as .tabbar-capsule: anchor via top + --app-height to escape
+   * the cold-start layout-viewport short-read. 60px height + 8px gap = 68px. */
+  top: calc(var(--app-height, 100dvh) - 68px);
   right: 16px;
   width: 60px;
   height: 60px;
