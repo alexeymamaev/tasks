@@ -1197,36 +1197,34 @@ function stuckBlockNode(task, tracksById) {
   const main = document.createElement('div');
   main.className = 'stuck-main';
 
-  // Top section: meta + title (+ optional note) on left, ellipsis on right
+  // Top section: icon+title row (+ optional pill, blocker) on left, trash top-right
   const top = document.createElement('div');
   top.className = 'stuck-top-d';
   const left = document.createElement('div');
   left.className = 'stuck-left-d';
 
-  // Meta line: date · project (только то, что есть)
-  const meta = document.createElement('div');
-  meta.className = 'stuck-meta-d';
-  const metaParts = [];
-  if (task.deadline) metaParts.push(formatDateShort(task.deadline));
-  if (track) metaParts.push(track.name);
-  metaParts.forEach((txt, i) => {
-    if (i > 0) {
-      const dot = document.createElement('span');
-      dot.className = 'meta-d-dot';
-      dot.textContent = '·';
-      meta.appendChild(dot);
-    }
-    const span = document.createElement('span');
-    span.textContent = txt;
-    meta.appendChild(span);
-  });
-  if (metaParts.length) left.appendChild(meta);
-
-  // Title
+  // Title row: task icon + title (icon top-aligned with title)
+  const titleRow = document.createElement('div');
+  titleRow.className = 'stuck-title-row-d';
+  const taskIcon = iconNode(task.icon || DEFAULT_ICON);
+  taskIcon.classList.add('stuck-task-icon-d');
+  titleRow.appendChild(taskIcon);
   const title = document.createElement('div');
   title.className = 'stuck-title-d';
   title.textContent = task.text;
-  left.appendChild(title);
+  titleRow.appendChild(title);
+  left.appendChild(titleRow);
+
+  // Track pill (replaces meta line; date dropped)
+  if (track) {
+    const pill = document.createElement('div');
+    pill.className = 'stuck-track-pill-d';
+    pill.appendChild(iconNode(track.icon || 'layers'));
+    const pillTxt = document.createElement('span');
+    pillTxt.textContent = track.name;
+    pill.appendChild(pillTxt);
+    left.appendChild(pill);
+  }
 
   // Optional blocker chip — hidden during blocker edit or split
   if (task.blocker && !isEditingBlocker && !isSplitting) {
@@ -1263,6 +1261,25 @@ function stuckBlockNode(task, tracksById) {
   }
 
   top.appendChild(left);
+
+  // Trash button (top-right) — soft-delete without confirmation
+  const trash = document.createElement('button');
+  trash.type = 'button';
+  trash.className = 'stuck-trash-d';
+  trash.setAttribute('aria-label', 'Удалить');
+  trash.appendChild(iconNode('trash-2'));
+  trash.addEventListener('click', async (ev) => {
+    ev.stopPropagation();
+    try {
+      await db.tasks.update(task.id, { deleted_at: Date.now() });
+      renderMain().catch(showError);
+    } catch (e) {
+      if (isIdbDisconnectError(e)) { await recoverDb(); return; }
+      showError(e);
+    }
+  });
+  top.appendChild(trash);
+
   main.appendChild(top);
 
   // Bottom: split-bar / blocker edit-bar / segmented action bar
