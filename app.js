@@ -183,11 +183,13 @@ function daysBetweenIso(fromIso, toIso) {
 function stuckFromActive(active, now = new Date()) {
   return active.filter(t => isStuckNow(t, now))
     .sort((a, b) => {
-      // Oldest first_stuck_at first (most stuck on top)
-      const af = a.first_stuck_at || todayISO();
-      const bf = b.first_stuck_at || todayISO();
-      if (af !== bf) return af < bf ? -1 : 1;
-      // tiebreaker: oldest created first
+      // Oldest deadline first (most overdue on top). first_stuck_at is unreliable
+      // for ordering: sweep can only set it to "today" when the user first opens
+      // the app, even if the task was overdue much earlier — so a task missed
+      // for a week and a task missed yesterday land on the same day.
+      const ad = a.deadline || '9999-12-31';
+      const bd = b.deadline || '9999-12-31';
+      if (ad !== bd) return ad < bd ? -1 : 1;
       return a.created_at - b.created_at;
     });
 }
@@ -1143,8 +1145,11 @@ function ageColorVar(days) {
 }
 
 function stuckBlockNode(task, tracksById) {
-  const days = task.first_stuck_at
-    ? Math.max(1, daysBetweenIso(task.first_stuck_at, todayISO()))
+  // Days overdue, derived from deadline. first_stuck_at can't be trusted for
+  // display: sweep sets it to "today" the first time the app sees the task as
+  // stuck, which loses the real transition day for tasks missed across days.
+  const days = task.deadline
+    ? Math.max(1, daysBetweenIso(task.deadline, todayISO()))
     : 1;
   const word = pluralizeDays(days).toUpperCase();
   const track = task.track_id && tracksById ? tracksById.get(task.track_id) : null;
