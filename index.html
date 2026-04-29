@@ -66,6 +66,16 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+      // When a new SW takes over (after we bumped CACHE in sw.js), the rendered
+      // page is still using the OLD cached assets — clientsClaim doesn't
+      // re-fetch them. Reload once on controller change so the new style.css
+      // / app.js / index.html actually render. Guard against reload loops.
+      var reloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (reloaded) return;
+        reloaded = true;
+        window.location.reload();
+      });
     }
   </script>
 </body>
