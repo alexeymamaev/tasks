@@ -452,6 +452,17 @@
       "deleted_at": null,
       "notes": "",
       "updated_at": 1777537474078
+    },
+    {
+      "id": "114101a3ba82",
+      "text": "18:00 Проверить фигму фанка",
+      "track_name": "БТМ: Сайт",
+      "deadline": "2026-04-30",
+      "created_at": "2026-04-30",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "Если всё есть — написать Кириллу, чтобы комментил",
+      "updated_at": 1777557747772
     }
   ],
   "tracks": [
