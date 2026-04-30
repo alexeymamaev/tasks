@@ -4062,10 +4062,11 @@ async function sha1Hex12(s) {
   return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 12);
 }
 
-async function syncWithWiki() {
+async function syncWithWiki({ quiet = false } = {}) {
+  const reportError = quiet ? (e) => console.warn('sync:', e) : showError;
   const pat = getWikiToken();
   if (!pat) {
-    showError(new Error('Сначала задай GitHub токен в Settings → WIKI'));
+    reportError(new Error('Сначала задай GitHub токен в Settings → WIKI'));
     return;
   }
   const apiUrl = `https://api.github.com/repos/${WIKI_REPO}/contents/${WIKI_FEED_PATH}`;
@@ -4079,11 +4080,11 @@ async function syncWithWiki() {
       },
     });
   } catch (e) {
-    showError(new Error('Сеть: ' + e.message));
+    reportError(new Error('Сеть: ' + e.message));
     return;
   }
   if (!getRes.ok) {
-    showError(new Error(`GET feed: ${getRes.status} ${getRes.statusText}`));
+    reportError(new Error(`GET feed: ${getRes.status} ${getRes.statusText}`));
     return;
   }
   const meta = await getRes.json();
@@ -4091,7 +4092,7 @@ async function syncWithWiki() {
   try {
     feed = JSON.parse(base64ToUtf8(meta.content));
   } catch (e) {
-    showError(new Error('Неверный JSON фида: ' + e.message));
+    reportError(new Error('Неверный JSON фида: ' + e.message));
     return;
   }
   const feedSha = meta.sha;
@@ -4169,7 +4170,7 @@ async function syncWithWiki() {
     });
   } catch (e) {
     if (isIdbDisconnectError(e)) await recoverDb();
-    else showError(e);
+    else reportError(e);
     return;
   }
 
@@ -4206,12 +4207,12 @@ async function syncWithWiki() {
         body: JSON.stringify(putBody),
       });
     } catch (e) {
-      showError(new Error('Сеть PUT: ' + e.message));
+      reportError(new Error('Сеть PUT: ' + e.message));
       return;
     }
     if (!putRes.ok) {
       const text = await putRes.text().catch(() => '');
-      showError(new Error(`PUT feed: ${putRes.status} ${putRes.statusText} ${text}`));
+      reportError(new Error(`PUT feed: ${putRes.status} ${putRes.statusText} ${text}`));
       return;
     }
   }
@@ -4221,13 +4222,28 @@ async function syncWithWiki() {
   if (added) parts.push(`+${added}`);
   if (downloaded) parts.push(`↓${downloaded}`);
   if (uploaded) parts.push(`↑${uploaded}`);
-  // Use the wide top-banner instead of the bottom snackbar — the snackbar
-  // sits at bottom: 96px and is easy to miss; the banner is full-width with
-  // z-index 9999 and a bright green background for variant: ok.
+  // Quiet auto-sync (cold-start): show banner only if something actually
+  // changed — silent on no-op syncs to avoid a "ничего не изменилось"
+  // banner on every app open.
+  if (quiet && !parts.length) return;
   showBanner(
     parts.length ? `Синк: ${parts.join(' ')}` : 'Синк: всё в одном состоянии',
     { variant: 'ok', autoHide: 5000 },
   );
+}
+
+// Cold-start auto-sync. Best-effort: pulls latest feed from wiki on app
+// open so the user sees recent additions (e.g. tasks added via Claude on
+// desktop) without manually tapping Settings → Синк с вики. Silent on
+// errors and on no-op syncs.
+async function autoSyncOnBoot() {
+  if (!getWikiToken()) return;
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+  try {
+    await syncWithWiki({ quiet: true });
+  } catch (e) {
+    console.warn('auto-sync failed:', e);
+  }
 }
 
 function openWikiTokenSheet(onSaved) {
@@ -4306,7 +4322,10 @@ async function boot(retry = 0) {
       return boot(retry + 1);
     }
     showError(e);
+    return;
   }
+  // Fire-and-forget: pull latest feed from wiki after first paint.
+  autoSyncOnBoot();
 }
 
 if (document.readyState === 'loading') {
