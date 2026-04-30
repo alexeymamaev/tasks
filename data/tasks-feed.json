@@ -375,6 +375,83 @@
       "deleted_at": null,
       "notes": "",
       "updated_at": 1777535304742
+    },
+    {
+      "id": "cfbb60806a27",
+      "text": "Подать сведения в РКН",
+      "track_name": "Маркетинг КПМ",
+      "deadline": "2026-05-07",
+      "created_at": "2026-04-30",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1777537474078
+    },
+    {
+      "id": "f75c2eea0627",
+      "text": "Поговорить с Олегом про снятия Эф-эс «май + июль»",
+      "track_name": null,
+      "deadline": "2026-05-05",
+      "created_at": "2026-04-30",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1777537474078
+    },
+    {
+      "id": "c30cd0b7d07d",
+      "text": "Подготовить лестницу снижения цены участка 18.5 соток",
+      "track_name": null,
+      "deadline": "2026-06-15",
+      "created_at": "2026-04-30",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1777537474078
+    },
+    {
+      "id": "d34b674572bd",
+      "text": "Получить подтверждение аванса Бахрушинского ≥200 тр",
+      "track_name": null,
+      "deadline": "2026-05-31",
+      "created_at": "2026-04-30",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1777537474078
+    },
+    {
+      "id": "e7e433d6467b",
+      "text": "Точка решения D — рефинанс кредитки",
+      "track_name": null,
+      "deadline": "2026-06-25",
+      "created_at": "2026-04-30",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1777537474078
+    },
+    {
+      "id": "9a99ebcdffaa",
+      "text": "Согласовать с Тимуром буфер зарплаты Манифактуры",
+      "track_name": null,
+      "deadline": "2026-08-01",
+      "created_at": "2026-04-30",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1777537474078
+    },
+    {
+      "id": "3994dc116497",
+      "text": "Открыть отдельный счёт-подушку",
+      "track_name": null,
+      "deadline": "2026-09-15",
+      "created_at": "2026-04-30",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1777537474078
     }
   ],
   "tracks": [
