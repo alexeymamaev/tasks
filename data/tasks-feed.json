@@ -181,13 +181,13 @@
     {
       "id": "859412000fba",
       "text": "Отменить оплату Adobe",
-      "track_name": "Финансы",
+      "track_name": null,
       "deadline": "2026-05-02",
       "created_at": "2026-04-25",
       "done_at": null,
       "deleted_at": null,
       "notes": "Попробовать белорусской картой",
-      "updated_at": 1777540061770
+      "updated_at": 1777558056127
     },
     {
       "id": "db31bdd74e70",
@@ -390,68 +390,68 @@
     {
       "id": "f75c2eea0627",
       "text": "Поговорить с Олегом про снятия Эф-эс «май + июль»",
-      "track_name": "Финансы",
+      "track_name": null,
       "deadline": "2026-05-05",
       "created_at": "2026-04-30",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1777540050191
+      "updated_at": 1777558056127
     },
     {
       "id": "c30cd0b7d07d",
       "text": "Подготовить лестницу снижения цены участка 18.5 соток",
-      "track_name": "Финансы",
+      "track_name": null,
       "deadline": "2026-06-15",
       "created_at": "2026-04-30",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1777540052340
+      "updated_at": 1777558056127
     },
     {
       "id": "d34b674572bd",
       "text": "Получить подтверждение аванса Бахрушинского ≥200 тр",
-      "track_name": "Финансы",
+      "track_name": null,
       "deadline": "2026-05-31",
       "created_at": "2026-04-30",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1777540054510
+      "updated_at": 1777558056127
     },
     {
       "id": "e7e433d6467b",
       "text": "Точка решения D — рефинанс кредитки",
-      "track_name": "Финансы",
+      "track_name": null,
       "deadline": "2026-06-25",
       "created_at": "2026-04-30",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1777540055505
+      "updated_at": 1777558056127
     },
     {
       "id": "9a99ebcdffaa",
       "text": "Согласовать с Тимуром буфер зарплаты Манифактуры",
-      "track_name": "Финансы",
+      "track_name": null,
       "deadline": "2026-08-01",
       "created_at": "2026-04-30",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1777540056855
+      "updated_at": 1777558056127
     },
     {
       "id": "3994dc116497",
       "text": "Открыть отдельный счёт-подушку",
-      "track_name": "Финансы",
+      "track_name": null,
       "deadline": "2026-09-15",
       "created_at": "2026-04-30",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1777540058205
+      "updated_at": 1777558056127
     },
     {
       "id": "114101a3ba82",
