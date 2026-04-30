@@ -261,10 +261,10 @@
       "track_name": "Сайт АБМ",
       "deadline": "2026-04-27",
       "created_at": "2026-04-27",
-      "done_at": null,
+      "done_at": "2026-04-30",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1777319023967
+      "updated_at": 1777536906562
     },
     {
       "id": "e52846cac738",
@@ -272,10 +272,10 @@
       "track_name": "Сайт АБМ",
       "deadline": "2026-04-27",
       "created_at": "2026-04-27",
-      "done_at": null,
-      "deleted_at": null,
+      "done_at": "2026-04-30",
+      "deleted_at": "2026-04-30",
       "notes": "",
-      "updated_at": 1777319023967
+      "updated_at": 1777536982985
     },
     {
       "id": "e308f5e8fa74",
@@ -283,10 +283,10 @@
       "track_name": "Сайт АБМ",
       "deadline": "2026-04-27",
       "created_at": "2026-04-27",
-      "done_at": null,
-      "deleted_at": null,
+      "done_at": "2026-04-30",
+      "deleted_at": "2026-04-30",
       "notes": "",
-      "updated_at": 1777319023967
+      "updated_at": 1777536977163
     },
     {
       "id": "8a1f875a846e",
@@ -327,10 +327,10 @@
       "track_name": "Сайт АБМ",
       "deadline": "2026-04-30",
       "created_at": "2026-04-27",
-      "done_at": null,
+      "done_at": "2026-04-30",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1777535304738
+      "updated_at": 1777536920083
     },
     {
       "id": "561e54e096d5",
@@ -338,10 +338,10 @@
       "track_name": "Сайт АБМ",
       "deadline": "2026-04-30",
       "created_at": "2026-04-27",
-      "done_at": null,
+      "done_at": "2026-04-30",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1777535304739
+      "updated_at": 1777536918785
     },
     {
       "id": "b508b4b03f92",
