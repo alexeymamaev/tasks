@@ -473,7 +473,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1777618010058
+      "updated_at": 1777618062841
     },
     {
       "id": "d8aa91da23bc",
@@ -484,7 +484,18 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1777618010058
+      "updated_at": 1777618059293
+    },
+    {
+      "id": "fed6ae483817",
+      "text": "Отбалансировать колеса",
+      "track_name": null,
+      "deadline": "2026-05-01",
+      "created_at": "2026-05-01",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1777618305634
     }
   ],
   "tracks": [
