@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-05-03",
+  "generated_at": "2026-05-06",
   "tasks": [
     {
       "id": "75056dca344c",
@@ -514,10 +514,10 @@
       "track_name": null,
       "deadline": "2026-05-03",
       "created_at": "2026-05-03",
-      "done_at": null,
+      "done_at": "2026-05-04",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1777791492180
+      "updated_at": 1777922222747
     }
   ],
   "tracks": [
