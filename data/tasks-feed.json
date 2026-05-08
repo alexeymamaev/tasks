@@ -371,10 +371,10 @@
       "track_name": "Оплата счетов",
       "deadline": "2026-05-07",
       "created_at": "2026-04-29",
-      "done_at": null,
+      "done_at": "2026-05-07",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1778134971589
+      "updated_at": 1778153709066
     },
     {
       "id": "cfbb60806a27",
