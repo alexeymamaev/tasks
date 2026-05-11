@@ -560,8 +560,8 @@
       "created_at": "2026-05-11",
       "done_at": null,
       "deleted_at": null,
-      "notes": "См. alexey/decisions.md 2026-05-11",
-      "updated_at": 1778492447840
+      "notes": "См. alexey/decisions.md 2026-05-11 + alexey/income-line.md (оглавление сессии)\nПроверить: не саботирует ли курс паттерн сравнения с партнёрами (alexey/partner-comparison.md)",
+      "updated_at": 1778496152750
     }
   ],
   "tracks": [
