@@ -459,7 +459,7 @@ body {
 .active-grouped {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 8px;
 }
 .active-grouped .divider {
   margin: 0 4px;
@@ -467,6 +467,52 @@ body {
 }
 .active-grouped .divider.plain {
   padding: 12px 0 4px 0;
+}
+
+.track-subsection {
+  background: #1F1814;
+  border-radius: 14px;
+  padding: 10px 8px 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.track-subsection-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+  min-width: 0;
+}
+.track-subsection-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+.track-subsection-name .icon,
+.track-subsection-name svg {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  color: var(--text-dim);
+}
+.track-subsection-name span {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.track-subsection-counter {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+  flex: 0 0 auto;
+  padding-left: 8px;
 }
 
 /* ---------- empty ---------- */

@@ -552,7 +552,64 @@ function formatDeadline(isoDate) {
   return { text: short, kind: diffDays < 0 ? 'overdue' : 'future' };
 }
 
-function cardBase(task, tracksById) {
+function groupByTrack(list, tracksById) {
+  const map = new Map();
+  for (const t of list) {
+    const key = t.track_id || 'none';
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(t);
+  }
+  const groups = [];
+  for (const [key, tasks] of map) {
+    const track = key === 'none' ? null : (tracksById.get(key) || null);
+    let earliest = null;
+    for (const t of tasks) {
+      if (!t.deadline) continue;
+      if (!earliest || t.deadline < earliest) earliest = t.deadline;
+    }
+    groups.push({ track, tasks, earliest });
+  }
+  groups.sort((a, b) => {
+    if (a.earliest && b.earliest) return a.earliest < b.earliest ? -1 : a.earliest > b.earliest ? 1 : 0;
+    if (a.earliest) return -1;
+    if (b.earliest) return 1;
+    return 0;
+  });
+  return groups;
+}
+
+function trackSubsectionNode(track, tasks, tracksById) {
+  const sub = document.createElement('div');
+  sub.className = 'track-subsection';
+
+  const header = document.createElement('div');
+  header.className = 'track-subsection-header';
+
+  const nameRow = document.createElement('div');
+  nameRow.className = 'track-subsection-name';
+  nameRow.appendChild(iconNode(track ? (track.icon || DEFAULT_ICON) : 'circle-dashed'));
+  const name = document.createElement('span');
+  name.textContent = track ? track.name : 'Без трека';
+  nameRow.appendChild(name);
+  header.appendChild(nameRow);
+
+  const counter = document.createElement('span');
+  counter.className = 'track-subsection-counter';
+  counter.textContent = String(tasks.length);
+  header.appendChild(counter);
+
+  sub.appendChild(header);
+
+  const grid = document.createElement('div');
+  grid.className = 'grid';
+  tasks.forEach(t => grid.appendChild(activeCardNode(t, tracksById, { hideTrack: true })));
+  sub.appendChild(grid);
+
+  return sub;
+}
+
+function cardBase(task, tracksById, opts) {
+  opts = opts || {};
   const el = document.createElement('div');
   el.className = 'card';
   el.dataset.id = String(task.id);
@@ -582,7 +639,7 @@ function cardBase(task, tracksById) {
   el.appendChild(text);
 
   const track = task.track_id && tracksById ? tracksById.get(task.track_id) : null;
-  if (track) {
+  if (track && !opts.hideTrack) {
     const mark = document.createElement('div');
     mark.className = 'track-mark';
     mark.appendChild(iconNode(track.icon || DEFAULT_ICON));
@@ -616,8 +673,8 @@ function playStampImpact(cardEl, task) {
   });
 }
 
-function activeCardNode(task, tracksById) {
-  const el = cardBase(task, tracksById);
+function activeCardNode(task, tracksById, opts) {
+  const el = cardBase(task, tracksById, opts);
   attachLongPress(el, {
     onTap: () => openSheet({ task }),
     onLongPress: async () => {
@@ -1086,30 +1143,23 @@ async function renderMorning() {
     });
     const nonEmpty = ['work', 'personal', 'rest'].filter(k => buckets[k].length > 0);
 
-    if (nonEmpty.length >= 2) {
-      const wrap = document.createElement('div');
-      wrap.className = 'active-grouped';
-      const sections = [
-        { key: 'work', label: 'РАБОТА' },
-        { key: 'personal', label: 'ЛИЧНОЕ' },
-        { key: 'rest', label: null },
-      ];
-      for (const { key, label } of sections) {
-        const list = buckets[key];
-        if (!list.length) continue;
-        wrap.appendChild(sectionDivider(label));
-        const grid = document.createElement('div');
-        grid.className = 'grid';
-        list.forEach(t => grid.appendChild(activeCardNode(t, tracksById)));
-        wrap.appendChild(grid);
+    const wrap = document.createElement('div');
+    wrap.className = 'active-grouped';
+    const showCategoryDividers = nonEmpty.length >= 2;
+    const sections = [
+      { key: 'work', label: 'РАБОТА' },
+      { key: 'personal', label: 'ЛИЧНОЕ' },
+      { key: 'rest', label: null },
+    ];
+    for (const { key, label } of sections) {
+      const list = buckets[key];
+      if (!list.length) continue;
+      if (showCategoryDividers && label) wrap.appendChild(sectionDivider(label));
+      for (const group of groupByTrack(list, tracksById)) {
+        wrap.appendChild(trackSubsectionNode(group.track, group.tasks, tracksById));
       }
-      topRegion.appendChild(wrap);
-    } else {
-      const grid = document.createElement('div');
-      grid.className = 'grid active-grid';
-      active.forEach(t => grid.appendChild(activeCardNode(t, tracksById)));
-      topRegion.appendChild(grid);
     }
+    topRegion.appendChild(wrap);
   }
 
   screen.appendChild(topRegion);
