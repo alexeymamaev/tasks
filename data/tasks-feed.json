@@ -181,13 +181,13 @@
     {
       "id": "859412000fba",
       "text": "Отменить оплату Adobe",
-      "track_name": null,
+      "track_name": "Финансы",
       "deadline": "2026-05-07",
       "created_at": "2026-04-25",
       "done_at": null,
       "deleted_at": null,
       "notes": "Попробовать белорусской картой",
-      "updated_at": 1778134971589
+      "updated_at": 1779081047121
     },
     {
       "id": "db31bdd74e70",
@@ -385,7 +385,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1777537474078
+      "updated_at": 1779080892813
     },
     {
       "id": "f75c2eea0627",
@@ -412,46 +412,46 @@
     {
       "id": "d34b674572bd",
       "text": "Получить подтверждение аванса Бахрушинского ≥200 тр",
-      "track_name": null,
+      "track_name": "Финансы",
       "deadline": "2026-05-31",
       "created_at": "2026-04-30",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1777618010058
+      "updated_at": 1779081032754
     },
     {
       "id": "e7e433d6467b",
       "text": "Точка решения D — рефинанс кредитки",
-      "track_name": null,
+      "track_name": "Финансы",
       "deadline": "2026-06-25",
       "created_at": "2026-04-30",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1777618010058
+      "updated_at": 1779081042355
     },
     {
       "id": "9a99ebcdffaa",
       "text": "Согласовать с Тимуром буфер зарплаты Манифактуры",
-      "track_name": null,
+      "track_name": "Финансы",
       "deadline": "2026-08-01",
       "created_at": "2026-04-30",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1777618010058
+      "updated_at": 1779081044695
     },
     {
       "id": "3994dc116497",
       "text": "Открыть отдельный счёт-подушку",
-      "track_name": null,
+      "track_name": "Финансы",
       "deadline": "2026-09-15",
       "created_at": "2026-04-30",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1777618010058
+      "updated_at": 1779081046251
     },
     {
       "id": "114101a3ba82",
@@ -500,13 +500,13 @@
     {
       "id": "32250aa5fce6",
       "text": "Отказаться от ненужных подписок (Cursor, HeyGen, ChatGPT, …)",
-      "track_name": null,
+      "track_name": "Финансы",
       "deadline": "2026-05-07",
       "created_at": "2026-05-03",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1778134971589
+      "updated_at": 1779081010986
     },
     {
       "id": "39f2b512bd19",
@@ -522,24 +522,24 @@
     {
       "id": "a1726dd59000",
       "text": "Прикрепить задний брызговик на BMW",
-      "track_name": null,
+      "track_name": "Авто",
       "deadline": "2026-05-10",
       "created_at": "2026-05-08",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1778240209993
+      "updated_at": 1779080998018
     },
     {
       "id": "013faa2f688d",
       "text": "Поменять стабилизатор рулевого управления на УАЗе",
-      "track_name": null,
+      "track_name": "Авто",
       "deadline": "2026-05-10",
       "created_at": "2026-05-08",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1778240209993
+      "updated_at": 1779081064787
     },
     {
       "id": "77db8bfc39b2",
@@ -570,9 +570,9 @@
       "deadline": "2026-05-30",
       "created_at": "2026-05-11",
       "done_at": null,
-      "deleted_at": null,
+      "deleted_at": "2026-05-18",
       "notes": "",
-      "updated_at": 1778520510615
+      "updated_at": 1779080904407
     },
     {
       "id": "7ae248d51aed",
@@ -583,7 +583,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1778520510615
+      "updated_at": 1779080912287
     },
     {
       "id": "b52c23bf4664",
@@ -971,6 +971,18 @@
       "category": "personal",
       "icon": "wallet",
       "position": 7
+    },
+    {
+      "name": "Авто",
+      "category": "personal",
+      "icon": "car",
+      "position": 8
+    },
+    {
+      "name": "Здоровье",
+      "category": "personal",
+      "icon": "stethoscope",
+      "position": 9
     }
   ]
 }
