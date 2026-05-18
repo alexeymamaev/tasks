@@ -49,24 +49,24 @@
     {
       "id": "ff488b3d75b0",
       "text": "Отремотировать ремень в машине",
-      "track_name": null,
+      "track_name": "Авто",
       "deadline": "2026-05-11",
       "created_at": "2026-04-21",
       "done_at": null,
       "deleted_at": null,
       "notes": "Заднее сиденье",
-      "updated_at": 1778134971589
+      "updated_at": 1779081280361
     },
     {
       "id": "7cf34645fe6b",
       "text": "Расторгнуть договор по охране квартиры",
       "track_name": "Оплата счетов",
-      "deadline": "2026-05-07",
+      "deadline": "2026-05-22",
       "created_at": "2026-04-21",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1778134971589
+      "updated_at": 1779081366197
     },
     {
       "id": "408574465f4b",
@@ -544,24 +544,24 @@
     {
       "id": "77db8bfc39b2",
       "text": "Узнать у стоматолога название препарата в зубе (мышьяк / параформальдегид / Ca(OH)₂?)",
-      "track_name": null,
+      "track_name": "Здоровье",
       "deadline": "2026-05-15",
       "created_at": "2026-05-10",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1778433445969
+      "updated_at": 1779081272278
     },
     {
       "id": "035edb9f882b",
       "text": "Чекпоинт линии дохода 2026–27: статус (4) авто/мото, distance до пола, развилка к (7a)",
-      "track_name": null,
+      "track_name": "Финансы",
       "deadline": "2026-10-15",
       "created_at": "2026-05-11",
       "done_at": null,
       "deleted_at": null,
       "notes": "См. alexey/decisions.md 2026-05-11 + alexey/income-line.md (оглавление сессии)\nПроверить: не саботирует ли курс паттерн сравнения с партнёрами (alexey/partner-comparison.md)",
-      "updated_at": 1778496152750
+      "updated_at": 1779081289737
     },
     {
       "id": "9c25fe24c1c0",
@@ -797,68 +797,68 @@
     {
       "id": "31b5a41337ad",
       "text": "B12 укол #7/10",
-      "track_name": null,
+      "track_name": "Здоровье",
       "deadline": "2026-05-18",
       "created_at": "2026-05-12",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1778575932536
+      "updated_at": 1779081262493
     },
     {
       "id": "2502b610d5e3",
       "text": "B12 укол #8/10",
-      "track_name": null,
+      "track_name": "Здоровье",
       "deadline": "2026-05-19",
       "created_at": "2026-05-12",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1778575932536
+      "updated_at": 1779081263369
     },
     {
       "id": "b0bf38fb3d65",
       "text": "B12 укол #9/10",
-      "track_name": null,
+      "track_name": "Здоровье",
       "deadline": "2026-05-20",
       "created_at": "2026-05-12",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1778575932536
+      "updated_at": 1779081264206
     },
     {
       "id": "90dd71563ea1",
       "text": "B12 укол #10/10 (последний)",
-      "track_name": null,
+      "track_name": "Здоровье",
       "deadline": "2026-05-21",
       "created_at": "2026-05-12",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1778575932536
+      "updated_at": 1779081265040
     },
     {
       "id": "7c37a370d45b",
       "text": "Контроль ОАК + ферритин до телемеда Ахуновой",
-      "track_name": null,
+      "track_name": "Здоровье",
       "deadline": "2026-06-12",
       "created_at": "2026-05-12",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1778575932536
+      "updated_at": 1779081266069
     },
     {
       "id": "4433da0647f6",
       "text": "Записаться на телемед с Ахуновой через колл-центр АВА-Казань (~1–1,5 мес от старта)",
-      "track_name": null,
+      "track_name": "Здоровье",
       "deadline": "2026-06-15",
       "created_at": "2026-05-12",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1778575932536
+      "updated_at": 1779081268173
     },
     {
       "id": "14f08f429059",
@@ -874,13 +874,13 @@
     {
       "id": "c4527606c89c",
       "text": "Купить кетоновые тест-полоски Лиде в аптеке (контроль кетонов 1–2×/нед на жёсткой низкоуглеводной)",
-      "track_name": null,
+      "track_name": "Здоровье",
       "deadline": "2026-05-14",
       "created_at": "2026-05-13",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1778663983048
+      "updated_at": 1779081261238
     },
     {
       "id": "cfbf40028b5f",
@@ -896,13 +896,13 @@
     {
       "id": "b7b71f184512",
       "text": "Вернуться к Doman Cards как кандидату (7a) продукт-в-коробке: оценить статус, решить следующий конкретный шаг или сдвинуть дату",
-      "track_name": null,
+      "track_name": "Финансы",
       "deadline": "2026-05-28",
       "created_at": "2026-05-17",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779007816965
+      "updated_at": 1779081287786
     }
   ],
   "tracks": [
@@ -983,6 +983,12 @@
       "category": "personal",
       "icon": "stethoscope",
       "position": 9
+    },
+    {
+      "name": "Сад",
+      "category": "personal",
+      "icon": "fence",
+      "position": 10
     }
   ]
 }
