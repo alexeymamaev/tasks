@@ -49,24 +49,24 @@
     {
       "id": "ff488b3d75b0",
       "text": "Отремотировать ремень в машине",
-      "track_name": "Авто",
+      "track_name": null,
       "deadline": "2026-05-11",
       "created_at": "2026-04-21",
       "done_at": null,
       "deleted_at": null,
       "notes": "Заднее сиденье",
-      "updated_at": 1779123776737
+      "updated_at": 1779208711720
     },
     {
       "id": "7cf34645fe6b",
       "text": "Расторгнуть договор по охране квартиры",
       "track_name": "Оплата счетов",
-      "deadline": "2026-05-22",
+      "deadline": "2026-05-07",
       "created_at": "2026-04-21",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779169551804
+      "updated_at": 1779208711720
     },
     {
       "id": "408574465f4b",
@@ -181,13 +181,13 @@
     {
       "id": "859412000fba",
       "text": "Отменить оплату Adobe",
-      "track_name": "Оплата счетов",
+      "track_name": null,
       "deadline": "2026-05-07",
       "created_at": "2026-04-25",
       "done_at": null,
       "deleted_at": null,
       "notes": "Попробовать белорусской картой",
-      "updated_at": 1779169635971
+      "updated_at": 1779208711720
     },
     {
       "id": "db31bdd74e70",
@@ -401,57 +401,57 @@
     {
       "id": "c30cd0b7d07d",
       "text": "Подготовить лестницу снижения цены участка 18.5 соток",
-      "track_name": "Финансы",
+      "track_name": null,
       "deadline": "2026-06-15",
       "created_at": "2026-04-30",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779136728158
+      "updated_at": 1779208711720
     },
     {
       "id": "d34b674572bd",
       "text": "Получить подтверждение аванса Бахрушинского ≥200 тр",
-      "track_name": "Финансы",
+      "track_name": null,
       "deadline": "2026-05-31",
       "created_at": "2026-04-30",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779136601214
+      "updated_at": 1779208711720
     },
     {
       "id": "e7e433d6467b",
       "text": "Точка решения D — рефинанс кредитки",
-      "track_name": "Финансы",
+      "track_name": null,
       "deadline": "2026-06-25",
       "created_at": "2026-04-30",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779136603274
+      "updated_at": 1779208711720
     },
     {
       "id": "9a99ebcdffaa",
       "text": "Согласовать с Тимуром буфер зарплаты Манифактуры",
-      "track_name": "Финансы",
+      "track_name": null,
       "deadline": "2026-08-01",
       "created_at": "2026-04-30",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779136606538
+      "updated_at": 1779208711720
     },
     {
       "id": "3994dc116497",
       "text": "Открыть отдельный счёт-подушку",
-      "track_name": "Финансы",
+      "track_name": null,
       "deadline": "2026-09-15",
       "created_at": "2026-04-30",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779136609020
+      "updated_at": 1779208711720
     },
     {
       "id": "114101a3ba82",
@@ -500,13 +500,13 @@
     {
       "id": "32250aa5fce6",
       "text": "Отказаться от ненужных подписок (Cursor, HeyGen, ChatGPT, …)",
-      "track_name": "Оплата счетов",
+      "track_name": null,
       "deadline": "2026-05-07",
       "created_at": "2026-05-03",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779172176359
+      "updated_at": 1779208711720
     },
     {
       "id": "39f2b512bd19",
@@ -522,24 +522,24 @@
     {
       "id": "a1726dd59000",
       "text": "Прикрепить задний брызговик на BMW",
-      "track_name": "Авто",
-      "deadline": "2026-05-19",
+      "track_name": null,
+      "deadline": "2026-05-10",
       "created_at": "2026-05-08",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779170520863
+      "updated_at": 1779208711720
     },
     {
       "id": "013faa2f688d",
       "text": "Поменять стабилизатор рулевого управления на УАЗе",
-      "track_name": "Авто",
-      "deadline": "2026-05-20",
+      "track_name": null,
+      "deadline": "2026-05-10",
       "created_at": "2026-05-08",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779169564700
+      "updated_at": 1779208711720
     },
     {
       "id": "77db8bfc39b2",
@@ -555,13 +555,13 @@
     {
       "id": "035edb9f882b",
       "text": "Чекпоинт линии дохода 2026–27: статус (4) авто/мото, distance до пола, развилка к (7a)",
-      "track_name": "Финансы",
+      "track_name": null,
       "deadline": "2026-10-15",
       "created_at": "2026-05-11",
       "done_at": null,
       "deleted_at": null,
       "notes": "См. alexey/decisions.md 2026-05-11 + alexey/income-line.md (оглавление сессии)\nПроверить: не саботирует ли курс паттерн сравнения с партнёрами (alexey/partner-comparison.md)",
-      "updated_at": 1779136579848
+      "updated_at": 1779208711720
     },
     {
       "id": "9c25fe24c1c0",
@@ -808,57 +808,57 @@
     {
       "id": "2502b610d5e3",
       "text": "B12 укол #8/10",
-      "track_name": "Здоровье",
+      "track_name": null,
       "deadline": "2026-05-19",
       "created_at": "2026-05-12",
       "done_at": "2026-05-19",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779198824447
+      "updated_at": 1779208711720
     },
     {
       "id": "b0bf38fb3d65",
       "text": "B12 укол #9/10",
-      "track_name": "Здоровье",
+      "track_name": null,
       "deadline": "2026-05-20",
       "created_at": "2026-05-12",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779170340462
+      "updated_at": 1779208711720
     },
     {
       "id": "90dd71563ea1",
       "text": "B12 укол #10/10 (последний)",
-      "track_name": "Здоровье",
+      "track_name": null,
       "deadline": "2026-05-21",
       "created_at": "2026-05-12",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779170345608
+      "updated_at": 1779208711720
     },
     {
       "id": "7c37a370d45b",
       "text": "Контроль ОАК + ферритин до телемеда Ахуновой",
-      "track_name": "Здоровье",
+      "track_name": null,
       "deadline": "2026-06-12",
       "created_at": "2026-05-12",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779123808098
+      "updated_at": 1779208711720
     },
     {
       "id": "4433da0647f6",
       "text": "Записаться на телемед с Ахуновой через колл-центр АВА-Казань (~1–1,5 мес от старта)",
-      "track_name": "Здоровье",
+      "track_name": null,
       "deadline": "2026-06-15",
       "created_at": "2026-05-12",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779123809405
+      "updated_at": 1779208711720
     },
     {
       "id": "14f08f429059",
@@ -874,13 +874,13 @@
     {
       "id": "c4527606c89c",
       "text": "Купить кетоновые тест-полоски Лиде в аптеке (контроль кетонов 1–2×/нед на жёсткой низкоуглеводной)",
-      "track_name": "Здоровье",
+      "track_name": null,
       "deadline": "2026-05-14",
       "created_at": "2026-05-13",
       "done_at": "2026-05-18",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779136660953
+      "updated_at": 1779208711720
     },
     {
       "id": "cfbf40028b5f",
@@ -896,13 +896,13 @@
     {
       "id": "b7b71f184512",
       "text": "Вернуться к Doman Cards как кандидату (7a) продукт-в-коробке: оценить статус, решить следующий конкретный шаг или сдвинуть дату",
-      "track_name": "Финансы",
+      "track_name": null,
       "deadline": "2026-05-28",
       "created_at": "2026-05-17",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779136585158
+      "updated_at": 1779208711720
     },
     {
       "id": "2b61396fdd32",
