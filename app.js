@@ -562,19 +562,13 @@ function groupByTrack(list, tracksById) {
   const groups = [];
   for (const [key, tasks] of map) {
     const track = key === 'none' ? null : (tracksById.get(key) || null);
-    let earliest = null;
+    let newest = 0;
     for (const t of tasks) {
-      if (!t.deadline) continue;
-      if (!earliest || t.deadline < earliest) earliest = t.deadline;
+      if (t.created_at && t.created_at > newest) newest = t.created_at;
     }
-    groups.push({ track, tasks, earliest });
+    groups.push({ track, tasks, newest });
   }
-  groups.sort((a, b) => {
-    if (a.earliest && b.earliest) return a.earliest < b.earliest ? -1 : a.earliest > b.earliest ? 1 : 0;
-    if (a.earliest) return -1;
-    if (b.earliest) return 1;
-    return 0;
-  });
+  groups.sort((a, b) => b.newest - a.newest);
   return groups;
 }
 
@@ -2064,7 +2058,7 @@ async function renderCalendar() {
     const bucket = buckets.get(dateIso);
     if (bucket) {
       // Active first, then closed
-      bucket.active.sort((a, b) => a.created_at - b.created_at);
+      bucket.active.sort((a, b) => b.created_at - a.created_at);
       bucket.closed.sort((a, b) => b.done_at - a.done_at);
       const items = [...bucket.active, ...bucket.closed.map(t => ({ ...t, _closed: true }))];
       items.forEach((t, idx) => {
