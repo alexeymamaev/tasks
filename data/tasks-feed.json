@@ -811,10 +811,10 @@
       "track_name": "Здоровье",
       "deadline": "2026-05-19",
       "created_at": "2026-05-12",
-      "done_at": null,
+      "done_at": "2026-05-19",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779170332594
+      "updated_at": 1779198824447
     },
     {
       "id": "b0bf38fb3d65",
@@ -958,6 +958,17 @@
       "deleted_at": null,
       "notes": "",
       "updated_at": 1779183944515
+    },
+    {
+      "id": "4e646bafbb93",
+      "text": "Найти доки по Гильдеево",
+      "track_name": "Продажа Гильдеево",
+      "deadline": "2026-05-19",
+      "created_at": "2026-05-19",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1779198920603
     }
   ],
   "tracks": [
@@ -1017,7 +1028,7 @@
     },
     {
       "name": "Продажа Гильдеево",
-      "category": "inactive",
+      "category": "personal",
       "icon": "warehouse",
       "position": 1
     },
