@@ -472,7 +472,8 @@ body {
 .track-subsection {
   background: #1F1814;
   border-radius: 14px;
-  padding: 10px 8px 12px 8px;
+  margin: 0 -10px;
+  padding: 10px 18px 12px 18px;
   display: flex;
   flex-direction: column;
   gap: 8px;
