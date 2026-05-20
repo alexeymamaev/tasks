@@ -972,6 +972,48 @@ function sectionDivider(label, opts) {
   return d;
 }
 
+// Divider for collapsible Morning category sections (Личное / Работа): chevron
+// affordance + label toggle entire section, "+" on the right opens a new-task
+// sheet with the category preselected (new inline track inherits it).
+function collapsibleSectionDivider(key, label, sectionWrap) {
+  const d = document.createElement('div');
+  d.className = 'divider collapsible has-action';
+
+  const head = document.createElement('button');
+  head.type = 'button';
+  head.className = 'divider-head';
+  const chev = iconNode('chevron-down');
+  chev.classList.add('divider-chevron');
+  head.appendChild(chev);
+  const l = document.createElement('span');
+  l.className = 'divider-label';
+  l.textContent = label;
+  head.appendChild(l);
+  head.addEventListener('click', () => {
+    const next = !sectionWrap.classList.contains('collapsed');
+    sectionWrap.classList.toggle('collapsed', next);
+    localStorage.setItem(`tasks_morning_collapsed_${key}`, next ? '1' : '0');
+  });
+  d.appendChild(head);
+
+  const line = document.createElement('span');
+  line.className = 'divider-line';
+  d.appendChild(line);
+
+  const action = document.createElement('button');
+  action.type = 'button';
+  action.className = 'divider-action';
+  action.setAttribute('aria-label', `Новая задача в «${label.toLowerCase()}»`);
+  action.appendChild(iconNode('plus'));
+  action.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openSheet({ task: null, presetCategory: key });
+  });
+  d.appendChild(action);
+
+  return d;
+}
+
 // Horizontal swipe between pages. A move is considered a swipe only if the
 // pointer moves horizontally > vertically past a small threshold, so vertical
 // scroll inside a page is never hijacked. Drag handles on track strips
@@ -1148,10 +1190,24 @@ async function renderMorning() {
     for (const { key, label } of sections) {
       const list = buckets[key];
       if (!list.length) continue;
-      if (showCategoryDividers && label) wrap.appendChild(sectionDivider(label));
-      for (const group of groupByTrack(list, tracksById)) {
-        wrap.appendChild(trackSubsectionNode(group.track, group.tasks, tracksById));
+      const isCollapsible = showCategoryDividers && label && (key === 'work' || key === 'personal');
+      const sectionWrap = document.createElement('div');
+      sectionWrap.className = 'morning-section';
+      let collapsed = false;
+      if (isCollapsible) {
+        collapsed = localStorage.getItem(`tasks_morning_collapsed_${key}`) === '1';
+        if (collapsed) sectionWrap.classList.add('collapsed');
+        sectionWrap.appendChild(collapsibleSectionDivider(key, label, sectionWrap));
+      } else if (showCategoryDividers && label) {
+        sectionWrap.appendChild(sectionDivider(label));
       }
+      const body = document.createElement('div');
+      body.className = 'morning-section-body';
+      for (const group of groupByTrack(list, tracksById)) {
+        body.appendChild(trackSubsectionNode(group.track, group.tasks, tracksById));
+      }
+      sectionWrap.appendChild(body);
+      wrap.appendChild(sectionWrap);
     }
     topRegion.appendChild(wrap);
   }
@@ -2263,7 +2319,7 @@ function buildEditFooter({ onFinish, onDelete }) {
   return frag;
 }
 
-function openSheet({ task }) {
+function openSheet({ task, presetCategory = null }) {
   if (sheetOpen) return;
   sheetOpen = true;
   const isEdit = !!task;
@@ -2483,7 +2539,7 @@ function openSheet({ task }) {
       const matched = matchIcons(name, 1);
       const icon = matched[0] || DEFAULT_ICON;
       try {
-        const id = await addTrack({ name, icon });
+        const id = await addTrack({ name, icon, category: presetCategory || 'personal' });
         draft.track_id = id;
       } catch (e) {
         if (isIdbDisconnectError(e)) await recoverDb();
