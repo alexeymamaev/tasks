@@ -1135,14 +1135,14 @@ async function renderMorning() {
       else if (track && track.category === 'personal') buckets.personal.push(t);
       else buckets.rest.push(t);
     });
-    const nonEmpty = ['work', 'personal', 'rest'].filter(k => buckets[k].length > 0);
+    const nonEmpty = ['personal', 'work', 'rest'].filter(k => buckets[k].length > 0);
 
     const wrap = document.createElement('div');
     wrap.className = 'active-grouped';
     const showCategoryDividers = nonEmpty.length >= 2;
     const sections = [
-      { key: 'work', label: 'РАБОТА' },
       { key: 'personal', label: 'ЛИЧНОЕ' },
+      { key: 'work', label: 'РАБОТА' },
       { key: 'rest', label: null },
     ];
     for (const { key, label } of sections) {
