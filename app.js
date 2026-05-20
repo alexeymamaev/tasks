@@ -576,21 +576,50 @@ function trackSubsectionNode(track, tasks, tracksById) {
   const sub = document.createElement('div');
   sub.className = 'track-subsection';
 
+  const collapseKey = `tasks_morning_collapsed_track_${track ? track.id : 'null'}`;
+  if (localStorage.getItem(collapseKey) === '1') sub.classList.add('collapsed');
+
   const header = document.createElement('div');
   header.className = 'track-subsection-header';
 
-  const nameRow = document.createElement('div');
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'track-subsection-toggle';
+
+  const chev = iconNode('chevron-down');
+  chev.classList.add('track-subsection-chevron');
+  toggle.appendChild(chev);
+
+  const nameRow = document.createElement('span');
   nameRow.className = 'track-subsection-name';
   nameRow.appendChild(iconNode(track ? (track.icon || DEFAULT_ICON) : 'circle-dashed'));
   const name = document.createElement('span');
   name.textContent = track ? track.name : 'Без трека';
   nameRow.appendChild(name);
-  header.appendChild(nameRow);
+  toggle.appendChild(nameRow);
 
   const counter = document.createElement('span');
   counter.className = 'track-subsection-counter';
   counter.textContent = String(tasks.length);
-  header.appendChild(counter);
+  toggle.appendChild(counter);
+
+  toggle.addEventListener('click', () => {
+    const next = !sub.classList.contains('collapsed');
+    sub.classList.toggle('collapsed', next);
+    localStorage.setItem(collapseKey, next ? '1' : '0');
+  });
+  header.appendChild(toggle);
+
+  const add = document.createElement('button');
+  add.type = 'button';
+  add.className = 'track-subsection-add';
+  add.setAttribute('aria-label', `Новая задача${track ? ` в «${track.name}»` : ''}`);
+  add.appendChild(iconNode('plus'));
+  add.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openSheet({ task: null, presetTrackId: track ? track.id : null });
+  });
+  header.appendChild(add);
 
   sub.appendChild(header);
 
@@ -2263,7 +2292,7 @@ function buildEditFooter({ onFinish, onDelete }) {
   return frag;
 }
 
-function openSheet({ task }) {
+function openSheet({ task, presetTrackId }) {
   if (sheetOpen) return;
   sheetOpen = true;
   const isEdit = !!task;
@@ -2281,7 +2310,7 @@ function openSheet({ task }) {
     icon: task?.icon || DEFAULT_ICON,
     notes: task?.notes || '',
     deadline: isEdit ? (task?.deadline || null) : todayISO(),
-    track_id: task?.track_id ?? null,
+    track_id: task?.track_id ?? (presetTrackId ?? null),
   };
 
   // When user is mid-creation of a new track (inline input open) and taps
