@@ -1132,6 +1132,7 @@ async function renderMorning() {
 
   const header = document.createElement('div');
   header.className = 'header';
+  header.setAttribute('data-no-swipe', '');
   const headerRow = document.createElement('div');
   headerRow.className = 'header-row';
   const h1 = document.createElement('h1');
@@ -1815,6 +1816,7 @@ async function renderToday() {
   // Header
   const header = document.createElement('div');
   header.className = 'header';
+  header.setAttribute('data-no-swipe', '');
   const headerRow = document.createElement('div');
   headerRow.className = 'header-row';
   const h1 = document.createElement('h1');
@@ -1982,6 +1984,7 @@ async function renderCalendar() {
   // Header
   const header = document.createElement('div');
   header.className = 'header';
+  header.setAttribute('data-no-swipe', '');
   const headerRow = document.createElement('div');
   headerRow.className = 'header-row';
   const h1 = document.createElement('h1');
@@ -2168,6 +2171,7 @@ async function renderTracks() {
 
   const header = document.createElement('div');
   header.className = 'header';
+  header.setAttribute('data-no-swipe', '');
   const headerRow = document.createElement('div');
   headerRow.className = 'header-row';
   const h1 = document.createElement('h1');
