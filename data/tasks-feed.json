@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-05-20",
+  "generated_at": "2026-05-21",
   "tasks": [
     {
       "id": "75056dca344c",
@@ -822,10 +822,10 @@
       "track_name": "Здоровье",
       "deadline": "2026-05-20",
       "created_at": "2026-05-12",
-      "done_at": null,
+      "done_at": "2026-05-20",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779209866862
+      "updated_at": 1779303801821
     },
     {
       "id": "90dd71563ea1",
@@ -954,10 +954,10 @@
       "track_name": "Дом Васильево",
       "deadline": "2026-05-19",
       "created_at": "2026-05-19",
-      "done_at": null,
+      "done_at": "2026-05-20",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779183944515
+      "updated_at": 1779303776009
     },
     {
       "id": "4e646bafbb93",
@@ -987,10 +987,10 @@
       "track_name": "Бухгалтерия",
       "deadline": "2026-05-19",
       "created_at": "2026-05-19",
-      "done_at": null,
+      "done_at": "2026-05-20",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779270443708
+      "updated_at": 1779303783926
     },
     {
       "id": "7a7fd09e3715",
@@ -1057,6 +1057,17 @@
       "deleted_at": null,
       "notes": "",
       "updated_at": 1779270468173
+    },
+    {
+      "id": "025ad25e6c9a",
+      "text": "Повесить зеркало",
+      "track_name": "Дом Васильево",
+      "deadline": "2026-05-20",
+      "created_at": "2026-05-20",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1779299792879
     }
   ],
   "tracks": [
