@@ -575,6 +575,7 @@ function groupByTrack(list, tracksById) {
 function trackSubsectionNode(track, tasks, tracksById) {
   const sub = document.createElement('div');
   sub.className = 'track-subsection';
+  sub.dataset.trackId = track ? String(track.id) : 'null';
 
   const collapseKey = `tasks_morning_collapsed_track_${track ? track.id : 'null'}`;
   if (localStorage.getItem(collapseKey) === '1') sub.classList.add('collapsed');
@@ -607,6 +608,7 @@ function trackSubsectionNode(track, tasks, tracksById) {
     const next = !sub.classList.contains('collapsed');
     sub.classList.toggle('collapsed', next);
     localStorage.setItem(collapseKey, next ? '1' : '0');
+    sub.dispatchEvent(new CustomEvent('track-collapse-changed', { bubbles: true }));
   });
   header.appendChild(toggle);
 
@@ -1135,18 +1137,24 @@ async function renderMorning() {
   const h1 = document.createElement('h1');
   h1.textContent = 'Задачи';
   headerRow.appendChild(h1);
+  const collapseAll = document.createElement('button');
+  collapseAll.type = 'button';
+  collapseAll.className = 'header-collapse-all';
   const gear = document.createElement('button');
   gear.type = 'button';
   gear.className = 'header-gear';
   gear.setAttribute('aria-label', 'Настройки');
   gear.appendChild(iconNode('settings'));
   gear.addEventListener('click', () => openSettings());
+  headerRow.appendChild(collapseAll);
   headerRow.appendChild(gear);
   header.appendChild(headerRow);
   topRegion.appendChild(header);
 
   const [active, journal, tracks] = await Promise.all([listActive(), listJournal(), listTracks()]);
   const tracksById = new Map(tracks.map(t => [t.id, t]));
+
+  let wrap = null;
 
   if (active.length === 0) {
     const empty = document.createElement('div');
@@ -1163,7 +1171,7 @@ async function renderMorning() {
     });
     const nonEmpty = ['personal', 'work', 'rest'].filter(k => buckets[k].length > 0);
 
-    const wrap = document.createElement('div');
+    wrap = document.createElement('div');
     wrap.className = 'active-grouped';
     const showCategoryDividers = nonEmpty.length >= 2;
     const sections = [
@@ -1181,6 +1189,30 @@ async function renderMorning() {
     }
     topRegion.appendChild(wrap);
   }
+
+  const updateCollapseAllIcon = () => {
+    if (!wrap) { collapseAll.style.display = 'none'; return; }
+    const subs = wrap.querySelectorAll('.track-subsection');
+    if (!subs.length) { collapseAll.style.display = 'none'; return; }
+    collapseAll.style.display = '';
+    const hasExpanded = Array.from(subs).some(s => !s.classList.contains('collapsed'));
+    collapseAll.replaceChildren(iconNode(hasExpanded ? 'chevrons-down-up' : 'chevrons-up-down'));
+    collapseAll.setAttribute('aria-label', hasExpanded ? 'Свернуть все' : 'Развернуть все');
+    renderLucide();
+  };
+  collapseAll.addEventListener('click', () => {
+    if (!wrap) return;
+    const subs = wrap.querySelectorAll('.track-subsection');
+    const targetCollapsed = Array.from(subs).some(s => !s.classList.contains('collapsed'));
+    for (const s of subs) {
+      s.classList.toggle('collapsed', targetCollapsed);
+      const key = `tasks_morning_collapsed_track_${s.dataset.trackId}`;
+      localStorage.setItem(key, targetCollapsed ? '1' : '0');
+    }
+    updateCollapseAllIcon();
+  });
+  if (wrap) wrap.addEventListener('track-collapse-changed', updateCollapseAllIcon);
+  updateCollapseAllIcon();
 
   screen.appendChild(topRegion);
 

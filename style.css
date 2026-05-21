@@ -1991,6 +1991,24 @@ body {
 .header-gear .icon,
 .header-gear svg { width: 22px; height: 22px; }
 
+.header-row > h1 { flex: 1; min-width: 0; }
+.header-collapse-all {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  color: var(--text-dim);
+  border-radius: 999px;
+}
+.header-collapse-all:active { transform: scale(0.94); }
+.header-collapse-all .icon,
+.header-collapse-all svg { width: 22px; height: 22px; }
+
 /* ---------- settings overlay ---------- */
 
 .settings-overlay {
