@@ -1142,10 +1142,7 @@ async function renderMorning() {
   gear.appendChild(iconNode('settings'));
   gear.addEventListener('click', () => openSettings());
   headerRow.appendChild(gear);
-  const sub = document.createElement('div');
-  sub.className = 'sub';
-  sub.textContent = 'давай займемся делом –';
-  header.append(headerRow, sub);
+  header.appendChild(headerRow);
   topRegion.appendChild(header);
 
   const [active, journal, tracks] = await Promise.all([listActive(), listJournal(), listTracks()]);
@@ -1791,10 +1788,7 @@ async function renderToday() {
   const h1 = document.createElement('h1');
   h1.textContent = 'Сегодня';
   headerRow.appendChild(h1);
-  const sub = document.createElement('div');
-  sub.className = 'sub';
-  sub.textContent = todaySubtitle(stuck.length, fresh.length);
-  header.append(headerRow, sub);
+  header.appendChild(headerRow);
   screen.appendChild(header);
 
   // Stuck blocks
@@ -1962,10 +1956,6 @@ async function renderCalendar() {
   h1.textContent = 'План';
   headerRow.appendChild(h1);
   header.appendChild(headerRow);
-  const sub = document.createElement('div');
-  sub.className = 'sub cal-quote';
-  sub.textContent = 'Меня не интересует почему «нет», меня интересует, что вы сделали, чтобы было «да».';
-  header.appendChild(sub);
   screen.appendChild(header);
 
   // Buckets
@@ -2151,10 +2141,7 @@ async function renderTracks() {
   const h1 = document.createElement('h1');
   h1.textContent = 'Треки';
   headerRow.appendChild(h1);
-  const sub = document.createElement('div');
-  sub.className = 'sub';
-  sub.textContent = 'направления деятельности.';
-  header.append(headerRow, sub);
+  header.appendChild(headerRow);
   screen.appendChild(header);
 
   const tracks = await listTracks();
