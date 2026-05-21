@@ -50,12 +50,12 @@
       "id": "ff488b3d75b0",
       "text": "Отремотировать ремень в машине",
       "track_name": "Авто",
-      "deadline": "2026-05-11",
+      "deadline": "2026-05-30",
       "created_at": "2026-04-21",
       "done_at": null,
       "deleted_at": null,
       "notes": "Заднее сиденье",
-      "updated_at": 1779209955010
+      "updated_at": 1779349023279
     },
     {
       "id": "7cf34645fe6b",
@@ -160,12 +160,12 @@
       "id": "20bc9c647dab",
       "text": "Рейтинг Рунета",
       "track_name": "Маркетинг КПМ",
-      "deadline": "2026-05-11",
+      "deadline": "2026-05-20",
       "created_at": "2026-04-23",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1778134971589
+      "updated_at": 1779349158977
     },
     {
       "id": "57915747fe9d",
@@ -182,12 +182,12 @@
       "id": "859412000fba",
       "text": "Отменить оплату Adobe",
       "track_name": "Оплата счетов",
-      "deadline": "2026-05-07",
+      "deadline": "2026-06-10",
       "created_at": "2026-04-25",
       "done_at": null,
       "deleted_at": null,
       "notes": "Попробовать белорусской картой",
-      "updated_at": 1779209912840
+      "updated_at": 1779349100742
     },
     {
       "id": "db31bdd74e70",
@@ -501,12 +501,12 @@
       "id": "32250aa5fce6",
       "text": "Отказаться от ненужных подписок (Cursor, HeyGen, ChatGPT, …)",
       "track_name": "Финансы",
-      "deadline": "2026-05-07",
+      "deadline": "2026-06-10",
       "created_at": "2026-05-03",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779209893803
+      "updated_at": 1779349106843
     },
     {
       "id": "39f2b512bd19",
@@ -523,23 +523,23 @@
       "id": "a1726dd59000",
       "text": "Прикрепить задний брызговик на BMW",
       "track_name": "Авто",
-      "deadline": "2026-05-10",
+      "deadline": "2026-05-30",
       "created_at": "2026-05-08",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779209952313
+      "updated_at": 1779349011736
     },
     {
       "id": "013faa2f688d",
       "text": "Поменять стабилизатор рулевого управления на УАЗе",
       "track_name": "Авто",
-      "deadline": "2026-05-10",
+      "deadline": "2026-05-30",
       "created_at": "2026-05-08",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779209953312
+      "updated_at": 1779349018325
     },
     {
       "id": "77db8bfc39b2",
@@ -908,45 +908,45 @@
       "id": "2b61396fdd32",
       "text": "Поднять смородину",
       "track_name": "Сад",
-      "deadline": "2026-05-19",
+      "deadline": "2026-05-30",
       "created_at": "2026-05-19",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779183944512
+      "updated_at": 1779349039927
     },
     {
       "id": "bcda7a16b417",
       "text": "Покрасить печку-прачку",
       "track_name": "Сад",
-      "deadline": "2026-05-19",
+      "deadline": "2026-05-30",
       "created_at": "2026-05-19",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779260291535
+      "updated_at": 1779349044403
     },
     {
       "id": "faa680510fa3",
       "text": "Собрать компостер",
       "track_name": "Сад",
-      "deadline": "2026-05-20",
+      "deadline": "2026-05-30",
       "created_at": "2026-05-19",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779206490778
+      "updated_at": 1779349115011
     },
     {
       "id": "ecb70b880082",
       "text": "Прикрепить стекло к варке",
       "track_name": "Дом Васильево",
-      "deadline": "2026-05-19",
+      "deadline": "2026-05-30",
       "created_at": "2026-05-19",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779183944514
+      "updated_at": 1779349110532
     },
     {
       "id": "1bb2a5f4a4d4",
@@ -996,56 +996,56 @@
       "id": "7a7fd09e3715",
       "text": "Убрать кучу за домом где новый паркинг",
       "track_name": "Сад",
-      "deadline": "2026-05-20",
+      "deadline": "2026-05-30",
       "created_at": "2026-05-20",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779270468169
+      "updated_at": 1779349118799
     },
     {
       "id": "000d2586f361",
       "text": "Убрать кирпичи",
       "track_name": "Сад",
-      "deadline": "2026-05-20",
+      "deadline": "2026-05-30",
       "created_at": "2026-05-20",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779270468170
+      "updated_at": 1779349122426
     },
     {
       "id": "22f0fb019b91",
       "text": "Вбить колышки-держатели для шланга",
       "track_name": "Сад",
-      "deadline": "2026-05-20",
+      "deadline": "2026-05-30",
       "created_at": "2026-05-20",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779270468171
+      "updated_at": 1779349125699
     },
     {
       "id": "e94c1df74f6d",
       "text": "Мегауборка в сарае",
       "track_name": "Сад",
-      "deadline": "2026-05-20",
+      "deadline": "2026-06-06",
       "created_at": "2026-05-20",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779270468171
+      "updated_at": 1779349131258
     },
     {
       "id": "440baed77b73",
       "text": "Доделать стол",
       "track_name": "Дом Васильево",
-      "deadline": "2026-05-20",
+      "deadline": "2026-05-30",
       "created_at": "2026-05-20",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779270468172
+      "updated_at": 1779349138445
     },
     {
       "id": "2ce70b7b8650",
@@ -1062,12 +1062,23 @@
       "id": "025ad25e6c9a",
       "text": "Повесить зеркало",
       "track_name": "Дом Васильево",
-      "deadline": "2026-05-20",
+      "deadline": "2026-05-30",
       "created_at": "2026-05-20",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779338555800
+      "updated_at": 1779349135350
+    },
+    {
+      "id": "52fe52ce1408",
+      "text": "Разровнять площадку под компостер",
+      "track_name": "Сад",
+      "deadline": "2026-05-30",
+      "created_at": "2026-05-21",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1779349069128
     }
   ],
   "tracks": [
