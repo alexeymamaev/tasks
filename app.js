@@ -1827,6 +1827,10 @@ async function renderToday() {
 
   // Stuck blocks
   if (stuck.length) {
+    const stuckLabel = document.createElement('div');
+    stuckLabel.className = 'today-section-label';
+    stuckLabel.textContent = 'В ОЖИДАНИИ';
+    screen.appendChild(stuckLabel);
     const stuckList = document.createElement('div');
     stuckList.className = 'stuck-list';
     for (const t of stuck) {
