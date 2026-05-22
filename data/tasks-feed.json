@@ -61,12 +61,12 @@
       "id": "7cf34645fe6b",
       "text": "Расторгнуть договор по охране квартиры",
       "track_name": "Оплата счетов",
-      "deadline": "2026-05-07",
+      "deadline": "2026-05-25",
       "created_at": "2026-04-21",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779208711720
+      "updated_at": 1779435904763
     },
     {
       "id": "408574465f4b",
@@ -380,12 +380,12 @@
       "id": "cfbb60806a27",
       "text": "Подать сведения в РКН",
       "track_name": "Маркетинг КПМ",
-      "deadline": "2026-05-07",
+      "deadline": "2026-05-25",
       "created_at": "2026-04-30",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779080892813
+      "updated_at": 1779435918196
     },
     {
       "id": "f75c2eea0627",
@@ -833,10 +833,10 @@
       "track_name": "Здоровье",
       "deadline": "2026-05-22",
       "created_at": "2026-05-12",
-      "done_at": null,
+      "done_at": "2026-05-22",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779383708691
+      "updated_at": 1779435907741
     },
     {
       "id": "7c37a370d45b",
@@ -844,10 +844,10 @@
       "track_name": "Здоровье",
       "deadline": "2026-06-12",
       "created_at": "2026-05-12",
-      "done_at": null,
+      "done_at": "2026-05-22",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779209868981
+      "updated_at": 1779435949854
     },
     {
       "id": "4433da0647f6",
@@ -855,10 +855,10 @@
       "track_name": "Здоровье",
       "deadline": "2026-06-15",
       "created_at": "2026-05-12",
-      "done_at": null,
+      "done_at": "2026-05-22",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779209870004
+      "updated_at": 1779435952889
     },
     {
       "id": "14f08f429059",
@@ -1079,6 +1079,17 @@
       "deleted_at": null,
       "notes": "",
       "updated_at": 1779357838555
+    },
+    {
+      "id": "92798c715066",
+      "text": "Записаться на фгдс",
+      "track_name": "Здоровье",
+      "deadline": "2026-05-22",
+      "created_at": "2026-05-22",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1779436011794
     }
   ],
   "tracks": [
