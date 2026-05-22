@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-05-21",
+  "generated_at": "2026-05-22",
   "tasks": [
     {
       "id": "75056dca344c",
@@ -831,12 +831,12 @@
       "id": "90dd71563ea1",
       "text": "B12 укол #10/10 (последний)",
       "track_name": "Здоровье",
-      "deadline": "2026-05-21",
+      "deadline": "2026-05-22",
       "created_at": "2026-05-12",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779209867844
+      "updated_at": 1779383708691
     },
     {
       "id": "7c37a370d45b",
