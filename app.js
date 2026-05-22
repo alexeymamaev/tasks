@@ -414,9 +414,9 @@ function matchIcons(text, limit = 8) {
 //   rest   = MRU recents, then curated fallback to always fill 8 slots.
 // Tap = apply + push to recents. No selected/toggle state: the icon-box
 // beside the input is the single source of truth for the current pick.
-const ICON_ROW_SIZE = 8;
+const ICON_ROW_SIZE = 20;
 const RECENTS_KEY = 'tasks.recentIcons';
-const RECENTS_MAX = 20;
+const RECENTS_MAX = 24;
 
 function getRecentIcons() {
   try {

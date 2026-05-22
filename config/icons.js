@@ -19,9 +19,14 @@ const CURATED_FULL = [
   // work / communication
   'briefcase', 'laptop', 'monitor', 'keyboard', 'mouse', 'printer',
   'phone', 'phone-call', 'phone-outgoing', 'phone-incoming',
-  'message-circle', 'message-square', 'mail', 'mail-open', 'send', 'inbox',
-  'video', 'mic', 'headphones', 'users', 'user', 'user-plus', 'user-check',
-  'presentation', 'bot', 'building', 'building-2', 'landmark',
+  'message-circle', 'message-square', 'message-square-text', 'mail', 'mail-open',
+  'send', 'inbox', 'video', 'mic', 'headphones', 'users', 'user', 'user-plus',
+  'user-check', 'presentation', 'bot', 'building', 'building-2', 'landmark',
+  'globe', 'search', 'upload-cloud', 'download-cloud', 'gavel', 'paperclip',
+  'tags', 'refresh-cw', 'settings-2',
+
+  // design
+  'palette', 'paintbrush', 'figma', 'layout-template', 'square-dashed',
 
   // time / calendar
   'calendar', 'calendar-check', 'calendar-clock', 'calendar-days',
@@ -89,7 +94,7 @@ const CURATED_FULL = [
 
   // events / misc
   'gift', 'party-popper', 'cake', 'crown', 'rocket', 'puzzle', 'target',
-  'megaphone', 'bell-ring', 'star', 'badge',
+  'megaphone', 'bell-ring', 'star', 'badge', 'thumbs-up', 'thumbs-down',
 
   // tech / device
   'smartphone', 'tablet', 'computer', 'cpu', 'hard-drive', 'usb', 'wifi',
@@ -154,6 +159,47 @@ const ICON_KEYWORDS = {
   'презент': 'presentation', 'выступ': 'presentation', 'доклад': 'presentation',
   'банк': 'landmark', 'bank': 'landmark',
   'клиент': 'user', 'партнер': 'handshake', 'партнёр': 'handshake',
+  'сайт': 'globe', 'site': 'globe', 'website': 'globe', 'веб': 'globe',
+  'загруз': 'upload-cloud', 'upload': 'upload-cloud', 'залить': 'upload-cloud',
+  'выгруз': 'download-cloud', 'download': 'download-cloud', 'скачать': 'download-cloud',
+  'найти': 'search', 'поиск': 'search', 'find': 'search', 'search': 'search',
+  'искать': 'search',
+  'юрист': 'gavel', 'юридическ': 'gavel', 'legal': 'gavel',
+  'тендер': 'gavel', 'конкурс': 'gavel', 'аукцион': 'gavel',
+  'обновить': 'refresh-cw', 'апдейт': 'refresh-cw', 'update': 'refresh-cw',
+  'настроить': 'settings-2', 'настройк': 'settings-2', 'configure': 'settings-2',
+  'оценить': 'star', 'оценка': 'star',
+  'фидбек': 'message-square-text', 'feedback': 'message-square-text', 'отзыв': 'message-square-text',
+  'кейс': 'briefcase', 'case': 'briefcase', 'портфолио': 'briefcase',
+  'кандидат': 'user-check', 'candidate': 'user-check',
+  'запросить': 'message-circle', 'запрос': 'message-circle',
+  'рекомендац': 'thumbs-up', 'recommend': 'thumbs-up',
+  'рейтинг': 'trending-up', 'rating': 'trending-up',
+  'мегауборк': 'sparkles', 'recurring': 'repeat',
+  'сарае': 'warehouse', 'сарай': 'warehouse',
+  'участк': 'map', 'plot': 'map', 'земл': 'map',
+  'продаж': 'tags', 'sale': 'tags', 'продавать': 'tags',
+  'формат': 'file-text', 'pdf': 'file-text',
+  'прикреп': 'paperclip', 'attach': 'paperclip',
+
+  // ---------- design / making ----------
+  'дизайн': 'palette', 'design': 'palette',
+  'макет': 'layout-template', 'mockup': 'layout-template', 'wireframe': 'layout-template',
+  'фигм': 'figma', 'figma': 'figma',
+  'pencil': 'pencil', 'penсil': 'pencil',
+  'контент': 'file-text', 'content': 'file-text',
+  'покрасить': 'paintbrush', 'покраска': 'paintbrush', 'paint': 'paintbrush',
+
+  // ---------- AI / Claude ----------
+  'клод': 'bot', 'claude': 'bot', 'ии': 'bot', 'gpt': 'bot', 'chatgpt': 'bot',
+
+  // ---------- household repair / garden ----------
+  'повесить': 'hammer', 'вбить': 'hammer', 'прибить': 'hammer',
+  'собрать': 'wrench', 'смонтиров': 'wrench', 'отбалансир': 'wrench',
+  'компост': 'sprout', 'огород': 'sprout', 'грядк': 'sprout', 'теплиц': 'sprout',
+  'смородин': 'cherry', 'малин': 'cherry', 'клубник': 'cherry',
+  'шланг': 'droplets', 'полив': 'droplets',
+  'зеркал': 'square-dashed', 'mirror': 'square-dashed',
 
   // ---------- fitness ----------
   'зал': 'dumbbell', 'спорт': 'dumbbell', 'gym': 'dumbbell', 'тренировк': 'dumbbell',

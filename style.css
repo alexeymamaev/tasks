@@ -743,9 +743,21 @@ body {
 }
 
 .sheet-icon-row {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
+  display: flex;
   gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  margin: 0 -24px;
+  padding: 0 24px;
+}
+.sheet-icon-row::-webkit-scrollbar { display: none; }
+.sheet-icon-row > .sheet-icon {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  scroll-snap-align: start;
 }
 .sheet-icons-all {
   align-self: flex-start;
