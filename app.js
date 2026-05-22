@@ -2698,11 +2698,28 @@ function openSheet({ task, presetTrackId }) {
     textInput.focus();
   }
 
+  // iOS Safari quirk: focus() on a textarea while the sheet is still at
+  // translateY(100%) (off-screen) makes WebKit scroll the layout viewport up
+  // to "reveal" the focused element. That residual scroll persists after the
+  // sheet slides in and pulls the fixed backdrop under the notch. Re-pin
+  // window.scrollY=0 while the sheet is open, on every visual-viewport
+  // resize/scroll (keyboard show/hide).
+  const pinTop = () => window.scrollTo(0, 0);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', pinTop);
+    window.visualViewport.addEventListener('scroll', pinTop);
+    backdrop._unpinTop = () => {
+      window.visualViewport.removeEventListener('resize', pinTop);
+      window.visualViewport.removeEventListener('scroll', pinTop);
+    };
+  }
+
   // animate in + size textareas for any pre-filled content
   requestAnimationFrame(() => {
     backdrop.classList.add('open');
     autoResize();
     autoResizeNotes();
+    pinTop();
   });
 }
 
@@ -2882,6 +2899,7 @@ async function closeSheet(backdrop, { commit, skipCommit } = {}) {
   if (!sheetOpen && !skipCommit) return;
   sheetOpen = false;
   backdrop.classList.remove('open');
+  if (backdrop._unpinTop) backdrop._unpinTop();
   if (commit) await commit();
   setTimeout(() => {
     backdrop.remove();
