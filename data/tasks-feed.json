@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-05-24",
+  "generated_at": "2026-05-25",
   "tasks": [
     {
       "id": "75056dca344c",
@@ -160,12 +160,12 @@
       "id": "20bc9c647dab",
       "text": "Рейтинг Рунета",
       "track_name": "Маркетинг КПМ",
-      "deadline": "2026-05-20",
+      "deadline": "2026-05-25",
       "created_at": "2026-04-23",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779349158977
+      "updated_at": 1779639741762
     },
     {
       "id": "57915747fe9d",
@@ -963,12 +963,12 @@
       "id": "4e646bafbb93",
       "text": "Найти доки по Гильдеево",
       "track_name": "Продажа Гильдеево",
-      "deadline": "2026-05-22",
+      "deadline": "2026-05-27",
       "created_at": "2026-05-19",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779206452311
+      "updated_at": 1779639734313
     },
     {
       "id": "6ad430019fb6",
@@ -1084,12 +1084,12 @@
       "id": "92798c715066",
       "text": "Записаться на фгдс",
       "track_name": "Здоровье",
-      "deadline": "2026-05-22",
+      "deadline": "2026-05-25",
       "created_at": "2026-05-22",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779436762231
+      "updated_at": 1779639729897
     },
     {
       "id": "a9b2e94f8707",
@@ -1119,10 +1119,32 @@
       "track_name": "Бухгалтерия",
       "deadline": "2026-05-23",
       "created_at": "2026-05-23",
+      "done_at": "2026-05-24",
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1779639648159
+    },
+    {
+      "id": "32d52ca9de37",
+      "text": "Собрать ящик в комод 1/6",
+      "track_name": "Дом Васильево",
+      "deadline": "2026-05-24",
+      "created_at": "2026-05-24",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779485516071
+      "updated_at": 1779639821350
+    },
+    {
+      "id": "4288efb78add",
+      "text": "Написать Дмитрию про кп2, тз2, д2",
+      "track_name": "БТМ: Сайт",
+      "deadline": "2026-05-24",
+      "created_at": "2026-05-24",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1779639906930
     }
   ],
   "tracks": [
