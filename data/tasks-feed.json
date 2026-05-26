@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-05-25",
+  "generated_at": "2026-05-26",
   "tasks": [
     {
       "id": "75056dca344c",
@@ -1130,10 +1130,10 @@
       "track_name": "Дом Васильево",
       "deadline": "2026-05-24",
       "created_at": "2026-05-24",
-      "done_at": null,
+      "done_at": "2026-05-26",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779687552576
+      "updated_at": 1779774978581
     },
     {
       "id": "4288efb78add",
@@ -1145,6 +1145,17 @@
       "deleted_at": null,
       "notes": "",
       "updated_at": 1779687552577
+    },
+    {
+      "id": "bcce0fe47c43",
+      "text": "Собрать каркас комода 1/2",
+      "track_name": "Дом Васильево",
+      "deadline": "2026-05-26",
+      "created_at": "2026-05-26",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1779775021771
     }
   ],
   "tracks": [
