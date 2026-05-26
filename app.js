@@ -2726,6 +2726,7 @@ function openSheet({ task, presetTrackId }) {
 // ---------- full icon picker (stacked above edit sheet) ----------
 
 function openIconPicker({ current, onSelect }) {
+  const groups = (typeof CURATED_GROUPS !== 'undefined' ? CURATED_GROUPS : null);
   const all = (typeof CURATED_FULL !== 'undefined' ? CURATED_FULL : ['circle-dashed']);
 
   const backdrop = document.createElement('div');
@@ -2750,28 +2751,43 @@ function openIconPicker({ current, onSelect }) {
   grid.className = 'picker-grid';
   sheet.appendChild(grid);
 
+  const iconButton = (name) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'sheet-icon';
+    if (name === current) b.classList.add('selected');
+    b.appendChild(iconNode(name));
+    b.addEventListener('click', () => {
+      onSelect?.(name);
+      close();
+    });
+    return b;
+  };
+
   const renderGrid = (filter) => {
     grid.replaceChildren();
     const q = (filter || '').trim().toLowerCase();
-    const list = q ? all.filter(n => n.includes(q)) : all;
-    if (list.length === 0) {
-      const empty = document.createElement('div');
-      empty.className = 'picker-empty';
-      empty.textContent = 'Нет совпадений. Можно задать иконку, введя точное Lucide-имя в поиск и нажав Enter.';
-      grid.appendChild(empty);
-    } else {
-      list.forEach(name => {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'sheet-icon';
-        if (name === current) b.classList.add('selected');
-        b.appendChild(iconNode(name));
-        b.addEventListener('click', () => {
-          onSelect?.(name);
-          close();
-        });
-        grid.appendChild(b);
+    if (q) {
+      const list = all.filter(n => n.includes(q));
+      if (list.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'picker-empty';
+        empty.textContent = 'Нет совпадений. Можно задать иконку, введя точное Lucide-имя в поиск и нажав Enter.';
+        grid.appendChild(empty);
+      } else {
+        list.forEach(name => grid.appendChild(iconButton(name)));
+      }
+    } else if (groups) {
+      groups.forEach((g, i) => {
+        const label = document.createElement('div');
+        label.className = 'picker-section-label';
+        if (i === 0) label.classList.add('first');
+        label.textContent = g.label;
+        grid.appendChild(label);
+        g.icons.forEach(name => grid.appendChild(iconButton(name)));
       });
+    } else {
+      all.forEach(name => grid.appendChild(iconButton(name)));
     }
     renderLucide();
   };

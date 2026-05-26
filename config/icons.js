@@ -1,111 +1,34 @@
 'use strict';
 
-// Curated Lucide icons for the full picker (~220 icons covering daily use).
-// Names must match Lucide's kebab-case identifiers. Order = approximate
-// frequency-of-use, so fallback suggestions (when no keyword matches) and
-// the first rows of the picker feel "everyday" rather than alphabetical.
+// Grouped icon set for the full picker. Each icon lives in exactly one group.
+// Order of groups ≈ frequency-of-use (not alphabetical), so the top of the
+// picker feels "everyday". `CURATED_FULL` is derived as a flat list of all
+// icons (in group order) and used as fallback when no group context is needed.
+// Names must match Lucide's kebab-case identifiers.
 
-const CURATED_FULL = [
-  // default / generic
-  'circle-dashed', 'check', 'star', 'heart', 'flag', 'bookmark', 'bell',
-  'sparkles', 'sparkle', 'zap', 'flame',
-
-  // shopping / household
-  'shopping-bag', 'shopping-cart', 'shopping-basket', 'store', 'package',
-  'home', 'bed', 'bed-double', 'bath', 'shower-head', 'sofa', 'armchair',
-  'lamp', 'lightbulb', 'washing-machine', 'shirt', 'broom', 'trash-2',
-  'door-open', 'door-closed', 'warehouse', 'fence',
-
-  // work / communication
-  'briefcase', 'laptop', 'monitor', 'keyboard', 'mouse', 'printer',
-  'phone', 'phone-call', 'phone-outgoing', 'phone-incoming',
-  'message-circle', 'message-square', 'message-square-text', 'mail', 'mail-open',
-  'send', 'inbox', 'video', 'mic', 'headphones', 'users', 'user', 'user-plus',
-  'user-check', 'presentation', 'bot', 'building', 'building-2', 'landmark',
-  'globe', 'search', 'upload-cloud', 'download-cloud', 'gavel', 'paperclip',
-  'tags', 'refresh-cw', 'settings-2',
-
-  // design
-  'palette', 'paintbrush', 'figma', 'layout-template', 'square-dashed',
-
-  // time / calendar
-  'calendar', 'calendar-check', 'calendar-clock', 'calendar-days',
-  'calendar-plus', 'calendar-x', 'clock', 'alarm-clock', 'alarm-clock-check',
-  'hourglass', 'timer', 'watch', 'history', 'repeat',
-
-  // learning / reading
-  'book', 'book-open', 'book-marked', 'pencil', 'pen', 'highlighter',
-  'graduation-cap', 'file-text', 'clipboard', 'clipboard-check', 'clipboard-list',
-  'notebook', 'notebook-pen', 'language', 'library', 'school', 'university',
-  'scroll', 'sticky-note', 'bookmark', 'lightbulb',
-
-  // health
-  'pill', 'tablets', 'stethoscope', 'syringe', 'thermometer', 'heart-pulse',
-  'bandage', 'hospital', 'brain', 'ear', 'eye', 'eye-off', 'tooth', 'droplet',
-  'droplets', 'flask-conical', 'microscope', 'ambulance', 'cross', 'glasses',
-
-  // fitness / outdoors
-  'dumbbell', 'bike', 'footprints', 'activity', 'mountain', 'mountain-snow',
-  'tent', 'tent-tree', 'backpack', 'compass', 'map', 'map-pin', 'map-pinned',
-  'trees', 'tree-deciduous', 'tree-pine', 'waves', 'sailboat', 'anchor',
-  'trophy', 'medal', 'target', 'goal', 'volleyball', 'helmet',
-
-  // food
-  'coffee', 'cup-soda', 'wine', 'beer', 'martini', 'utensils', 'utensils-crossed',
-  'fork-knife', 'chef-hat', 'sandwich', 'pizza', 'salad', 'soup', 'cake',
-  'cake-slice', 'ice-cream', 'ice-cream-cone', 'cookie', 'donut', 'candy',
-  'popcorn', 'popsicle', 'lollipop', 'dessert', 'apple', 'banana', 'carrot',
-  'cherry', 'citrus', 'croissant', 'egg', 'egg-fried', 'fish', 'ham',
-  'drumstick', 'beef', 'milk', 'wheat', 'nut', 'tomato', 'leafy-green', 'lemon',
-
-  // travel
-  'car', 'car-front', 'bus', 'plane', 'plane-takeoff', 'plane-landing',
-  'train-front', 'train-track', 'tram-front', 'ship', 'sailboat', 'rocket',
-  'truck', 'fuel', 'luggage', 'ticket', 'baggage-claim', 'navigation',
-  'route', 'road', 'taxi',
-
-  // finance
-  'wallet', 'credit-card', 'banknote', 'coins', 'piggy-bank', 'receipt',
-  'trending-up', 'trending-down', 'calculator', 'dollar-sign',
-  'russian-ruble', 'percent', 'scale', 'gem', 'gift',
-
-  // entertainment
-  'music', 'music-2', 'music-4', 'headphones', 'film', 'tv', 'gamepad-2',
-  'joystick', 'dices', 'camera', 'image', 'palette', 'paintbrush', 'theater',
-  'drama', 'clapperboard', 'disc', 'guitar', 'piano',
-
-  // nature / weather
-  'sun', 'sunrise', 'sunset', 'moon', 'cloud', 'cloud-rain', 'cloud-drizzle',
-  'cloud-snow', 'cloud-lightning', 'cloud-fog', 'snowflake', 'leaf',
-  'flower', 'flower-2', 'sprout', 'wind', 'rainbow', 'umbrella',
-  'thermometer-sun', 'thermometer-snowflake',
-
-  // tools
-  'hammer', 'wrench', 'screwdriver', 'scissors', 'paintbrush', 'brush',
-  'plug', 'plug-zap', 'battery', 'battery-charging', 'key', 'lock', 'unlock',
-  'pickaxe', 'axe', 'shovel', 'saw', 'drill', 'ruler', 'magnet',
-
-  // people / family
-  'baby', 'baby-bottle', 'users', 'user', 'user-plus', 'smile', 'laugh',
-  'frown', 'angry', 'heart-handshake', 'handshake', 'hand-metal',
-
-  // pets
-  'dog', 'cat', 'paw-print', 'bird', 'fish', 'rabbit', 'turtle',
-
-  // events / misc
-  'gift', 'party-popper', 'cake', 'crown', 'rocket', 'puzzle', 'target',
-  'megaphone', 'bell-ring', 'star', 'badge', 'thumbs-up', 'thumbs-down',
-
-  // tech / device
-  'smartphone', 'tablet', 'computer', 'cpu', 'hard-drive', 'usb', 'wifi',
-  'bluetooth', 'cable', 'battery', 'power', 'zap',
-
-  // body / care
-  'bath', 'hand', 'smile', 'eye', 'ear', 'footprints',
-
-  // clothing
-  'shirt', 'glasses', 'crown', 'watch',
+const CURATED_GROUPS = [
+  { label: 'Общее', icons: ['circle-dashed', 'check', 'star', 'heart', 'flag', 'bookmark', 'bell', 'sparkles', 'sparkle', 'flame'] },
+  { label: 'Дом и быт', icons: ['house', 'bed', 'bed-double', 'bath', 'shower-head', 'sofa', 'armchair', 'lamp', 'lightbulb', 'washing-machine', 'shirt', 'broom', 'trash-2', 'door-open', 'door-closed', 'warehouse', 'fence'] },
+  { label: 'Покупки', icons: ['shopping-bag', 'shopping-cart', 'shopping-basket', 'store', 'package', 'tags', 'gift'] },
+  { label: 'Работа и связь', icons: ['briefcase', 'laptop', 'monitor', 'keyboard', 'mouse', 'printer', 'phone', 'phone-call', 'phone-outgoing', 'phone-incoming', 'message-circle', 'message-square', 'message-square-text', 'mail', 'mail-open', 'send', 'inbox', 'video', 'mic', 'users', 'user', 'user-plus', 'user-check', 'presentation', 'bot', 'building', 'building-2', 'landmark', 'globe', 'search', 'upload-cloud', 'download-cloud', 'gavel', 'paperclip', 'refresh-cw', 'settings-2'] },
+  { label: 'Дизайн', icons: ['palette', 'paintbrush', 'figma', 'layout-template', 'square-dashed'] },
+  { label: 'Время', icons: ['calendar', 'calendar-check', 'calendar-clock', 'calendar-days', 'calendar-plus', 'calendar-x', 'alarm-clock', 'alarm-clock-check', 'hourglass', 'timer', 'watch', 'history', 'repeat'] },
+  { label: 'Учёба и заметки', icons: ['book', 'book-open', 'book-marked', 'pencil', 'pen', 'highlighter', 'graduation-cap', 'file-text', 'clipboard', 'clipboard-check', 'clipboard-list', 'notebook', 'notebook-pen', 'language', 'library', 'school', 'scroll', 'sticky-note'] },
+  { label: 'Здоровье', icons: ['pill', 'tablets', 'stethoscope', 'syringe', 'thermometer', 'heart-pulse', 'bandage', 'hospital', 'brain', 'ear', 'eye', 'eye-off', 'tooth', 'droplet', 'droplets', 'flask-conical', 'microscope', 'ambulance', 'cross', 'glasses', 'scissors'] },
+  { label: 'Спорт и улица', icons: ['dumbbell', 'bike', 'footprints', 'activity', 'mountain', 'mountain-snow', 'tent', 'tent-tree', 'backpack', 'compass', 'map', 'map-pin', 'map-pinned', 'trees', 'tree-deciduous', 'tree-pine', 'waves', 'anchor', 'trophy', 'medal', 'target', 'goal', 'volleyball', 'helmet'] },
+  { label: 'Еда', icons: ['coffee', 'cup-soda', 'wine', 'beer', 'martini', 'utensils', 'utensils-crossed', 'chef-hat', 'sandwich', 'pizza', 'salad', 'soup', 'cake', 'cake-slice', 'ice-cream', 'ice-cream-cone', 'cookie', 'donut', 'candy', 'popcorn', 'popsicle', 'lollipop', 'dessert', 'apple', 'banana', 'carrot', 'cherry', 'citrus', 'croissant', 'egg', 'egg-fried', 'fish', 'ham', 'drumstick', 'beef', 'milk', 'wheat', 'nut', 'leafy-green', 'lemon'] },
+  { label: 'Транспорт', icons: ['car', 'car-front', 'bus', 'plane', 'plane-takeoff', 'plane-landing', 'train-front', 'train-track', 'tram-front', 'ship', 'sailboat', 'rocket', 'truck', 'fuel', 'luggage', 'ticket', 'baggage-claim', 'navigation', 'route', 'road', 'taxi'] },
+  { label: 'Финансы', icons: ['wallet', 'credit-card', 'banknote', 'coins', 'piggy-bank', 'receipt', 'trending-up', 'trending-down', 'calculator', 'dollar-sign', 'russian-ruble', 'percent', 'scale', 'gem'] },
+  { label: 'Развлечения', icons: ['music', 'music-2', 'music-4', 'headphones', 'film', 'tv', 'gamepad-2', 'joystick', 'dices', 'camera', 'image', 'theater', 'drama', 'clapperboard', 'disc', 'guitar', 'piano'] },
+  { label: 'Природа и погода', icons: ['sun', 'sunrise', 'sunset', 'moon', 'cloud', 'cloud-rain', 'cloud-drizzle', 'cloud-snow', 'cloud-lightning', 'cloud-fog', 'snowflake', 'leaf', 'flower', 'flower-2', 'sprout', 'wind', 'rainbow', 'umbrella', 'thermometer-sun', 'thermometer-snowflake'] },
+  { label: 'Инструменты', icons: ['hammer', 'wrench', 'screwdriver', 'brush', 'plug', 'plug-zap', 'key', 'lock', 'unlock', 'pickaxe', 'axe', 'shovel', 'saw', 'drill', 'ruler', 'magnet'] },
+  { label: 'Люди и семья', icons: ['baby', 'baby-bottle', 'smile', 'laugh', 'frown', 'angry', 'heart-handshake', 'handshake', 'hand-metal', 'hand', 'crown'] },
+  { label: 'Питомцы', icons: ['dog', 'cat', 'paw-print', 'bird', 'rabbit', 'turtle'] },
+  { label: 'События', icons: ['party-popper', 'megaphone', 'bell-ring', 'badge', 'thumbs-up', 'thumbs-down', 'puzzle', 'zap'] },
+  { label: 'Техника', icons: ['smartphone', 'tablet', 'computer', 'cpu', 'hard-drive', 'usb', 'wifi', 'bluetooth', 'cable', 'battery', 'battery-charging', 'power'] },
 ];
+
+const CURATED_FULL = CURATED_GROUPS.flatMap(g => g.icons);
 
 // Keyword → Lucide icon name. Hand-curated RU + EN pairs, matched per-word
 // against the task text. Supports prefix match (word startsWith keyword or
