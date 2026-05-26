@@ -1,4 +1,4 @@
-const CACHE = 'tasks-v1-118';
+const CACHE = 'tasks-v1-119';
 const ASSETS = [
   './',
   'index.html',
@@ -6,6 +6,9 @@ const ASSETS = [
   'app.js',
   'config/icons.js',
   'manifest.json',
+  'icons/icon-180.png',
+  'icons/icon-192.png',
+  'icons/icon-512.png',
   'https://unpkg.com/dexie@4.0.8/dist/dexie.min.js',
   'https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js',
 ];
