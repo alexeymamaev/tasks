@@ -1317,10 +1317,10 @@
       "track_name": "Квартира",
       "deadline": "2026-05-27",
       "created_at": "2026-05-27",
-      "done_at": null,
+      "done_at": "2026-05-27",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779891344231
+      "updated_at": 1779900696301
     },
     {
       "id": "34aa84a8aa84",
