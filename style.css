@@ -2032,6 +2032,39 @@ body {
 .header-collapse-all .icon,
 .header-collapse-all svg { width: 22px; height: 22px; }
 
+.today-segmented {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 4px;
+  border-radius: 999px;
+  background: rgba(42, 32, 24, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+.today-seg-btn {
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-dim);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+  transition: background 180ms ease, color 180ms ease, padding 180ms ease;
+}
+.today-seg-btn.active {
+  background: rgba(255, 148, 120, 0.14);
+  color: var(--accent);
+  font-weight: 600;
+  padding: 5px 14px;
+}
+.today-seg-btn:active { transform: scale(0.96); }
+
 /* ---------- settings overlay ---------- */
 
 .settings-overlay {

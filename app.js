@@ -471,6 +471,20 @@ function todayISO() {
   return `${y}-${m}-${day}`;
 }
 
+const TODAY_FILTER_KEY = 'tasks.today_filter';
+function isTodayFilterOn() {
+  return localStorage.getItem(TODAY_FILTER_KEY) === '1';
+}
+function setTodayFilter(on) {
+  localStorage.setItem(TODAY_FILTER_KEY, on ? '1' : '0');
+}
+// Filter to today+overdue: deadline set AND deadline <= today.
+// No-date tasks hidden (per design 2026-05-27).
+function filterTodayOverdue(tasks) {
+  const today = todayISO();
+  return tasks.filter(t => t.deadline && t.deadline <= today);
+}
+
 function iconNode(name) {
   const el = document.createElement('i');
   el.className = 'icon';
@@ -954,6 +968,28 @@ function tabbarNode() {
   return wrap;
 }
 
+function todaySegmentedNode() {
+  const wrap = document.createElement('div');
+  wrap.className = 'today-segmented';
+  wrap.setAttribute('data-no-swipe', '');
+  const on = isTodayFilterOn();
+  for (const [val, label] of [['all', 'Все'], ['today', 'Сегодня']]) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    const isActive = (val === 'today') === on;
+    btn.className = 'today-seg-btn' + (isActive ? ' active' : '');
+    btn.textContent = label;
+    btn.addEventListener('click', () => {
+      const want = val === 'today';
+      if (want === isTodayFilterOn()) return;
+      setTodayFilter(want);
+      renderMain().catch(showError);
+    });
+    wrap.appendChild(btn);
+  }
+  return wrap;
+}
+
 function plusBtnNode() {
   const btn = document.createElement('button');
   btn.type = 'button';
@@ -1147,6 +1183,7 @@ async function renderMorning() {
   gear.setAttribute('aria-label', 'Настройки');
   gear.appendChild(iconNode('settings'));
   gear.addEventListener('click', () => openSettings());
+  headerRow.appendChild(todaySegmentedNode());
   headerRow.appendChild(collapseAll);
   headerRow.appendChild(gear);
   header.appendChild(headerRow);
@@ -1155,16 +1192,23 @@ async function renderMorning() {
   const [active, journal, tracks] = await Promise.all([listActive(), listJournal(), listTracks()]);
   const tracksById = new Map(tracks.map(t => [t.id, t]));
 
+  const todayFilter = isTodayFilterOn();
+  const visible = todayFilter ? filterTodayOverdue(active) : active;
+
   let wrap = null;
 
-  if (active.length === 0) {
+  if (visible.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'empty';
-    empty.textContent = 'Пока пусто. Добавь первую задачу снизу.';
+    if (todayFilter && active.length > 0) {
+      empty.textContent = 'На сегодня и в просрочке — пусто.';
+    } else {
+      empty.textContent = 'Пока пусто. Добавь первую задачу снизу.';
+    }
     topRegion.appendChild(empty);
   } else {
     const buckets = { work: [], personal: [], rest: [] };
-    active.forEach(t => {
+    visible.forEach(t => {
       const track = t.track_id ? tracksById.get(t.track_id) : null;
       if (track && track.category === 'work') buckets.work.push(t);
       else if (track && track.category === 'personal') buckets.personal.push(t);
