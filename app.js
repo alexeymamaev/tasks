@@ -19,15 +19,33 @@ function showError(e) {
   bar.textContent = (bar.textContent ? bar.textContent + '\n\n' : '') + msg;
 }
 
+// Transient status (sync result, DB reconnect) → a compact pill floating above
+// the tabbar. Distinct from showError, which dumps multi-line stack traces into
+// the full-width #err-bar that a pill can't hold.
 function showBanner(msg, { variant = 'info', autoHide = 0 } = {}) {
-  const bar = errBar();
-  bar.style.background = variant === 'ok' ? '#2d6a4f' : '#3b5a80';
-  bar.textContent = msg;
+  let pill = document.getElementById('status-pill');
+  if (!pill) {
+    pill = document.createElement('div');
+    pill.id = 'status-pill';
+    document.body.appendChild(pill);
+  }
+  if (pill._hideTimer) { clearTimeout(pill._hideTimer); pill._hideTimer = null; }
+  if (pill._removeTimer) { clearTimeout(pill._removeTimer); pill._removeTimer = null; }
+  pill.classList.toggle('ok', variant === 'ok');
+  pill.classList.toggle('info', variant !== 'ok');
+  pill.textContent = msg;
+  // rAF so a freshly inserted element transitions in from opacity:0 instead of
+  // snapping straight to the shown state.
+  requestAnimationFrame(() => pill.classList.add('show'));
   if (autoHide) {
     const snapshot = msg;
-    setTimeout(() => {
-      const b = document.getElementById('err-bar');
-      if (b && b.textContent === snapshot) b.remove();
+    pill._hideTimer = setTimeout(() => {
+      const p = document.getElementById('status-pill');
+      if (!p || p.textContent !== snapshot) return;
+      p.classList.remove('show');
+      p._removeTimer = setTimeout(() => {
+        if (p.textContent === snapshot) p.remove();
+      }, 260);
     }, autoHide);
   }
 }
@@ -92,14 +110,22 @@ db.version(4).stores({
   });
 });
 
+// True while syncWithWiki is applying inbound changes to db.tasks. The mutation
+// hooks check it so a sync's own writes don't schedule another push → no loop.
+let syncWriting = false;
+
 // Auto-bump updated_at on every task mutation. Sync code passes an explicit
 // updated_at to skip the bump (so inbound merges don't loop back as outbound
-// changes on the next sync).
+// changes on the next sync). User-driven mutations (syncWriting === false) also
+// schedule a debounced push so local edits propagate to the wiki without a
+// manual sync.
 db.tasks.hook('creating', (_primKey, obj) => {
   if (obj.updated_at == null) obj.updated_at = Date.now();
   if (obj.deleted_at == null) obj.deleted_at = 0;
+  if (!syncWriting) scheduleSyncPush();
 });
 db.tasks.hook('updating', (mods) => {
+  if (!syncWriting) scheduleSyncPush();
   if (!('updated_at' in mods)) {
     return { ...mods, updated_at: Date.now() };
   }
@@ -4366,154 +4392,176 @@ async function syncWithWiki({ quiet = false } = {}) {
     return;
   }
   const apiUrl = `https://api.github.com/repos/${WIKI_REPO}/contents/${WIKI_FEED_PATH}`;
-  let getRes;
-  try {
-    getRes = await fetch(apiUrl, {
-      headers: {
-        Authorization: `Bearer ${pat}`,
-        Accept: 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-      },
-    });
-  } catch (e) {
-    reportError(new Error('Сеть: ' + e.message));
-    return;
-  }
-  if (!getRes.ok) {
-    reportError(new Error(`GET feed: ${getRes.status} ${getRes.statusText}`));
-    return;
-  }
-  const meta = await getRes.json();
-  let feed;
-  try {
-    feed = JSON.parse(base64ToUtf8(meta.content));
-  } catch (e) {
-    reportError(new Error('Неверный JSON фида: ' + e.message));
-    return;
-  }
-  const feedSha = meta.sha;
-
-  // Load local raw (no isLive filter — we sync tombstones too)
-  const [localTasks, localTracks] = await Promise.all([
-    db.tasks.toArray(),
-    db.tracks.toArray(),
-  ]);
-  const tracksByName = new Map(localTracks.map(t => [t.name, t]));
-  const tracksById = new Map(localTracks.map(t => [t.id, t]));
-
-  // Stamp external_id on any local task missing one (legacy v3 record).
-  for (const t of localTasks) {
-    if (!t.external_id && t.text) {
-      t.external_id = await sha1Hex12(t.text);
-    }
-  }
-
-  const localByExt = new Map();
-  for (const t of localTasks) {
-    if (t.external_id) localByExt.set(t.external_id, t);
-  }
-
-  const feedTasksOut = [];
-  const localOps = []; // { kind, id?, task?, patch? }
-  let added = 0, downloaded = 0, uploaded = 0;
-  const seenExt = new Set();
-
-  for (const fe of (feed.tasks || [])) {
-    seenExt.add(fe.id);
-    const lo = localByExt.get(fe.id);
-    if (!lo) {
-      added++;
-      localOps.push({ kind: 'add', task: feedToLocal(fe, tracksByName) });
-      feedTasksOut.push(fe);
-      continue;
-    }
-    const lu = lo.updated_at || lo.created_at || 0;
-    const fu = fe.updated_at || 0;
-    if (fu > lu) {
-      downloaded++;
-      localOps.push({ kind: 'update', id: lo.id, patch: feedToLocalPatch(fe, tracksByName) });
-      feedTasksOut.push(fe);
-    } else if (lu > fu) {
-      uploaded++;
-      feedTasksOut.push(localToFeed(lo, tracksById));
-    } else {
-      feedTasksOut.push(fe);
-    }
-  }
-
-  // Local tasks not represented in feed → push, and stamp external_id back
-  for (const lo of localTasks) {
-    if (!lo.external_id) continue;
-    if (seenExt.has(lo.external_id)) continue;
-    uploaded++;
-    feedTasksOut.push(localToFeed(lo, tracksById));
-    if (lo.external_id) {
-      localOps.push({
-        kind: 'update',
-        id: lo.id,
-        patch: { external_id: lo.external_id, updated_at: lo.updated_at || Date.now() },
-      });
-    }
-  }
-
-  // Apply local ops
-  try {
-    await db.transaction('rw', db.tasks, async () => {
-      for (const op of localOps) {
-        if (op.kind === 'add') await db.tasks.add(op.task);
-        else await db.tasks.update(op.id, op.patch);
-      }
-    });
-  } catch (e) {
-    if (isIdbDisconnectError(e)) await recoverDb();
-    else reportError(e);
-    return;
-  }
-
-  // Build new feed payload
-  const newFeed = {
-    schema: 1,
-    generated_at: new Date().toISOString().slice(0, 10),
-    tasks: feedTasksOut,
-    tracks: localTracks.map(t => ({
-      name: t.name,
-      category: t.category || 'personal',
-      icon: t.icon || null,
-      position: t.position || 0,
-    })),
+  const authHeaders = {
+    Authorization: `Bearer ${pat}`,
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
   };
 
-  // PUT updated feed (only if anything changed)
-  const changed = uploaded > 0 || added > 0 || downloaded > 0;
-  if (changed) {
-    const putBody = {
-      message: 'PWA sync',
-      content: utf8ToBase64(JSON.stringify(newFeed, null, 2) + '\n'),
-      sha: feedSha,
-    };
-    let putRes;
+  // One GET → merge → PUT pass. Returns one of:
+  //   { ok: true, counts }   — synced (or no-op, nothing to PUT)
+  //   { conflict: true }     — PUT 409: feed sha went stale (another writer
+  //                            landed between our GET and PUT) → caller retries
+  //   { aborted: true }      — IDB connection lost mid-write, recovery kicked in
+  //   { error: Error }       — anything else → caller reports and gives up
+  async function attempt() {
+    let getRes;
     try {
-      putRes = await fetch(apiUrl, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${pat}`,
-          Accept: 'application/vnd.github+json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(putBody),
+      getRes = await fetch(apiUrl, { headers: authHeaders });
+    } catch (e) {
+      return { error: new Error('Сеть: ' + e.message) };
+    }
+    if (!getRes.ok) {
+      return { error: new Error(`GET feed: ${getRes.status} ${getRes.statusText}`) };
+    }
+    const meta = await getRes.json();
+    let feed;
+    try {
+      feed = JSON.parse(base64ToUtf8(meta.content));
+    } catch (e) {
+      return { error: new Error('Неверный JSON фида: ' + e.message) };
+    }
+    const feedSha = meta.sha;
+
+    // Load local raw (no isLive filter — we sync tombstones too)
+    const [localTasks, localTracks] = await Promise.all([
+      db.tasks.toArray(),
+      db.tracks.toArray(),
+    ]);
+    const tracksByName = new Map(localTracks.map(t => [t.name, t]));
+    const tracksById = new Map(localTracks.map(t => [t.id, t]));
+
+    // Stamp external_id on any local task missing one (legacy v3 record).
+    for (const t of localTasks) {
+      if (!t.external_id && t.text) {
+        t.external_id = await sha1Hex12(t.text);
+      }
+    }
+
+    const localByExt = new Map();
+    for (const t of localTasks) {
+      if (t.external_id) localByExt.set(t.external_id, t);
+    }
+
+    const feedTasksOut = [];
+    const localOps = []; // { kind, id?, task?, patch? }
+    let added = 0, downloaded = 0, uploaded = 0;
+    const seenExt = new Set();
+
+    for (const fe of (feed.tasks || [])) {
+      seenExt.add(fe.id);
+      const lo = localByExt.get(fe.id);
+      if (!lo) {
+        added++;
+        localOps.push({ kind: 'add', task: feedToLocal(fe, tracksByName) });
+        feedTasksOut.push(fe);
+        continue;
+      }
+      const lu = lo.updated_at || lo.created_at || 0;
+      const fu = fe.updated_at || 0;
+      if (fu > lu) {
+        downloaded++;
+        localOps.push({ kind: 'update', id: lo.id, patch: feedToLocalPatch(fe, tracksByName) });
+        feedTasksOut.push(fe);
+      } else if (lu > fu) {
+        uploaded++;
+        feedTasksOut.push(localToFeed(lo, tracksById));
+      } else {
+        feedTasksOut.push(fe);
+      }
+    }
+
+    // Local tasks not represented in feed → push, and stamp external_id back
+    for (const lo of localTasks) {
+      if (!lo.external_id) continue;
+      if (seenExt.has(lo.external_id)) continue;
+      uploaded++;
+      feedTasksOut.push(localToFeed(lo, tracksById));
+      if (lo.external_id) {
+        localOps.push({
+          kind: 'update',
+          id: lo.id,
+          patch: { external_id: lo.external_id, updated_at: lo.updated_at || Date.now() },
+        });
+      }
+    }
+
+    // Apply local ops. syncWriting suppresses the mutation hooks' push-scheduling
+    // so these inbound writes don't bounce back as a fresh outbound sync.
+    syncWriting = true;
+    try {
+      await db.transaction('rw', db.tasks, async () => {
+        for (const op of localOps) {
+          if (op.kind === 'add') await db.tasks.add(op.task);
+          else await db.tasks.update(op.id, op.patch);
+        }
       });
     } catch (e) {
-      reportError(new Error('Сеть PUT: ' + e.message));
-      return;
+      if (isIdbDisconnectError(e)) { await recoverDb(); return { aborted: true }; }
+      return { error: e };
+    } finally {
+      syncWriting = false;
     }
-    if (!putRes.ok) {
-      const text = await putRes.text().catch(() => '');
-      reportError(new Error(`PUT feed: ${putRes.status} ${putRes.statusText} ${text}`));
-      return;
+
+    // Build new feed payload
+    const newFeed = {
+      schema: 1,
+      generated_at: new Date().toISOString().slice(0, 10),
+      tasks: feedTasksOut,
+      tracks: localTracks.map(t => ({
+        name: t.name,
+        category: t.category || 'personal',
+        icon: t.icon || null,
+        position: t.position || 0,
+      })),
+    };
+
+    // PUT updated feed (only if anything changed)
+    const changed = uploaded > 0 || added > 0 || downloaded > 0;
+    if (changed) {
+      const putBody = {
+        message: 'PWA sync',
+        content: utf8ToBase64(JSON.stringify(newFeed, null, 2) + '\n'),
+        sha: feedSha,
+      };
+      let putRes;
+      try {
+        putRes = await fetch(apiUrl, {
+          method: 'PUT',
+          headers: { ...authHeaders, 'Content-Type': 'application/json' },
+          body: JSON.stringify(putBody),
+        });
+      } catch (e) {
+        return { error: new Error('Сеть PUT: ' + e.message) };
+      }
+      if (putRes.status === 409) return { conflict: true };
+      if (!putRes.ok) {
+        const text = await putRes.text().catch(() => '');
+        return { error: new Error(`PUT feed: ${putRes.status} ${putRes.statusText} ${text}`) };
+      }
     }
+
+    return { ok: true, counts: { added, downloaded, uploaded } };
+  }
+
+  // Retry only on 409 (stale sha): re-GET, re-merge against current DB, re-PUT.
+  // The merge is idempotent — already-applied inbound ops won't re-add, and
+  // still-local changes re-upload — so each retry converges instead of clobbering.
+  const MAX_ATTEMPTS = 3;
+  let result;
+  for (let i = 0; i < MAX_ATTEMPTS; i++) {
+    result = await attempt();
+    if (!result.conflict) break;
+  }
+  if (result.aborted) return; // recoverDb already surfaced a banner
+  if (result.error) { reportError(result.error); return; }
+  if (result.conflict) {
+    reportError(new Error('Синк: конфликт версий фида, попробуй ещё раз'));
+    return;
   }
 
   await renderMain();
+  const { added, downloaded, uploaded } = result.counts;
   const parts = [];
   if (added) parts.push(`+${added}`);
   if (downloaded) parts.push(`↓${downloaded}`);
@@ -4528,19 +4576,67 @@ async function syncWithWiki({ quiet = false } = {}) {
   );
 }
 
-// Cold-start auto-sync. Best-effort: pulls latest feed from wiki on app
-// open so the user sees recent additions (e.g. tasks added via Claude on
-// desktop) without manually tapping Settings → Синк с вики. Silent on
-// errors and on no-op syncs.
-async function autoSyncOnBoot() {
+// ---------- auto-sync triggers (event-driven, no polling) ----------
+//
+// No interval timer. Sync fires on meaningful events instead:
+//   - app comes to the foreground / a bfcache restore / connectivity returns
+//     → throttled PULL (catches tasks added elsewhere, e.g. via Claude)
+//   - a local edit settles (debounced) → PUSH (propagates your own changes)
+// A throttle guards pulls so rapid focus-flapping can't spam GitHub, and a
+// single in-flight guard coalesces overlapping auto-triggers. Concurrent-writer
+// conflicts are handled by syncWithWiki's own 409 retry.
+
+const SYNC_PULL_THROTTLE_MS = 45 * 1000; // skip foreground pulls within 45s of last sync
+const PUSH_DEBOUNCE_MS = 4000;           // coalesce a burst of edits into one push
+let lastSyncAt = 0;
+let syncInFlight = false;
+let pushDebounceTimer = null;
+
+// Best-effort quiet sync. Silent on errors and no-op syncs. Coalesced via
+// syncInFlight so two triggers landing together don't double-fire.
+async function autoSync(reason) {
   if (!getWikiToken()) return;
   if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+  if (syncInFlight) return;
+  syncInFlight = true;
   try {
     await syncWithWiki({ quiet: true });
+    lastSyncAt = Date.now();
   } catch (e) {
-    console.warn('auto-sync failed:', e);
+    console.warn(`auto-sync (${reason}) failed:`, e);
+  } finally {
+    syncInFlight = false;
   }
 }
+
+// Pull trigger, throttled — foreground / pageshow / online.
+function autoSyncPull(reason) {
+  if (Date.now() - lastSyncAt < SYNC_PULL_THROTTLE_MS) return;
+  autoSync(reason);
+}
+
+// Push trigger, debounced — fired by the task mutation hooks on user edits.
+// Waits for PUSH_DEBOUNCE_MS of quiet so a burst of edits becomes one sync.
+function scheduleSyncPush() {
+  if (!getWikiToken()) return;
+  if (pushDebounceTimer) clearTimeout(pushDebounceTimer);
+  pushDebounceTimer = setTimeout(() => {
+    pushDebounceTimer = null;
+    autoSync('push');
+  }, PUSH_DEBOUNCE_MS);
+}
+
+// Cold-start sync: pull latest on app open (kept as a named entry point used by
+// boot()). Always runs regardless of throttle — first sync of the session.
+async function autoSyncOnBoot() {
+  await autoSync('boot');
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') autoSyncPull('foreground');
+});
+window.addEventListener('pageshow', () => autoSyncPull('pageshow'));
+window.addEventListener('online', () => autoSync('online'));
 
 function openWikiTokenSheet(onSaved) {
   if (document.querySelector('.settings-sheet-backdrop')) return;

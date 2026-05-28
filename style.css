@@ -1120,6 +1120,36 @@ body {
 }
 .snackbar-action:active { transform: scale(0.96); }
 
+/* ---------- status pill (sync result, DB reconnect) ---------- */
+/* Floats above the tabbar like .snackbar, parked higher so the two don't
+   collide. Carries variant colours; opacity (not just translate) does the
+   hiding so it can never linger half-visible over the bar. */
+#status-pill {
+  position: fixed;
+  left: 50%;
+  bottom: calc(150px + env(safe-area-inset-bottom, 0));
+  transform: translateX(-50%) translateY(16px);
+  max-width: calc(100vw - 32px);
+  padding: 9px 18px;
+  border-radius: 999px;
+  font: 600 13px/1.3 -apple-system, system-ui, sans-serif;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: 50;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 200ms ease;
+}
+#status-pill.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+#status-pill.ok   { background: #2d6a4f; }
+#status-pill.info { background: #3b5a80; }
+
 /* ---------- tracks screen ---------- */
 
 .track-section {
