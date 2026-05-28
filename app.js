@@ -5,8 +5,7 @@
 function errBar() {
   let bar = document.getElementById('err-bar');
   if (!bar) {
-    bar = document.createElement('div');
-    bar.id = 'err-bar';
+    bar = el('div', { id: 'err-bar' });
     document.body.appendChild(bar);
   }
   return bar;
@@ -25,8 +24,7 @@ function showError(e) {
 function showBanner(msg, { variant = 'info', autoHide = 0 } = {}) {
   let pill = document.getElementById('status-pill');
   if (!pill) {
-    pill = document.createElement('div');
-    pill.id = 'status-pill';
+    pill = el('div', { id: 'status-pill' });
     document.body.appendChild(pill);
   }
   if (pill._hideTimer) { clearTimeout(pill._hideTimer); pill._hideTimer = null; }
@@ -59,6 +57,60 @@ function isIdbDisconnectError(e) {
   const msg = String(e.message || e);
   if (name === 'DatabaseClosedError') return true;
   return /Connection to Indexed Database server lost/i.test(msg);
+}
+
+// ---------- DOM helper ----------
+
+// el(tag, props?, children?) — terse element builder. Replaces the
+// createElement → set className → set text → appendChild boilerplate.
+//   props keys:
+//     class            → className
+//     text             → textContent (always treated as text, never HTML)
+//     style: {...}      → Object.assign(node.style, …)
+//     dataset: {...}    → Object.assign(node.dataset, …)
+//     onclick/on…       → addEventListener(type, fn)
+//     anything that is a DOM property (type, value, id, href, disabled…) → set as property
+//     anything else (aria-*, data-*, autocorrect, role…) → setAttribute
+//   children: a node / string / number, or an array of them. Null/false/undefined
+//             entries are skipped, so `cond && el(…)` works inline.
+// Props can be omitted: el('div', [a, b]) or el('span', 'text').
+// No `html` key by design — there is no innerHTML anywhere, keep it that way.
+function el(tag, props, children) {
+  if (props == null || Array.isArray(props) || props instanceof Node
+      || typeof props === 'string' || typeof props === 'number') {
+    children = props;
+    props = null;
+  }
+  const node = document.createElement(tag);
+  if (props) {
+    for (const k in props) {
+      const v = props[k];
+      // Skip only null/undefined — a literal `false` is a valid value for a
+      // boolean DOM property (e.g. spellcheck: false). The false-skip applies
+      // to children below, where `cond && el(...)` is the conditional idiom.
+      if (v == null) continue;
+      if (k === 'class') node.className = v;
+      else if (k === 'text') node.textContent = v;
+      else if (k === 'style' && typeof v === 'object') {
+        // setProperty (not assignment) for CSS custom props (--x); plain props otherwise.
+        for (const sk in v) {
+          if (sk.startsWith('--')) node.style.setProperty(sk, v[sk]);
+          else node.style[sk] = v[sk];
+        }
+      }
+      else if (k === 'dataset' && typeof v === 'object') Object.assign(node.dataset, v);
+      else if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2), v);
+      else if (k in node) node[k] = v;
+      else node.setAttribute(k, v);
+    }
+  }
+  if (children != null) {
+    for (const c of (Array.isArray(children) ? children : [children])) {
+      if (c == null || c === false) continue;
+      node.append(typeof c === 'string' || typeof c === 'number' ? String(c) : c);
+    }
+  }
+  return node;
 }
 
 async function handleGlobalError(rawErr, ev) {
@@ -337,15 +389,6 @@ async function listTracksByRecency() {
   return arr;
 }
 
-async function touchTrack(id) {
-  if (!id) return;
-  try {
-    await db.tracks.update(id, { last_used_at: Date.now() });
-  } catch (e) {
-    if (isIdbDisconnectError(e)) await recoverDb();
-  }
-}
-
 async function addTrack({ name, icon, category = 'personal' }) {
   const all = await db.tracks.toArray();
   const maxPos = all.reduce((m, t) => Math.max(m, t.position ?? 0), 0);
@@ -522,10 +565,7 @@ function filterTodayOverdue(tasks) {
 }
 
 function iconNode(name) {
-  const el = document.createElement('i');
-  el.className = 'icon';
-  el.setAttribute('data-lucide', name || DEFAULT_ICON);
-  return el;
+  return el('i', { class: 'icon', 'data-lucide': name || DEFAULT_ICON });
 }
 
 function renderLucide() {
@@ -534,14 +574,14 @@ function renderLucide() {
   }
 }
 
-function attachLongPress(el, { onLongPress, onTap, ms = 500 }) {
+function attachLongPress(node, { onLongPress, onTap, ms = 500 }) {
   let timer = null;
   let firedLong = false;
   let moved = false;
   let pressed = false;
   let startX = 0, startY = 0;
   const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
-  el.addEventListener('pointerdown', (e) => {
+  node.addEventListener('pointerdown', (e) => {
     pressed = true;
     firedLong = false;
     moved = false;
@@ -554,7 +594,7 @@ function attachLongPress(el, { onLongPress, onTap, ms = 500 }) {
       onLongPress?.(e);
     }, ms);
   });
-  el.addEventListener('pointermove', (e) => {
+  node.addEventListener('pointermove', (e) => {
     if (!pressed) return;
     const dx = e.clientX - startX, dy = e.clientY - startY;
     if (dx*dx + dy*dy > 100) {
@@ -562,7 +602,7 @@ function attachLongPress(el, { onLongPress, onTap, ms = 500 }) {
       cancel();
     }
   });
-  el.addEventListener('pointerup', (e) => {
+  node.addEventListener('pointerup', (e) => {
     if (!pressed) return;
     const wasLong = firedLong;
     const wasMoved = moved;
@@ -571,9 +611,9 @@ function attachLongPress(el, { onLongPress, onTap, ms = 500 }) {
     if (!wasLong && !wasMoved) onTap?.(e);
   });
   const bail = () => { pressed = false; cancel(); };
-  el.addEventListener('pointercancel', bail);
-  el.addEventListener('pointerleave', bail);
-  el.addEventListener('contextmenu', (e) => e.preventDefault());
+  node.addEventListener('pointercancel', bail);
+  node.addEventListener('pointerleave', bail);
+  node.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
 function pluralizeDays(n) {
@@ -623,150 +663,100 @@ function groupByTrack(list, tracksById) {
 }
 
 function trackSubsectionNode(track, tasks, tracksById) {
-  const sub = document.createElement('div');
-  sub.className = 'track-subsection';
-  sub.dataset.trackId = track ? String(track.id) : 'null';
-
   const collapseKey = `tasks_morning_collapsed_track_${track ? track.id : 'null'}`;
-  if (localStorage.getItem(collapseKey) === '1') sub.classList.add('collapsed');
-
-  const header = document.createElement('div');
-  header.className = 'track-subsection-header';
-
-  const toggle = document.createElement('button');
-  toggle.type = 'button';
-  toggle.className = 'track-subsection-toggle';
 
   const chev = iconNode('chevron-down');
   chev.classList.add('track-subsection-chevron');
-  toggle.appendChild(chev);
 
-  const nameRow = document.createElement('span');
-  nameRow.className = 'track-subsection-name';
-  nameRow.appendChild(iconNode(track ? (track.icon || DEFAULT_ICON) : 'circle-dashed'));
-  const name = document.createElement('span');
-  name.textContent = track ? track.name : 'Без трека';
-  nameRow.appendChild(name);
-  toggle.appendChild(nameRow);
+  const sub = el('div', {
+    class: 'track-subsection',
+    dataset: { trackId: track ? String(track.id) : 'null' },
+  }, [
+    el('div', { class: 'track-subsection-header' }, [
+      el('button', {
+        type: 'button', class: 'track-subsection-toggle',
+        onclick: () => {
+          const next = !sub.classList.contains('collapsed');
+          sub.classList.toggle('collapsed', next);
+          localStorage.setItem(collapseKey, next ? '1' : '0');
+          sub.dispatchEvent(new CustomEvent('track-collapse-changed', { bubbles: true }));
+        },
+      }, [
+        chev,
+        el('span', { class: 'track-subsection-name' }, [
+          iconNode(track ? (track.icon || DEFAULT_ICON) : 'circle-dashed'),
+          el('span', { text: track ? track.name : 'Без трека' }),
+        ]),
+        el('span', { class: 'track-subsection-counter', text: String(tasks.length) }),
+      ]),
+      el('button', {
+        type: 'button', class: 'track-subsection-add',
+        'aria-label': `Новая задача${track ? ` в «${track.name}»` : ''}`,
+        onclick: (e) => {
+          e.stopPropagation();
+          openSheet({ task: null, presetTrackId: track ? track.id : null });
+        },
+      }, [iconNode('plus')]),
+    ]),
+    el('div', { class: 'grid' }, tasks.map(t => activeCardNode(t, tracksById, { hideTrack: true }))),
+  ]);
 
-  const counter = document.createElement('span');
-  counter.className = 'track-subsection-counter';
-  counter.textContent = String(tasks.length);
-  toggle.appendChild(counter);
-
-  toggle.addEventListener('click', () => {
-    const next = !sub.classList.contains('collapsed');
-    sub.classList.toggle('collapsed', next);
-    localStorage.setItem(collapseKey, next ? '1' : '0');
-    sub.dispatchEvent(new CustomEvent('track-collapse-changed', { bubbles: true }));
-  });
-  header.appendChild(toggle);
-
-  const add = document.createElement('button');
-  add.type = 'button';
-  add.className = 'track-subsection-add';
-  add.setAttribute('aria-label', `Новая задача${track ? ` в «${track.name}»` : ''}`);
-  add.appendChild(iconNode('plus'));
-  add.addEventListener('click', (e) => {
-    e.stopPropagation();
-    openSheet({ task: null, presetTrackId: track ? track.id : null });
-  });
-  header.appendChild(add);
-
-  sub.appendChild(header);
-
-  const grid = document.createElement('div');
-  grid.className = 'grid';
-  tasks.forEach(t => grid.appendChild(activeCardNode(t, tracksById, { hideTrack: true })));
-  sub.appendChild(grid);
-
+  if (localStorage.getItem(collapseKey) === '1') sub.classList.add('collapsed');
   return sub;
 }
 
 function cardBase(task, tracksById, opts) {
   opts = opts || {};
-  const el = document.createElement('div');
-  el.className = 'card';
-  el.dataset.id = String(task.id);
-
-  const iconRow = document.createElement('div');
-  iconRow.className = 'icon-row';
-  iconRow.appendChild(iconNode(task.icon));
+  const iconRow = el('div', { class: 'icon-row' }, [iconNode(task.icon)]);
   if (task.notes && task.notes.trim()) {
-    const mark = document.createElement('div');
-    mark.className = 'notes-mark';
-    mark.appendChild(iconNode('notebook-pen'));
-    iconRow.appendChild(mark);
+    iconRow.append(el('div', { class: 'notes-mark' }, [iconNode('notebook-pen')]));
   }
-  el.appendChild(iconRow);
 
   const fmt = formatDeadline(task.deadline);
-  if (fmt) {
-    const dl = document.createElement('div');
-    dl.className = 'deadline ' + fmt.kind;
-    dl.textContent = fmt.text;
-    el.appendChild(dl);
-  }
-
-  const text = document.createElement('div');
-  text.className = 'text';
-  text.textContent = task.text;
-  el.appendChild(text);
-
   const track = task.track_id && tracksById ? tracksById.get(task.track_id) : null;
-  if (track && !opts.hideTrack) {
-    const mark = document.createElement('div');
-    mark.className = 'track-mark';
-    mark.appendChild(iconNode(track.icon || DEFAULT_ICON));
-    const name = document.createElement('span');
-    name.className = 'name';
-    name.textContent = track.name;
-    mark.appendChild(name);
-    el.appendChild(mark);
-  }
 
-  return el;
+  return el('div', { class: 'card', dataset: { id: String(task.id) } }, [
+    iconRow,
+    fmt && el('div', { class: 'deadline ' + fmt.kind, text: fmt.text }),
+    el('div', { class: 'text', text: task.text }),
+    (track && !opts.hideTrack) && el('div', { class: 'track-mark' }, [
+      iconNode(track.icon || DEFAULT_ICON),
+      el('span', { class: 'name', text: track.name }),
+    ]),
+  ]);
 }
 
 function playStampImpact(cardEl, task) {
   return new Promise(resolve => {
     const finalRot = ((task.id * 13) % 15) - 7;
-
-    const shockwave = document.createElement('div');
-    shockwave.className = 'stamp-shockwave';
-    cardEl.appendChild(shockwave);
-
-    const badge = document.createElement('div');
-    badge.className = 'stamp-badge';
-    badge.style.setProperty('--final-rot', finalRot + 'deg');
-    badge.appendChild(checkBadgeSvg());
-    cardEl.appendChild(badge);
-
+    cardEl.append(el('div', { class: 'stamp-shockwave' }));
+    cardEl.append(el('div', {
+      class: 'stamp-badge', style: { '--final-rot': finalRot + 'deg' },
+    }, [checkBadgeSvg()]));
     cardEl.classList.add('stamping');
-
     setTimeout(() => resolve(), 280);
   });
 }
 
 function activeCardNode(task, tracksById, opts) {
-  const el = cardBase(task, tracksById, opts);
-  attachLongPress(el, {
+  const card = cardBase(task, tracksById, opts);
+  attachLongPress(card, {
     onTap: () => openSheet({ task }),
     onLongPress: async () => {
-      if (el.classList.contains('stamping') || el.classList.contains('removing')) return;
+      if (card.classList.contains('stamping') || card.classList.contains('removing')) return;
       try {
-        await playStampImpact(el, task);
+        await playStampImpact(card, task);
         await markDone(task.id);
         showUndoSnackbar(task.id);
         setTimeout(() => { renderMain().catch(showError); }, 60);
       } catch (e) {
-        el.classList.remove('stamping');
+        card.classList.remove('stamping');
         if (isIdbDisconnectError(e)) { await recoverDb(); return; }
         showError(e);
       }
     },
   });
-  return el;
+  return card;
 }
 
 // ---------- undo snackbar ----------
@@ -777,33 +767,26 @@ let splittingTaskId = null;
 
 function showSnackbar({ label: labelText, onUndo }) {
   if (snackbarTimer) { clearTimeout(snackbarTimer); snackbarTimer = null; }
-  document.querySelectorAll('.snackbar').forEach(el => el.remove());
+  document.querySelectorAll('.snackbar').forEach(n => n.remove());
 
-  const sb = document.createElement('div');
-  sb.className = 'snackbar';
-
-  const label = document.createElement('span');
-  label.className = 'snackbar-label';
-  label.textContent = labelText;
-
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'snackbar-action';
-  btn.textContent = 'Отменить';
-  btn.addEventListener('click', async () => {
-    if (snackbarTimer) { clearTimeout(snackbarTimer); snackbarTimer = null; }
-    sb.classList.remove('open');
-    try {
-      await onUndo();
-    } catch (e) {
-      if (isIdbDisconnectError(e)) { await recoverDb(); return; }
-      showError(e);
-    } finally {
-      setTimeout(() => sb.remove(), 200);
-    }
-  });
-
-  sb.append(label, btn);
+  const sb = el('div', { class: 'snackbar' }, [
+    el('span', { class: 'snackbar-label', text: labelText }),
+    el('button', {
+      type: 'button', class: 'snackbar-action', text: 'Отменить',
+      onclick: async () => {
+        if (snackbarTimer) { clearTimeout(snackbarTimer); snackbarTimer = null; }
+        sb.classList.remove('open');
+        try {
+          await onUndo();
+        } catch (e) {
+          if (isIdbDisconnectError(e)) { await recoverDb(); return; }
+          showError(e);
+        } finally {
+          setTimeout(() => sb.remove(), 200);
+        }
+      },
+    }),
+  ]);
   document.body.appendChild(sb);
   requestAnimationFrame(() => sb.classList.add('open'));
 
@@ -861,16 +844,12 @@ function checkBadgeSvg() {
 // `removing` guard so a held-down card can't fire undoDone twice) and by the
 // History sheet (passes its own onTap/onLongPress).
 function doneCardNode(task, tracksById, { onTap, onLongPress }) {
-  const el = cardBase(task, tracksById);
-  el.classList.add('done');
-  const badge = document.createElement('div');
-  badge.className = 'check-badge';
+  const card = cardBase(task, tracksById);
+  card.classList.add('done');
   const rot = ((task.id * 13) % 15) - 7; // deterministic -7..+7, stable across re-renders
-  badge.style.setProperty('--rot', rot + 'deg');
-  badge.appendChild(checkBadgeSvg());
-  el.appendChild(badge);
-  attachLongPress(el, { onTap, onLongPress });
-  return el;
+  card.append(el('div', { class: 'check-badge', style: { '--rot': rot + 'deg' } }, [checkBadgeSvg()]));
+  attachLongPress(card, { onTap, onLongPress });
+  return card;
 }
 
 function journalCardNode(task, tracksById) {
@@ -923,19 +902,12 @@ async function renderApp() {
   root.replaceChildren();
   root.classList.add('app-root');
 
-  pagerEl = document.createElement('div');
-  pagerEl.className = 'pager';
-
-  const pToday = document.createElement('section');
-  pToday.className = 'page page-today';
-  const pMorning = document.createElement('section');
-  pMorning.className = 'page page-morning';
-  const pCalendar = document.createElement('section');
-  pCalendar.className = 'page page-calendar';
-  const pTracks = document.createElement('section');
-  pTracks.className = 'page page-tracks';
-  pagerEl.append(pToday, pMorning, pCalendar, pTracks);
-
+  pagerEl = el('div', { class: 'pager' }, [
+    el('section', { class: 'page page-today' }),
+    el('section', { class: 'page page-morning' }),
+    el('section', { class: 'page page-calendar' }),
+    el('section', { class: 'page page-tracks' }),
+  ]);
   root.appendChild(pagerEl);
 
   // Floating tabbar (Liquid Glass capsule + coral plus button) — sits above
@@ -985,67 +957,50 @@ const TABBAR_TABS = [
 ];
 
 function tabbarNode() {
-  const wrap = document.createElement('div');
-  wrap.className = 'tabbar-capsule';
-  wrap.setAttribute('data-no-swipe', '');
-  for (const t of TABBAR_TABS) {
-    const tab = document.createElement('button');
-    tab.type = 'button';
-    tab.className = 'tabbar-tab' + (t.idx === currentPage ? ' active' : '');
-    tab.dataset.page = String(t.idx);
-    tab.appendChild(iconNode(t.icon));
-    const lbl = document.createElement('span');
-    lbl.textContent = t.label;
-    tab.appendChild(lbl);
-    tab.addEventListener('pointerdown', () => setPage(t.idx));
-    wrap.appendChild(tab);
-  }
+  const wrap = el('div', { class: 'tabbar-capsule', 'data-no-swipe': '' },
+    TABBAR_TABS.map(t => el('button', {
+      type: 'button',
+      class: 'tabbar-tab' + (t.idx === currentPage ? ' active' : ''),
+      dataset: { page: String(t.idx) },
+      onpointerdown: () => setPage(t.idx),
+    }, [iconNode(t.icon), el('span', { text: t.label })])),
+  );
   renderLucide();
   return wrap;
 }
 
 function todaySegmentedNode(counts = {}) {
-  const wrap = document.createElement('div');
-  wrap.className = 'today-segmented';
-  wrap.setAttribute('data-no-swipe', '');
   const on = isTodayFilterOn();
   const countFor = { all: counts.all, today: counts.today };
-  for (const [val, label] of [['all', 'Все'], ['today', 'Сегодня']]) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    const isActive = (val === 'today') === on;
-    btn.className = 'today-seg-btn' + (isActive ? ' active' : '');
-    const lbl = document.createElement('span');
-    lbl.textContent = label;
-    btn.appendChild(lbl);
-    const n = countFor[val];
-    if (typeof n === 'number') {
-      const c = document.createElement('span');
-      c.className = 'today-seg-count';
-      c.textContent = String(n);
-      btn.appendChild(c);
-    }
-    btn.addEventListener('click', () => {
-      const want = val === 'today';
-      if (want === isTodayFilterOn()) return;
-      setTodayFilter(want);
-      renderMain().catch(showError);
-    });
-    wrap.appendChild(btn);
-  }
-  return wrap;
+  return el('div', { class: 'today-segmented', 'data-no-swipe': '' },
+    [['all', 'Все'], ['today', 'Сегодня']].map(([val, label]) => {
+      const isActive = (val === 'today') === on;
+      const n = countFor[val];
+      return el('button', {
+        type: 'button',
+        class: 'today-seg-btn' + (isActive ? ' active' : ''),
+        onclick: () => {
+          const want = val === 'today';
+          if (want === isTodayFilterOn()) return;
+          setTodayFilter(want);
+          renderMain().catch(showError);
+        },
+      }, [
+        el('span', { text: label }),
+        (typeof n === 'number') && el('span', { class: 'today-seg-count', text: String(n) }),
+      ]);
+    }),
+  );
 }
 
 function plusBtnNode() {
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'tabbar-plus';
-  btn.setAttribute('data-no-swipe', '');
-  btn.appendChild(iconNode('plus'));
-  btn.addEventListener('click', () => {
-    if (currentPage === 3) openTrackSheet({ track: null });
-    else openSheet({ task: null });
-  });
+  const btn = el('button', {
+    type: 'button', class: 'tabbar-plus', 'data-no-swipe': '',
+    onclick: () => {
+      if (currentPage === 3) openTrackSheet({ track: null });
+      else openSheet({ task: null });
+    },
+  }, [iconNode('plus')]);
   renderLucide();
   return btn;
 }
@@ -1063,24 +1018,17 @@ function updatePlusButton() {
 }
 
 function sectionDivider(label, opts) {
-  const d = document.createElement('div');
-  d.className = 'divider' + (label ? '' : ' plain');
-  if (label) {
-    const l = document.createElement('span');
-    l.className = 'divider-label';
-    l.textContent = label;
-    d.appendChild(l);
-  }
+  const d = el('div', { class: 'divider' + (label ? '' : ' plain') },
+    label ? [el('span', { class: 'divider-label', text: label })] : []);
   if (opts?.link) {
     d.classList.add('has-link');
-    const line = document.createElement('span');
-    line.className = 'divider-line';
-    d.appendChild(line);
-    const link = document.createElement('span');
-    link.className = 'divider-link';
-    link.textContent = opts.link.text;
-    link.addEventListener('click', (e) => { e.stopPropagation(); opts.link.onClick(); });
-    d.appendChild(link);
+    d.append(
+      el('span', { class: 'divider-line' }),
+      el('span', {
+        class: 'divider-link', text: opts.link.text,
+        onclick: (e) => { e.stopPropagation(); opts.link.onClick(); },
+      }),
+    );
   }
   return d;
 }
@@ -1089,7 +1037,7 @@ function sectionDivider(label, opts) {
 // pointer moves horizontally > vertically past a small threshold, so vertical
 // scroll inside a page is never hijacked. Drag handles on track strips
 // stopPropagation to own their gestures.
-function attachPagerSwipe(el) {
+function attachPagerSwipe(node) {
   let startX = 0, startY = 0, dragging = false, active = false, baseTx = 0;
   let multiTouch = false;
   // Lock the gesture to the first pointerId so a second finger landing
@@ -1100,29 +1048,29 @@ function attachPagerSwipe(el) {
   let maxRight = 0, maxLeft = 0;
   const W = () => window.innerWidth;
 
-  el.addEventListener('touchstart', (e) => {
+  node.addEventListener('touchstart', (e) => {
     if (e.touches.length >= 2) {
       multiTouch = true;
       if (active) {
         active = false;
         if (dragging) {
           dragging = false;
-          el.classList.remove('dragging');
-          el.style.transform = `translateX(${-currentPage * PAGE_WIDTH_PCT}%)`;
+          node.classList.remove('dragging');
+          node.style.transform = `translateX(${-currentPage * PAGE_WIDTH_PCT}%)`;
         }
       }
     }
   }, { passive: true });
   const releaseMulti = (e) => { if (e.touches.length === 0) multiTouch = false; };
-  el.addEventListener('touchend', releaseMulti, { passive: true });
-  el.addEventListener('touchcancel', releaseMulti, { passive: true });
+  node.addEventListener('touchend', releaseMulti, { passive: true });
+  node.addEventListener('touchcancel', releaseMulti, { passive: true });
 
-  el.addEventListener('pointerdown', (e) => {
+  node.addEventListener('pointerdown', (e) => {
     if (multiTouch) return;
     if (e.target.closest('[data-no-swipe]')) return;
     if (trackingId !== null) return;
     trackingId = e.pointerId;
-    try { el.setPointerCapture(e.pointerId); } catch {}
+    try { node.setPointerCapture(e.pointerId); } catch {}
     active = true;
     dragging = false;
     startX = e.clientX;
@@ -1131,7 +1079,7 @@ function attachPagerSwipe(el) {
     maxLeft = 0;
     baseTx = -currentPage * W();
   });
-  el.addEventListener('pointermove', (e) => {
+  node.addEventListener('pointermove', (e) => {
     if (e.pointerId !== trackingId) return;
     if (multiTouch) { active = false; return; }
     if (!active) return;
@@ -1141,7 +1089,7 @@ function attachPagerSwipe(el) {
       if (Math.abs(dx) < 10) return;
       if (Math.abs(dx) > Math.abs(dy) * 1.3) {
         dragging = true;
-        el.classList.add('dragging');
+        node.classList.add('dragging');
       } else {
         active = false;
         return;
@@ -1154,16 +1102,16 @@ function attachPagerSwipe(el) {
     const minTx = -W() * (PAGE_COUNT - 1);
     if (tx > maxTx) tx = maxTx + (tx - maxTx) * 0.3;
     if (tx < minTx) tx = minTx + (tx - minTx) * 0.3;
-    el.style.transform = `translateX(${tx}px)`;
+    node.style.transform = `translateX(${tx}px)`;
   });
   const end = (e) => {
     if (e.pointerId !== trackingId) return;
     trackingId = null;
-    try { el.releasePointerCapture(e.pointerId); } catch {}
+    try { node.releasePointerCapture(e.pointerId); } catch {}
     if (!active) return;
     active = false;
     if (!dragging) return;
-    el.classList.remove('dragging');
+    node.classList.remove('dragging');
     const dxFinal = e.clientX - startX;
     const threshold = W() * 0.2;
     // Pick page based on the dominant direction during the gesture, not
@@ -1174,26 +1122,26 @@ function attachPagerSwipe(el) {
     const decisive = Math.abs(dominant) > threshold ? dominant : dxFinal;
     if (decisive < -threshold && currentPage < PAGE_COUNT - 1) next = currentPage + 1;
     else if (decisive > threshold && currentPage > 0) next = currentPage - 1;
-    el.style.transform = '';
+    node.style.transform = '';
     setPage(next, true);
     dragging = false;
   };
-  el.addEventListener('pointerup', end);
+  node.addEventListener('pointerup', end);
   // pointercancel fires when the OS hijacks the gesture — its clientX is
   // not trustworthy, so snap back rather than computing dx.
-  el.addEventListener('pointercancel', (e) => {
+  node.addEventListener('pointercancel', (e) => {
     if (e.pointerId !== trackingId) return;
     trackingId = null;
-    try { el.releasePointerCapture(e.pointerId); } catch {}
+    try { node.releasePointerCapture(e.pointerId); } catch {}
     if (!active) return;
     active = false;
     if (!dragging) return;
     dragging = false;
-    el.classList.remove('dragging');
-    el.style.transform = '';
+    node.classList.remove('dragging');
+    node.style.transform = '';
     setPage(currentPage, true);
   });
-  el.addEventListener('pointerleave', (e) => {
+  node.addEventListener('pointerleave', (e) => {
     if (e.pointerId !== trackingId) return;
     if (active && dragging) end(e);
   });
@@ -1213,46 +1161,33 @@ async function renderMorning() {
   const todayList = filterTodayOverdue(active);
   const visible = todayFilter ? todayList : active;
 
-  const screen = document.createElement('div');
-  screen.className = 'screen';
+  const screen = el('div', { class: 'screen' });
+  const topRegion = el('div', { class: 'top-region' });
 
-  const topRegion = document.createElement('div');
-  topRegion.className = 'top-region';
+  const collapseAll = el('button', { type: 'button', class: 'header-collapse-all' });
+  const gear = el('button', {
+    type: 'button', class: 'header-gear', 'aria-label': 'Настройки',
+    onclick: () => openSettings(),
+  }, [iconNode('settings')]);
 
-  const header = document.createElement('div');
-  header.className = 'header';
-  header.setAttribute('data-no-swipe', '');
-  const headerRow = document.createElement('div');
-  headerRow.className = 'header-row';
-  const h1 = document.createElement('h1');
-  h1.textContent = 'Задачи';
-  headerRow.appendChild(h1);
-  const collapseAll = document.createElement('button');
-  collapseAll.type = 'button';
-  collapseAll.className = 'header-collapse-all';
-  const gear = document.createElement('button');
-  gear.type = 'button';
-  gear.className = 'header-gear';
-  gear.setAttribute('aria-label', 'Настройки');
-  gear.appendChild(iconNode('settings'));
-  gear.addEventListener('click', () => openSettings());
-  headerRow.appendChild(todaySegmentedNode({ all: active.length, today: todayList.length }));
-  headerRow.appendChild(collapseAll);
-  headerRow.appendChild(gear);
-  header.appendChild(headerRow);
-  topRegion.appendChild(header);
+  topRegion.append(el('div', { class: 'header', 'data-no-swipe': '' }, [
+    el('div', { class: 'header-row' }, [
+      el('h1', { text: 'Задачи' }),
+      todaySegmentedNode({ all: active.length, today: todayList.length }),
+      collapseAll,
+      gear,
+    ]),
+  ]));
 
   let wrap = null;
 
   if (visible.length === 0) {
-    const empty = document.createElement('div');
-    empty.className = 'empty';
-    if (todayFilter && active.length > 0) {
-      empty.textContent = 'На сегодня и в просрочке — пусто.';
-    } else {
-      empty.textContent = 'Пока пусто. Добавь первую задачу снизу.';
-    }
-    topRegion.appendChild(empty);
+    topRegion.append(el('div', {
+      class: 'empty',
+      text: (todayFilter && active.length > 0)
+        ? 'На сегодня и в просрочке — пусто.'
+        : 'Пока пусто. Добавь первую задачу снизу.',
+    }));
   } else {
     const buckets = { work: [], personal: [], rest: [] };
     visible.forEach(t => {
@@ -1263,8 +1198,7 @@ async function renderMorning() {
     });
     const nonEmpty = ['personal', 'work', 'rest'].filter(k => buckets[k].length > 0);
 
-    wrap = document.createElement('div');
-    wrap.className = 'active-grouped';
+    wrap = el('div', { class: 'active-grouped' });
     const showCategoryDividers = nonEmpty.length >= 2;
     const sections = [
       { key: 'personal', label: 'ЛИЧНОЕ' },
@@ -1274,12 +1208,12 @@ async function renderMorning() {
     for (const { key, label } of sections) {
       const list = buckets[key];
       if (!list.length) continue;
-      if (showCategoryDividers && label) wrap.appendChild(sectionDivider(label));
+      if (showCategoryDividers && label) wrap.append(sectionDivider(label));
       for (const group of groupByTrack(list, tracksById)) {
-        wrap.appendChild(trackSubsectionNode(group.track, group.tasks, tracksById));
+        wrap.append(trackSubsectionNode(group.track, group.tasks, tracksById));
       }
     }
-    topRegion.appendChild(wrap);
+    topRegion.append(wrap);
   }
 
   const updateCollapseAllIcon = () => {
@@ -1309,13 +1243,11 @@ async function renderMorning() {
   screen.appendChild(topRegion);
 
   if (journal.length > 0) {
-    screen.appendChild(sectionDivider('ЖУРНАЛ', {
+    screen.append(sectionDivider('ЖУРНАЛ', {
       link: { text: 'Весь журнал', onClick: openHistorySheet },
     }));
-    const jgrid = document.createElement('div');
-    jgrid.className = 'grid journal-grid';
-    journal.forEach(t => jgrid.appendChild(journalCardNode(t, tracksById)));
-    screen.appendChild(jgrid);
+    screen.append(el('div', { class: 'grid journal-grid' },
+      journal.map(t => journalCardNode(t, tracksById))));
   }
 
   page.appendChild(screen);
@@ -1339,14 +1271,6 @@ function formatDateShort(iso) {
   return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }).replace('.', '');
 }
 
-function todaySubtitle(stuckCount, freshCount) {
-  if (stuckCount === 0 && freshCount === 0) return 'на сегодня пусто.';
-  const parts = [];
-  if (stuckCount) parts.push(`застрявших ${stuckCount}`);
-  if (freshCount) parts.push(`свежих ${freshCount}`);
-  return parts.join(' · ');
-}
-
 function ageColorVar(days) {
   if (days >= 8) return 'var(--age-4)';
   if (days >= 4) return 'var(--age-3)';
@@ -1363,127 +1287,94 @@ function stuckBlockNode(task, tracksById) {
   const isEditingBlocker = editingBlockerTaskId === task.id;
   const isSplitting = splittingTaskId === task.id;
 
-  const el = document.createElement('div');
-  el.className = 'stuck-card-d';
-  el.dataset.id = String(task.id);
-  el.style.setProperty('--card-age', ageColorVar(days));
+  const card = el('div', {
+    class: 'stuck-card-d',
+    dataset: { id: String(task.id) },
+    style: { '--card-age': ageColorVar(days) },
+  });
 
   // Left: 4px age stripe
-  const stripe = document.createElement('div');
-  stripe.className = 'stuck-stripe';
-  el.appendChild(stripe);
+  card.append(el('div', { class: 'stuck-stripe' }));
 
   // Age block: number + word + flame
-  const ageBlock = document.createElement('div');
-  ageBlock.className = 'stuck-age-block';
-  const num = document.createElement('div');
-  num.className = 'stuck-age-num';
-  num.textContent = String(days);
-  const wordEl = document.createElement('div');
-  wordEl.className = 'stuck-age-word';
-  wordEl.textContent = word;
   const flame = iconNode('flame');
   flame.classList.add('stuck-age-flame');
-  ageBlock.append(num, wordEl, flame);
-  el.appendChild(ageBlock);
+  card.append(el('div', { class: 'stuck-age-block' }, [
+    el('div', { class: 'stuck-age-num', text: String(days) }),
+    el('div', { class: 'stuck-age-word', text: word }),
+    flame,
+  ]));
 
   // Main column
-  const main = document.createElement('div');
-  main.className = 'stuck-main';
-
-  // Top section: icon+title row (+ optional pill, blocker) on left, trash top-right
-  const top = document.createElement('div');
-  top.className = 'stuck-top-d';
-  const left = document.createElement('div');
-  left.className = 'stuck-left-d';
+  const main = el('div', { class: 'stuck-main' });
 
   // Title row: task icon + title (icon top-aligned with title)
-  const titleRow = document.createElement('div');
-  titleRow.className = 'stuck-title-row-d';
   const taskIcon = iconNode(task.icon || DEFAULT_ICON);
   taskIcon.classList.add('stuck-task-icon-d');
-  titleRow.appendChild(taskIcon);
-  const title = document.createElement('div');
-  title.className = 'stuck-title-d';
-  title.textContent = task.text;
-  titleRow.appendChild(title);
-  left.appendChild(titleRow);
+  const left = el('div', { class: 'stuck-left-d' }, [
+    el('div', { class: 'stuck-title-row-d' }, [
+      taskIcon,
+      el('div', { class: 'stuck-title-d', text: task.text }),
+    ]),
+  ]);
 
   // Track pill (replaces meta line; date dropped)
   if (track) {
-    const pill = document.createElement('div');
-    pill.className = 'stuck-track-pill-d';
-    pill.appendChild(iconNode(track.icon || 'layers'));
-    const pillTxt = document.createElement('span');
-    pillTxt.textContent = track.name;
-    pill.appendChild(pillTxt);
-    left.appendChild(pill);
+    left.append(el('div', { class: 'stuck-track-pill-d' }, [
+      iconNode(track.icon || 'layers'),
+      el('span', { text: track.name }),
+    ]));
   }
 
   // Optional blocker chip — hidden during blocker edit or split
   if (task.blocker && !isEditingBlocker && !isSplitting) {
-    const note = document.createElement('button');
-    note.type = 'button';
-    note.className = 'stuck-note';
-    note.appendChild(iconNode('lock'));
-    const noteText = document.createElement('span');
-    noteText.textContent = task.blocker;
-    note.appendChild(noteText);
-    const xBtn = document.createElement('button');
-    xBtn.type = 'button';
-    xBtn.className = 'stuck-note-x';
-    xBtn.setAttribute('aria-label', 'Снять блокер');
-    xBtn.appendChild(iconNode('x'));
-    xBtn.addEventListener('click', async (ev) => {
+    const xBtn = el('button', {
+      type: 'button', class: 'stuck-note-x', 'aria-label': 'Снять блокер',
+      onclick: async (ev) => {
+        ev.stopPropagation();
+        try {
+          await db.tasks.update(task.id, { blocker: null });
+          renderMain().catch(showError);
+        } catch (e) {
+          if (isIdbDisconnectError(e)) { await recoverDb(); return; }
+          showError(e);
+        }
+      },
+    }, [iconNode('x')]);
+    left.append(el('button', {
+      type: 'button', class: 'stuck-note',
+      onclick: (ev) => {
+        if (ev.target.closest('.stuck-note-x')) return;
+        ev.stopPropagation();
+        editingBlockerTaskId = task.id;
+        renderMain().catch(showError);
+      },
+    }, [iconNode('lock'), el('span', { text: task.blocker }), xBtn]));
+  }
+
+  // Trash button (top-right) — soft-delete without confirmation
+  const trash = el('button', {
+    type: 'button', class: 'stuck-trash-d', 'aria-label': 'Удалить',
+    onclick: async (ev) => {
       ev.stopPropagation();
       try {
-        await db.tasks.update(task.id, { blocker: null });
+        await db.tasks.update(task.id, { deleted_at: Date.now() });
         renderMain().catch(showError);
       } catch (e) {
         if (isIdbDisconnectError(e)) { await recoverDb(); return; }
         showError(e);
       }
-    });
-    note.appendChild(xBtn);
-    note.addEventListener('click', (ev) => {
-      if (ev.target.closest('.stuck-note-x')) return;
-      ev.stopPropagation();
-      editingBlockerTaskId = task.id;
-      renderMain().catch(showError);
-    });
-    left.appendChild(note);
-  }
+    },
+  }, [iconNode('trash-2')]);
 
-  top.appendChild(left);
-
-  // Trash button (top-right) — soft-delete without confirmation
-  const trash = document.createElement('button');
-  trash.type = 'button';
-  trash.className = 'stuck-trash-d';
-  trash.setAttribute('aria-label', 'Удалить');
-  trash.appendChild(iconNode('trash-2'));
-  trash.addEventListener('click', async (ev) => {
-    ev.stopPropagation();
-    try {
-      await db.tasks.update(task.id, { deleted_at: Date.now() });
-      renderMain().catch(showError);
-    } catch (e) {
-      if (isIdbDisconnectError(e)) { await recoverDb(); return; }
-      showError(e);
-    }
-  });
-  top.appendChild(trash);
-
-  main.appendChild(top);
+  main.append(el('div', { class: 'stuck-top-d' }, [left, trash]));
 
   // Bottom: split-bar / blocker edit-bar / segmented action bar
   if (isSplitting) {
-    main.appendChild(buildSplitBar(task));
+    main.append(buildSplitBar(task));
   } else if (isEditingBlocker) {
-    main.appendChild(buildBlockerEditBar(task));
+    main.append(buildBlockerEditBar(task));
   } else {
-    const segbar = document.createElement('div');
-    segbar.className = 'stuck-segbar';
     const segs = [
       {
         icon: 'lock', label: 'Блокер',
@@ -1507,35 +1398,32 @@ function stuckBlockNode(task, tracksById) {
       {
         icon: 'check', label: 'Завершить', accent: true,
         onClick: async () => {
-          if (el.classList.contains('stamping') || el.classList.contains('removing')) return;
+          if (card.classList.contains('stamping') || card.classList.contains('removing')) return;
           try {
-            await playStampImpact(el, task);
+            await playStampImpact(card, task);
             await markDone(task.id);
             showUndoSnackbar(task.id);
             setTimeout(() => { renderMain().catch(showError); }, 60);
           } catch (e) {
-            el.classList.remove('stamping');
+            card.classList.remove('stamping');
             if (isIdbDisconnectError(e)) { await recoverDb(); return; }
             showError(e);
           }
         },
       },
     ];
+    const segbar = el('div', { class: 'stuck-segbar' });
     segs.forEach((s, i) => {
-      if (i > 0) {
-        const div = document.createElement('div');
-        div.className = 'stuck-seg-divider';
-        segbar.appendChild(div);
-      }
-      segbar.appendChild(s.kind === 'date' ? stuckSegDateBtn(s) : stuckSegBtn(s));
+      if (i > 0) segbar.append(el('div', { class: 'stuck-seg-divider' }));
+      segbar.append(s.kind === 'date' ? stuckSegDateBtn(s) : stuckSegBtn(s));
     });
-    main.appendChild(segbar);
+    main.append(segbar);
   }
 
-  el.appendChild(main);
+  card.append(main);
 
   // Tap outside buttons → open edit sheet (suspended while editing blocker / splitting)
-  el.addEventListener('click', (ev) => {
+  card.addEventListener('click', (ev) => {
     if (ev.target.closest('button')) return;
     if (ev.target.closest('.stuck-seg')) return;
     if (ev.target.closest('.stuck-edit-bar')) return;
@@ -1544,50 +1432,15 @@ function stuckBlockNode(task, tracksById) {
     openSheet({ task });
   });
 
-  return el;
+  return card;
 }
 
 function buildBlockerEditBar(task) {
-  const bar = document.createElement('div');
-  bar.className = 'stuck-edit-bar';
-
-  const inputRow = document.createElement('div');
-  inputRow.className = 'stuck-edit-input-row';
-  inputRow.appendChild(iconNode('lock'));
-
-  const inputBox = document.createElement('div');
-  inputBox.className = 'stuck-edit-input-box';
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.value = task.blocker || '';
-  input.placeholder = 'что мешает?';
-  input.className = 'stuck-edit-input';
-  input.maxLength = 120;
-  input.autocomplete = 'off';
-  inputBox.appendChild(input);
-  inputRow.appendChild(inputBox);
-  bar.appendChild(inputRow);
-
-  const actions = document.createElement('div');
-  actions.className = 'stuck-edit-actions';
-
-  const cancel = document.createElement('button');
-  cancel.type = 'button';
-  cancel.className = 'stuck-edit-cancel';
-  cancel.textContent = 'отмена';
-  cancel.addEventListener('click', (ev) => {
-    ev.stopPropagation();
-    editingBlockerTaskId = null;
-    renderMain().catch(showError);
+  const input = el('input', {
+    type: 'text', class: 'stuck-edit-input', value: task.blocker || '',
+    placeholder: 'что мешает?', maxLength: 120, autocomplete: 'off',
   });
 
-  const save = document.createElement('button');
-  save.type = 'button';
-  save.className = 'stuck-edit-save';
-  save.appendChild(iconNode('check'));
-  const saveLabel = document.createElement('span');
-  saveLabel.textContent = 'сохранить';
-  save.appendChild(saveLabel);
   const commit = async () => {
     const value = input.value.trim();
     try {
@@ -1599,13 +1452,20 @@ function buildBlockerEditBar(task) {
       showError(e);
     }
   };
-  save.addEventListener('click', (ev) => {
-    ev.stopPropagation();
-    commit();
+
+  const cancel = el('button', {
+    type: 'button', class: 'stuck-edit-cancel', text: 'отмена',
+    onclick: (ev) => {
+      ev.stopPropagation();
+      editingBlockerTaskId = null;
+      renderMain().catch(showError);
+    },
   });
 
-  actions.append(cancel, save);
-  bar.appendChild(actions);
+  const save = el('button', {
+    type: 'button', class: 'stuck-edit-save',
+    onclick: (ev) => { ev.stopPropagation(); commit(); },
+  }, [iconNode('check'), el('span', { text: 'сохранить' })]);
 
   input.addEventListener('keydown', (ev) => {
     if (ev.key === 'Enter') {
@@ -1616,6 +1476,14 @@ function buildBlockerEditBar(task) {
       cancel.click();
     }
   });
+
+  const bar = el('div', { class: 'stuck-edit-bar' }, [
+    el('div', { class: 'stuck-edit-input-row' }, [
+      iconNode('lock'),
+      el('div', { class: 'stuck-edit-input-box' }, [input]),
+    ]),
+    el('div', { class: 'stuck-edit-actions' }, [cancel, save]),
+  ]);
 
   setTimeout(() => {
     input.focus();
@@ -1629,37 +1497,17 @@ function buildBlockerEditBar(task) {
 const SPLIT_MAX_ROWS = 5;
 
 function buildSplitBar(task) {
-  const bar = document.createElement('div');
-  bar.className = 'stuck-split-bar';
-
-  const rows = document.createElement('div');
-  rows.className = 'stuck-split-rows';
-  bar.appendChild(rows);
-
-  const plusBtn = document.createElement('button');
-  plusBtn.type = 'button';
-  plusBtn.className = 'stuck-split-plus';
-  plusBtn.appendChild(iconNode('plus'));
-  const plusLbl = document.createElement('span');
-  plusLbl.textContent = 'добавить шаг';
-  plusBtn.appendChild(plusLbl);
-  bar.appendChild(plusBtn);
-
-  const actions = document.createElement('div');
-  actions.className = 'stuck-split-actions';
-  const cancelBtn = document.createElement('button');
-  cancelBtn.type = 'button';
-  cancelBtn.className = 'stuck-edit-cancel';
-  cancelBtn.textContent = 'отмена';
-  const saveBtn = document.createElement('button');
-  saveBtn.type = 'button';
-  saveBtn.className = 'stuck-split-save';
-  saveBtn.appendChild(iconNode('split'));
-  const saveLbl = document.createElement('span');
-  saveLbl.textContent = 'разделить';
-  saveBtn.appendChild(saveLbl);
-  actions.append(cancelBtn, saveBtn);
-  bar.appendChild(actions);
+  const rows = el('div', { class: 'stuck-split-rows' });
+  const plusBtn = el('button', { type: 'button', class: 'stuck-split-plus' },
+    [iconNode('plus'), el('span', { text: 'добавить шаг' })]);
+  const cancelBtn = el('button', { type: 'button', class: 'stuck-edit-cancel', text: 'отмена' });
+  const saveBtn = el('button', { type: 'button', class: 'stuck-split-save' },
+    [iconNode('split'), el('span', { text: 'разделить' })]);
+  const bar = el('div', { class: 'stuck-split-bar' }, [
+    rows,
+    plusBtn,
+    el('div', { class: 'stuck-split-actions' }, [cancelBtn, saveBtn]),
+  ]);
 
   const updateXVisibility = () => {
     const count = rows.children.length;
@@ -1736,33 +1584,24 @@ function buildSplitBar(task) {
 
   const addRow = (focus = false) => {
     if (rows.children.length >= SPLIT_MAX_ROWS) return null;
-    const row = document.createElement('div');
-    row.className = 'stuck-split-row';
-
-    const inputBox = document.createElement('div');
-    inputBox.className = 'stuck-split-input-box';
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.className = 'stuck-split-input';
-    input.placeholder = rows.children.length === 0 ? 'что сделать сначала?' : 'дальше…';
-    input.maxLength = 120;
-    input.autocomplete = 'off';
-    inputBox.appendChild(input);
-    row.appendChild(inputBox);
-
-    const xBtn = document.createElement('button');
-    xBtn.type = 'button';
-    xBtn.className = 'stuck-split-row-x';
-    xBtn.setAttribute('aria-label', 'Удалить шаг');
-    xBtn.appendChild(iconNode('x'));
-    xBtn.addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      row.remove();
-      updateXVisibility();
-      updatePlusVisibility();
-      updateSaveState();
+    const input = el('input', {
+      type: 'text', class: 'stuck-split-input',
+      placeholder: rows.children.length === 0 ? 'что сделать сначала?' : 'дальше…',
+      maxLength: 120, autocomplete: 'off',
     });
-    row.appendChild(xBtn);
+    const row = el('div', { class: 'stuck-split-row' }, [
+      el('div', { class: 'stuck-split-input-box' }, [input]),
+      el('button', {
+        type: 'button', class: 'stuck-split-row-x', 'aria-label': 'Удалить шаг',
+        onclick: (ev) => {
+          ev.stopPropagation();
+          row.remove();
+          updateXVisibility();
+          updatePlusVisibility();
+          updateSaveState();
+        },
+      }, [iconNode('x')]),
+    ]);
 
     input.addEventListener('input', updateSaveState);
     input.addEventListener('keydown', (ev) => {
@@ -1805,91 +1644,60 @@ function buildSplitBar(task) {
 }
 
 function stuckSegDateBtn({ icon, label, value, onChange }) {
-  const wrap = document.createElement('label');
-  wrap.className = 'stuck-seg stuck-seg-date';
-  wrap.appendChild(iconNode(icon));
-  const lbl = document.createElement('span');
-  lbl.className = 'stuck-seg-label';
-  lbl.textContent = label;
-  wrap.appendChild(lbl);
-  const input = document.createElement('input');
-  input.type = 'date';
-  input.className = 'stuck-seg-date-input';
-  input.value = value || '';
-  input.addEventListener('click', (ev) => ev.stopPropagation());
-  input.addEventListener('change', (ev) => {
-    ev.stopPropagation();
-    if (input.value) onChange(input.value);
+  const input = el('input', {
+    type: 'date', class: 'stuck-seg-date-input', value: value || '',
+    onclick: (ev) => ev.stopPropagation(),
+    onchange: (ev) => { ev.stopPropagation(); if (input.value) onChange(input.value); },
   });
-  wrap.appendChild(input);
-  return wrap;
+  return el('label', { class: 'stuck-seg stuck-seg-date' }, [
+    iconNode(icon),
+    el('span', { class: 'stuck-seg-label', text: label }),
+    input,
+  ]);
 }
 
 function stuckSegBtn({ icon, label, onClick, accent }) {
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'stuck-seg' + (accent ? ' stuck-seg-accent' : '');
-  btn.appendChild(iconNode(icon));
-  const lbl = document.createElement('span');
-  lbl.className = 'stuck-seg-label';
-  lbl.textContent = label;
-  btn.appendChild(lbl);
-  btn.addEventListener('click', (ev) => {
-    ev.stopPropagation();
-    onClick();
-  });
-  return btn;
+  return el('button', {
+    type: 'button', class: 'stuck-seg' + (accent ? ' stuck-seg-accent' : ''),
+    onclick: (ev) => { ev.stopPropagation(); onClick(); },
+  }, [iconNode(icon), el('span', { class: 'stuck-seg-label', text: label })]);
 }
 
 function freshRowNode(task, tracksById) {
-  const el = document.createElement('div');
-  el.className = 'fresh-row';
-  el.dataset.id = String(task.id);
-
-  const icon = iconNode(task.icon || DEFAULT_ICON);
-  const text = document.createElement('span');
-  text.className = 'fresh-text';
-  text.textContent = task.text;
-
-  const check = document.createElement('button');
-  check.type = 'button';
-  check.className = 'fresh-check';
-  check.setAttribute('aria-label', 'Завершить');
-  check.appendChild(iconNode('check'));
-  check.addEventListener('click', async (ev) => {
-    ev.stopPropagation();
-    if (el.classList.contains('removing')) return;
-    check.classList.add('filling');
-    renderLucide();
-    try {
-      await new Promise(r => setTimeout(r, 220));
-      el.classList.add('removing');
-      await markDone(task.id);
-      showUndoSnackbar(task.id);
-      setTimeout(() => { renderMain().catch(showError); }, 200);
-    } catch (e) {
-      el.classList.remove('removing');
-      check.classList.remove('filling');
-      if (isIdbDisconnectError(e)) { await recoverDb(); return; }
-      showError(e);
-    }
-  });
-
-  el.append(icon, text, check);
-  el.addEventListener('click', (ev) => {
+  const row = el('div', { class: 'fresh-row', dataset: { id: String(task.id) } });
+  const check = el('button', {
+    type: 'button', class: 'fresh-check', 'aria-label': 'Завершить',
+    onclick: async (ev) => {
+      ev.stopPropagation();
+      if (row.classList.contains('removing')) return;
+      check.classList.add('filling');
+      renderLucide();
+      try {
+        await new Promise(r => setTimeout(r, 220));
+        row.classList.add('removing');
+        await markDone(task.id);
+        showUndoSnackbar(task.id);
+        setTimeout(() => { renderMain().catch(showError); }, 200);
+      } catch (e) {
+        row.classList.remove('removing');
+        check.classList.remove('filling');
+        if (isIdbDisconnectError(e)) { await recoverDb(); return; }
+        showError(e);
+      }
+    },
+  }, [iconNode('check')]);
+  row.append(iconNode(task.icon || DEFAULT_ICON), el('span', { class: 'fresh-text', text: task.text }), check);
+  row.addEventListener('click', (ev) => {
     if (ev.target.closest('button')) return;
     openSheet({ task });
   });
-  return el;
+  return row;
 }
 
 async function renderToday() {
   const page = document.querySelector('.page-today');
   if (!page) return;
   page.replaceChildren();
-
-  const screen = document.createElement('div');
-  screen.className = 'screen';
 
   const now = new Date();
   let active, tracks;
@@ -1904,52 +1712,31 @@ async function renderToday() {
   const fresh = freshFromActive(active, now);
   const tracksById = new Map(tracks.map(t => [t.id, t]));
 
-  // Header
-  const header = document.createElement('div');
-  header.className = 'header';
-  header.setAttribute('data-no-swipe', '');
-  const headerRow = document.createElement('div');
-  headerRow.className = 'header-row';
-  const h1 = document.createElement('h1');
-  h1.textContent = 'Сегодня';
-  headerRow.appendChild(h1);
-  header.appendChild(headerRow);
-  screen.appendChild(header);
+  const screen = el('div', { class: 'screen' }, [
+    el('div', { class: 'header', 'data-no-swipe': '' }, [
+      el('div', { class: 'header-row' }, [el('h1', { text: 'Сегодня' })]),
+    ]),
+  ]);
 
   // Stuck blocks
   if (stuck.length) {
-    const stuckLabel = document.createElement('div');
-    stuckLabel.className = 'today-section-label';
-    stuckLabel.textContent = 'В ОЖИДАНИИ';
-    screen.appendChild(stuckLabel);
-    const stuckList = document.createElement('div');
-    stuckList.className = 'stuck-list';
-    for (const t of stuck) {
-      stuckList.appendChild(stuckBlockNode(t, tracksById));
-    }
-    screen.appendChild(stuckList);
+    screen.append(
+      el('div', { class: 'today-section-label', text: 'В ОЖИДАНИИ' }),
+      el('div', { class: 'stuck-list' }, stuck.map(t => stuckBlockNode(t, tracksById))),
+    );
   }
 
   // Fresh section — compact rows (icon + text + check circle)
   if (fresh.length) {
-    const freshLabel = document.createElement('div');
-    freshLabel.className = 'today-section-label';
-    freshLabel.textContent = 'СВЕЖИЕ · СЕГОДНЯ';
-    screen.appendChild(freshLabel);
-    const freshList = document.createElement('div');
-    freshList.className = 'fresh-list';
-    for (const t of fresh) {
-      freshList.appendChild(freshRowNode(t, tracksById));
-    }
-    screen.appendChild(freshList);
+    screen.append(
+      el('div', { class: 'today-section-label', text: 'СВЕЖИЕ · СЕГОДНЯ' }),
+      el('div', { class: 'fresh-list' }, fresh.map(t => freshRowNode(t, tracksById))),
+    );
   }
 
   // Empty state
   if (stuck.length === 0 && fresh.length === 0) {
-    const empty = document.createElement('div');
-    empty.className = 'empty';
-    empty.textContent = 'На сегодня ничего. Отдыхай.';
-    screen.appendChild(empty);
+    screen.append(el('div', { class: 'empty', text: 'На сегодня ничего. Отдыхай.' }));
   }
 
   page.appendChild(screen);
@@ -1996,76 +1783,57 @@ function calWeekday(iso) {
 }
 
 function calCardNode(task, isClosed, todayIso) {
-  const el = document.createElement('div');
-  el.className = 'cal-card' + (isClosed ? ' is-closed' : '');
-  el.dataset.id = String(task.id);
+  const card = el('div', {
+    class: 'cal-card' + (isClosed ? ' is-closed' : ''),
+    dataset: { id: String(task.id) },
+  });
 
-  const iconRow = document.createElement('div');
-  iconRow.className = 'icon-row';
-  iconRow.appendChild(iconNode(task.icon || DEFAULT_ICON));
+  const iconRow = el('div', { class: 'icon-row' }, [iconNode(task.icon || DEFAULT_ICON)]);
   if (task.notes) {
-    const notes = document.createElement('span');
-    notes.className = 'notes-mark';
-    notes.appendChild(iconNode('notebook-pen'));
-    iconRow.appendChild(notes);
+    iconRow.append(el('span', { class: 'notes-mark' }, [iconNode('notebook-pen')]));
   }
-  el.appendChild(iconRow);
+  card.append(iconRow, el('div', { class: 'text', text: task.text }));
 
-  const text = document.createElement('div');
-  text.className = 'text';
-  text.textContent = task.text;
-  el.appendChild(text);
-
-  const pill = document.createElement('div');
-  pill.className = 'deadline';
   if (isClosed) {
     const d = new Date(task.done_at);
-    pill.textContent = `${d.getDate()} ${CAL_MONTHS[d.getMonth()].toLowerCase()}`;
-    el.appendChild(pill);
-    const badge = document.createElement('div');
-    badge.className = 'check-badge';
     const rot = -16 + ((task.id * 7) % 16);
-    badge.style.setProperty('--rot', `${rot}deg`);
-    badge.appendChild(iconNode('check'));
-    el.appendChild(badge);
+    card.append(
+      el('div', { class: 'deadline', text: `${d.getDate()} ${CAL_MONTHS[d.getMonth()].toLowerCase()}` }),
+      el('div', { class: 'check-badge', style: { '--rot': `${rot}deg` } }, [iconNode('check')]),
+    );
   } else {
     const dl = task.deadline;
     if (dl === todayIso) {
-      pill.textContent = 'сегодня';
-      pill.classList.add('today');
-      el.appendChild(pill);
+      card.append(el('div', { class: 'deadline today', text: 'сегодня' }));
     } else if (dl && dl < todayIso) {
-      pill.textContent = 'overdue';
-      pill.classList.add('overdue');
-      el.appendChild(pill);
+      card.append(el('div', { class: 'deadline overdue', text: 'overdue' }));
     } else if (dl) {
       const d = isoToDate(dl);
-      pill.textContent = `${d.getDate()} ${CAL_MONTHS[d.getMonth()].toLowerCase()}`;
-      el.appendChild(pill);
+      card.append(el('div', { class: 'deadline', text: `${d.getDate()} ${CAL_MONTHS[d.getMonth()].toLowerCase()}` }));
     }
   }
 
   if (isClosed) {
-    el.addEventListener('click', () => openSheet({ task }));
+    card.addEventListener('click', () => openSheet({ task }));
   } else {
-    attachLongPress(el, {
+    attachLongPress(card, {
       onTap: () => openSheet({ task }),
       onLongPress: async () => {
-        if (el.classList.contains('stamping')) return;
+        if (card.classList.contains('stamping')) return;
         try {
-          await playStampImpact(el, task);
+          await playStampImpact(card, task);
           await markDone(task.id);
           showUndoSnackbar(task.id);
           setTimeout(() => { renderMain().catch(showError); }, 60);
         } catch (e) {
-          el.classList.remove('stamping');
+          card.classList.remove('stamping');
           if (isIdbDisconnectError(e)) { await recoverDb(); return; }
           showError(e);
         }
       },
     });
   }
-  return el;
+  return card;
 }
 
 async function renderCalendar() {
@@ -2073,20 +1841,11 @@ async function renderCalendar() {
   if (!page) return;
   page.replaceChildren();
 
-  const screen = document.createElement('div');
-  screen.className = 'screen-cal';
-
-  // Header
-  const header = document.createElement('div');
-  header.className = 'header';
-  header.setAttribute('data-no-swipe', '');
-  const headerRow = document.createElement('div');
-  headerRow.className = 'header-row';
-  const h1 = document.createElement('h1');
-  h1.textContent = 'План';
-  headerRow.appendChild(h1);
-  header.appendChild(headerRow);
-  screen.appendChild(header);
+  const screen = el('div', { class: 'screen-cal' }, [
+    el('div', { class: 'header', 'data-no-swipe': '' }, [
+      el('div', { class: 'header-row' }, [el('h1', { text: 'План' })]),
+    ]),
+  ]);
 
   // Buckets
   const [active, allDone] = await Promise.all([listActive(), listAllDone()]);
@@ -2123,8 +1882,7 @@ async function renderCalendar() {
   }
 
   // Strip
-  const stripWrap = document.createElement('div');
-  stripWrap.className = 'cal-strip-wrap';
+  const stripWrap = el('div', { class: 'cal-strip-wrap' });
 
   // Two-finger horizontal scroll. The pager owns 1-finger horizontal swipes,
   // so we expose Calendar scroll on the 2-finger gesture. preventDefault
@@ -2180,29 +1938,17 @@ async function renderCalendar() {
   stripWrap.addEventListener('touchend', vsEnd, { passive: true });
   stripWrap.addEventListener('touchcancel', vsEnd, { passive: true });
 
-  const strip = document.createElement('div');
-  strip.className = 'cal-strip';
+  const strip = el('div', { class: 'cal-strip' });
 
   let todayColEl = null;
   for (let i = 0; i < days.length; i++) {
     const dateIso = days[i];
-    const col = document.createElement('div');
-    col.className = 'cal-col' + (dateIso === today ? ' is-today' : '');
+    const col = el('div', { class: 'cal-col' + (dateIso === today ? ' is-today' : '') }, [
+      el('div', { class: 'cal-day-title', text: calDayLabel(dateIso, today) }),
+      el('div', { class: 'cal-day-sub', text: calWeekday(dateIso) }),
+      el('div', { class: 'cal-hdiv' }),
+    ]);
     if (dateIso === today) todayColEl = col;
-
-    const title = document.createElement('div');
-    title.className = 'cal-day-title';
-    title.textContent = calDayLabel(dateIso, today);
-    col.appendChild(title);
-
-    const sub = document.createElement('div');
-    sub.className = 'cal-day-sub';
-    sub.textContent = calWeekday(dateIso);
-    col.appendChild(sub);
-
-    const headerHd = document.createElement('div');
-    headerHd.className = 'cal-hdiv';
-    col.appendChild(headerHd);
 
     const bucket = buckets.get(dateIso);
     if (bucket) {
@@ -2211,25 +1957,16 @@ async function renderCalendar() {
       bucket.closed.sort((a, b) => b.done_at - a.done_at);
       const items = [...bucket.active, ...bucket.closed.map(t => ({ ...t, _closed: true }))];
       items.forEach((t, idx) => {
-        if (idx > 0) {
-          const hd = document.createElement('div');
-          hd.className = 'cal-hdiv';
-          col.appendChild(hd);
-        }
-        col.appendChild(calCardNode(t, t._closed === true || t.done_at > 0, today));
+        if (idx > 0) col.append(el('div', { class: 'cal-hdiv' }));
+        col.append(calCardNode(t, t._closed === true || t.done_at > 0, today));
       });
     }
 
-    strip.appendChild(col);
-
-    if (i < days.length - 1) {
-      const vd = document.createElement('div');
-      vd.className = 'cal-vdiv';
-      strip.appendChild(vd);
-    }
+    strip.append(col);
+    if (i < days.length - 1) strip.append(el('div', { class: 'cal-vdiv' }));
   }
-  stripWrap.appendChild(strip);
-  screen.appendChild(stripWrap);
+  stripWrap.append(strip);
+  screen.append(stripWrap);
 
   page.appendChild(screen);
 
@@ -2261,19 +1998,11 @@ async function renderTracks() {
   if (!page) return;
   page.replaceChildren();
 
-  const screen = document.createElement('div');
-  screen.className = 'screen';
-
-  const header = document.createElement('div');
-  header.className = 'header';
-  header.setAttribute('data-no-swipe', '');
-  const headerRow = document.createElement('div');
-  headerRow.className = 'header-row';
-  const h1 = document.createElement('h1');
-  h1.textContent = 'Треки';
-  headerRow.appendChild(h1);
-  header.appendChild(headerRow);
-  screen.appendChild(header);
+  const screen = el('div', { class: 'screen' }, [
+    el('div', { class: 'header', 'data-no-swipe': '' }, [
+      el('div', { class: 'header-row' }, [el('h1', { text: 'Треки' })]),
+    ]),
+  ]);
 
   const tracks = await listTracks();
   const byCat = { work: [], personal: [], inactive: [] };
@@ -2285,27 +2014,20 @@ async function renderTracks() {
   const statsMap = await trackStatsAll();
 
   if (tracks.length === 0) {
-    const empty = document.createElement('div');
-    empty.className = 'empty';
-    empty.textContent = 'Пока нет треков. Добавь первый снизу.';
-    screen.appendChild(empty);
+    screen.append(el('div', { class: 'empty', text: 'Пока нет треков. Добавь первый снизу.' }));
   } else {
     for (const cat of TRACK_CATEGORIES) {
       const list = byCat[cat];
-      const sec = document.createElement('section');
-      sec.className = 'track-section track-section-' + cat;
-      sec.dataset.category = cat;
-
-      const divider = document.createElement('div');
-      divider.className = 'track-divider' + (cat === 'inactive' ? ' inactive' : '');
-      const lbl = document.createElement('span');
-      lbl.className = 'track-divider-label';
-      lbl.textContent = TRACK_CATEGORY_LABELS[cat];
-      divider.appendChild(lbl);
-      sec.appendChild(divider);
-
-      list.forEach(t => sec.appendChild(trackStripNode(t, statsMap.get(t.id) || { done: 0, total: 0 })));
-      screen.appendChild(sec);
+      const sec = el('section', {
+        class: 'track-section track-section-' + cat,
+        dataset: { category: cat },
+      }, [
+        el('div', { class: 'track-divider' + (cat === 'inactive' ? ' inactive' : '') }, [
+          el('span', { class: 'track-divider-label', text: TRACK_CATEGORY_LABELS[cat] }),
+        ]),
+      ]);
+      list.forEach(t => sec.append(trackStripNode(t, statsMap.get(t.id) || { done: 0, total: 0 })));
+      screen.append(sec);
     }
   }
 
@@ -2314,37 +2036,29 @@ async function renderTracks() {
 }
 
 function trackStripNode(track, stats) {
-  const strip = document.createElement('div');
-  strip.className = 'track-strip';
-  strip.dataset.id = String(track.id);
-  strip.dataset.category = track.category || 'personal';
-  if (track.category === 'inactive') strip.classList.add('inactive');
+  const grip = el('button', {
+    type: 'button', class: 'track-grip', dataset: { noSwipe: '1' },
+    'aria-label': 'Перетащить',
+  }, [iconNode('grip-vertical')]);
+
+  const icon = iconNode(track.icon || DEFAULT_ICON);
+  icon.classList.add('track-icon');
+
+  const strip = el('div', {
+    class: 'track-strip' + (track.category === 'inactive' ? ' inactive' : ''),
+    dataset: { id: String(track.id), category: track.category || 'personal' },
+  }, [
+    grip,
+    icon,
+    el('span', { class: 'track-name', text: track.name }),
+    el('span', { class: 'track-meta', text: `задач: ${stats.done}/${stats.total}` }),
+  ]);
 
   // progress fill — gradient stops at done/total ratio
   const ratio = stats.total > 0 ? stats.done / stats.total : 0;
   if (track.category !== 'inactive') {
     strip.style.setProperty('--progress', (ratio * 100).toFixed(1) + '%');
   }
-
-  const grip = document.createElement('button');
-  grip.type = 'button';
-  grip.className = 'track-grip';
-  grip.dataset.noSwipe = '1';
-  grip.setAttribute('aria-label', 'Перетащить');
-  grip.appendChild(iconNode('grip-vertical'));
-
-  const icon = iconNode(track.icon || DEFAULT_ICON);
-  icon.classList.add('track-icon');
-
-  const name = document.createElement('span');
-  name.className = 'track-name';
-  name.textContent = track.name;
-
-  const meta = document.createElement('span');
-  meta.className = 'track-meta';
-  meta.textContent = `задач: ${stats.done}/${stats.total}`;
-
-  strip.append(grip, icon, name, meta);
 
   strip.addEventListener('click', (e) => {
     // Ignore clicks while drag just happened; handled in drag state
@@ -2370,43 +2084,23 @@ let sheetOpen = false;
 function buildDeadlineRow(initialIso, onChange) {
   // Stacked block matching the «ЗАМЕТКИ» section: caps label, then the
   // control row below as a separate sheet child (inherits the .sheet 18px gap).
-  const frag = document.createDocumentFragment();
-
-  const label = document.createElement('div');
-  label.className = 'sheet-label';
-  label.textContent = 'ДЕДЛАЙН';
-
-  const group = document.createElement('div');
-  group.className = 'dl-seg';
+  const label = el('div', { class: 'sheet-label', text: 'ДЕДЛАЙН' });
 
   let current = initialIso || null;
   const today = todayISO();
   const tomorrow = tomorrowISO();
 
-  const todayBtn = document.createElement('button');
-  todayBtn.type = 'button';
-  todayBtn.className = 'dl-seg-btn';
-  todayBtn.textContent = 'Сегодня';
-
-  const tomorrowBtn = document.createElement('button');
-  tomorrowBtn.type = 'button';
-  tomorrowBtn.className = 'dl-seg-btn';
-  tomorrowBtn.textContent = 'Завтра';
+  const todayBtn = el('button', { type: 'button', class: 'dl-seg-btn', text: 'Сегодня' });
+  const tomorrowBtn = el('button', { type: 'button', class: 'dl-seg-btn', text: 'Завтра' });
 
   // «Дата» is a button with the native date input overlaid transparently —
   // tapping anywhere on the cell opens iOS's picker (more reliable than
   // showPicker() on a hidden input). Label shows the chosen custom date.
-  const dateCell = document.createElement('div');
-  dateCell.className = 'dl-seg-btn dl-seg-date';
-  const dateLabel = document.createElement('span');
-  dateLabel.className = 'dl-date-label';
-  dateCell.appendChild(dateLabel);
-  const input = document.createElement('input');
-  input.type = 'date';
-  input.className = 'dl-date-input';
-  input.autocomplete = 'off';
-  input.setAttribute('aria-label', 'Выбрать дату');
-  dateCell.appendChild(input);
+  const dateLabel = el('span', { class: 'dl-date-label' });
+  const input = el('input', {
+    type: 'date', class: 'dl-date-input', autocomplete: 'off', 'aria-label': 'Выбрать дату',
+  });
+  const dateCell = el('div', { class: 'dl-seg-btn dl-seg-date' }, [dateLabel, input]);
 
   const sync = () => {
     const isToday = current === today;
@@ -2429,36 +2123,22 @@ function buildDeadlineRow(initialIso, onChange) {
   tomorrowBtn.addEventListener('click', () => set(tomorrow));
   input.addEventListener('change', () => set(input.value || null));
 
-  group.append(todayBtn, tomorrowBtn, dateCell);
+  const group = el('div', { class: 'dl-seg' }, [todayBtn, tomorrowBtn, dateCell]);
   sync();
+
+  const frag = document.createDocumentFragment();
   frag.append(label, group);
   return frag;
 }
 
 function buildEditFooter({ onFinish, onDelete }) {
   const frag = document.createDocumentFragment();
-
-  const finish = document.createElement('button');
-  finish.type = 'button';
-  finish.className = 'sheet-finish';
-  finish.appendChild(iconNode('check'));
-  const finishLbl = document.createElement('span');
-  finishLbl.textContent = 'Завершить';
-  finish.appendChild(finishLbl);
-  finish.addEventListener('click', onFinish);
-  frag.appendChild(finish);
-
-  const dvd = document.createElement('hr');
-  dvd.className = 'sheet-divider';
-  frag.appendChild(dvd);
-
-  const del = document.createElement('button');
-  del.type = 'button';
-  del.className = 'sheet-delete';
-  del.textContent = 'Удалить задачу';
-  del.addEventListener('click', onDelete);
-  frag.appendChild(del);
-
+  frag.append(
+    el('button', { type: 'button', class: 'sheet-finish', onclick: onFinish },
+      [iconNode('check'), el('span', { text: 'Завершить' })]),
+    el('hr', { class: 'sheet-divider' }),
+    el('button', { type: 'button', class: 'sheet-delete', text: 'Удалить задачу', onclick: onDelete }),
+  );
   return frag;
 }
 
@@ -2467,12 +2147,8 @@ function openSheet({ task, presetTrackId }) {
   sheetOpen = true;
   const isEdit = !!task;
 
-  const backdrop = document.createElement('div');
-  backdrop.className = 'sheet-backdrop';
-
-  const sheet = document.createElement('div');
-  sheet.className = 'sheet';
-  backdrop.appendChild(sheet);
+  const sheet = el('div', { class: 'sheet' });
+  const backdrop = el('div', { class: 'sheet-backdrop' }, [sheet]);
 
   // draft state — all edits accumulate here, committed on close
   const draft = {
@@ -2490,49 +2166,30 @@ function openSheet({ task, presetTrackId }) {
   let pendingTrackInput = null;
 
   // handle
-  const handle = document.createElement('div');
-  handle.className = 'sheet-handle';
-  sheet.appendChild(handle);
+  sheet.append(el('div', { class: 'sheet-handle' }));
 
   // header: title + Готово
-  const header = document.createElement('div');
-  header.className = 'sheet-header';
-  const title = document.createElement('div');
-  title.className = 'sheet-title';
-  title.textContent = isEdit ? 'Редактирование' : 'Новая задача';
-  const doneBtn = document.createElement('button');
-  doneBtn.type = 'button';
-  doneBtn.className = 'sheet-done';
-  doneBtn.textContent = 'Готово';
-  header.append(title, doneBtn);
-  sheet.appendChild(header);
+  const doneBtn = el('button', { type: 'button', class: 'sheet-done', text: 'Готово' });
+  sheet.append(el('div', { class: 'sheet-header' }, [
+    el('div', { class: 'sheet-title', text: isEdit ? 'Редактирование' : 'Новая задача' }),
+    doneBtn,
+  ]));
 
   // input row: icon box + input container with textarea
-  const inputRow = document.createElement('div');
-  inputRow.className = 'sheet-input-row';
-
-  const iconBox = document.createElement('button');
-  iconBox.type = 'button';
-  iconBox.className = 'sheet-iconbox';
+  const iconBox = el('button', { type: 'button', class: 'sheet-iconbox' });
   const renderIconBox = () => {
     iconBox.replaceChildren(iconNode(draft.icon || DEFAULT_ICON));
     renderLucide();
   };
   renderIconBox();
 
-  const inputWrap = document.createElement('div');
-  inputWrap.className = 'sheet-input-wrap';
-  const textInput = document.createElement('textarea');
-  textInput.className = 'sheet-text';
-  textInput.placeholder = 'Задача';
-  textInput.rows = 1;
-  textInput.value = draft.text;
-  textInput.autocapitalize = 'sentences';
-  // iOS Safari otherwise shows a URL-autofill pill (site domain) in the
-  // keyboard accessory bar — kill all autofill/autocorrect hints on this field.
-  textInput.autocomplete = 'off';
-  textInput.setAttribute('autocorrect', 'off');
-  textInput.spellcheck = false;
+  const textInput = el('textarea', {
+    class: 'sheet-text', placeholder: 'Задача', rows: 1, value: draft.text,
+    autocapitalize: 'sentences',
+    // iOS Safari otherwise shows a URL-autofill pill (site domain) in the
+    // keyboard accessory bar — kill all autofill/autocorrect hints on this field.
+    autocomplete: 'off', autocorrect: 'off', spellcheck: false,
+  });
   // auto-grow up to max-height (CSS clamps, JS sets precise height)
   const autoResize = () => {
     textInput.style.height = 'auto';
@@ -2542,44 +2199,32 @@ function openSheet({ task, presetTrackId }) {
     draft.text = textInput.value;
     autoResize();
   });
-  inputWrap.appendChild(textInput);
 
-  inputRow.append(iconBox, inputWrap);
-  sheet.appendChild(inputRow);
+  sheet.append(el('div', { class: 'sheet-input-row' }, [
+    iconBox,
+    el('div', { class: 'sheet-input-wrap' }, [textInput]),
+  ]));
 
   // icons section — suggestions row + "Все иконки" link
-  const iconSection = document.createElement('div');
-  iconSection.className = 'sheet-section';
-  const iconLabel = document.createElement('div');
-  iconLabel.className = 'sheet-label';
-  iconLabel.textContent = 'ЧАСТО';
-  const iconRow = document.createElement('div');
-  iconRow.className = 'sheet-icon-row';
+  const iconRow = el('div', { class: 'sheet-icon-row' });
 
   const renderSuggestions = () => {
     iconRow.replaceChildren();
-    const slots = buildIconRow(draft.text, draft.icon);
-    slots.forEach(slot => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'sheet-icon';
-      if (slot.kind === 'prediction') b.classList.add('prediction');
-      b.appendChild(iconNode(slot.icon));
-      b.addEventListener('click', () => {
-        draft.icon = slot.icon;
-        pushRecentIcon(slot.icon);
-        renderIconBox();
-        renderSuggestions();
-      });
-      iconRow.appendChild(b);
+    buildIconRow(draft.text, draft.icon).forEach(slot => {
+      iconRow.append(el('button', {
+        type: 'button',
+        class: 'sheet-icon' + (slot.kind === 'prediction' ? ' prediction' : ''),
+        onclick: () => {
+          draft.icon = slot.icon;
+          pushRecentIcon(slot.icon);
+          renderIconBox();
+          renderSuggestions();
+        },
+      }, [iconNode(slot.icon)]));
     });
     renderLucide();
   };
 
-  const allBtn = document.createElement('button');
-  allBtn.type = 'button';
-  allBtn.className = 'sheet-icons-all';
-  allBtn.textContent = 'Все иконки';
   const openPicker = () => {
     openIconPicker({
       current: draft.icon,
@@ -2591,25 +2236,26 @@ function openSheet({ task, presetTrackId }) {
       },
     });
   };
-  allBtn.addEventListener('click', openPicker);
+  const allBtn = el('button', {
+    type: 'button', class: 'sheet-icons-all', text: 'Все иконки', onclick: openPicker,
+  });
   iconBox.addEventListener('click', openPicker);
 
-  iconSection.append(iconLabel, iconRow, allBtn);
-  sheet.appendChild(iconSection);
+  sheet.append(el('div', { class: 'sheet-section' }, [
+    el('div', { class: 'sheet-label', text: 'ЧАСТО' }),
+    iconRow,
+    allBtn,
+  ]));
   renderSuggestions();
 
   // track section: horizontal chip row [— / track / track / +]. Tap chip =
   // select (or deselect if tapping the current). "+" swaps itself for an
   // inline input — no secondary picker sheet.
-  const trackSection = document.createElement('div');
-  trackSection.className = 'sheet-section';
-  const trackLabel = document.createElement('div');
-  trackLabel.className = 'sheet-label';
-  trackLabel.textContent = 'ТРЕК';
-  const trackRow = document.createElement('div');
-  trackRow.className = 'sheet-track-row';
-  trackSection.append(trackLabel, trackRow);
-  sheet.appendChild(trackSection);
+  const trackRow = el('div', { class: 'sheet-track-row' });
+  sheet.append(el('div', { class: 'sheet-section' }, [
+    el('div', { class: 'sheet-label', text: 'ТРЕК' }),
+    trackRow,
+  ]));
 
   const renderTrackChips = async () => {
     let tracks = [];
@@ -2621,53 +2267,39 @@ function openSheet({ task, presetTrackId }) {
     }
     trackRow.replaceChildren();
 
-    const none = document.createElement('button');
-    none.type = 'button';
-    none.className = 'track-chip track-chip-none';
-    if (!draft.track_id) none.classList.add('selected');
-    none.textContent = '—';
-    none.addEventListener('click', () => {
-      draft.track_id = null;
-      renderTrackChips();
-    });
-    trackRow.appendChild(none);
+    trackRow.append(el('button', {
+      type: 'button',
+      class: 'track-chip track-chip-none' + (!draft.track_id ? ' selected' : ''),
+      text: '—',
+      onclick: () => { draft.track_id = null; renderTrackChips(); },
+    }));
 
     tracks.forEach(t => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'track-chip';
-      if (t.id === draft.track_id) b.classList.add('selected');
-      b.appendChild(iconNode(t.icon));
-      const label = document.createElement('span');
-      label.textContent = t.name;
-      b.appendChild(label);
-      b.addEventListener('click', () => {
-        draft.track_id = (draft.track_id === t.id) ? null : t.id;
-        renderTrackChips();
-      });
-      trackRow.appendChild(b);
+      trackRow.append(el('button', {
+        type: 'button',
+        class: 'track-chip' + (t.id === draft.track_id ? ' selected' : ''),
+        onclick: () => {
+          draft.track_id = (draft.track_id === t.id) ? null : t.id;
+          renderTrackChips();
+        },
+      }, [iconNode(t.icon), el('span', { text: t.name })]));
     });
 
-    const plus = document.createElement('button');
-    plus.type = 'button';
-    plus.className = 'track-chip track-chip-plus';
-    plus.appendChild(iconNode('plus'));
-    plus.addEventListener('click', () => swapPlusForInput(plus));
-    trackRow.appendChild(plus);
+    const plus = el('button', {
+      type: 'button', class: 'track-chip track-chip-plus',
+      onclick: () => swapPlusForInput(plus),
+    }, [iconNode('plus')]);
+    trackRow.append(plus);
 
     renderLucide();
   };
 
   const swapPlusForInput = (plusChip) => {
-    const wrap = document.createElement('div');
-    wrap.className = 'track-chip track-chip-input';
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.placeholder = 'Новый трек';
-    input.autocomplete = 'off';
-    input.setAttribute('autocorrect', 'off');
-    input.spellcheck = false;
-    wrap.appendChild(input);
+    const input = el('input', {
+      type: 'text', placeholder: 'Новый трек',
+      autocomplete: 'off', autocorrect: 'off', spellcheck: false,
+    });
+    const wrap = el('div', { class: 'track-chip track-chip-input' }, [input]);
     plusChip.replaceWith(wrap);
     input.focus();
     // ensure the input is visible even with keyboard up
@@ -2715,19 +2347,10 @@ function openSheet({ task, presetTrackId }) {
 
   // notes section: label + textarea box (auto-grow, no max-height; the sheet
   // itself scrolls internally if it overflows).
-  const notesLabel = document.createElement('div');
-  notesLabel.className = 'sheet-label';
-  notesLabel.textContent = 'ЗАМЕТКИ';
-  const notesWrap = document.createElement('div');
-  notesWrap.className = 'sheet-notes-wrap';
-  const notesInput = document.createElement('textarea');
-  notesInput.className = 'sheet-notes';
-  notesInput.placeholder = 'Заметки (опционально)';
-  notesInput.rows = 2;
-  notesInput.value = draft.notes;
-  notesInput.autocomplete = 'off';
-  notesInput.setAttribute('autocorrect', 'off');
-  notesInput.spellcheck = false;
+  const notesInput = el('textarea', {
+    class: 'sheet-notes', placeholder: 'Заметки (опционально)', rows: 2, value: draft.notes,
+    autocomplete: 'off', autocorrect: 'off', spellcheck: false,
+  });
   const autoResizeNotes = () => {
     notesInput.style.height = 'auto';
     notesInput.style.height = notesInput.scrollHeight + 'px';
@@ -2736,8 +2359,10 @@ function openSheet({ task, presetTrackId }) {
     draft.notes = notesInput.value;
     autoResizeNotes();
   });
-  notesWrap.appendChild(notesInput);
-  sheet.append(notesLabel, notesWrap);
+  sheet.append(
+    el('div', { class: 'sheet-label', text: 'ЗАМЕТКИ' }),
+    el('div', { class: 'sheet-notes-wrap' }, [notesInput]),
+  );
 
   sheet.appendChild(buildDeadlineRow(draft.deadline, (next) => { draft.deadline = next; }));
 
@@ -2872,40 +2497,28 @@ function openIconPicker({ current, onSelect }) {
   const groups = (typeof CURATED_GROUPS !== 'undefined' ? CURATED_GROUPS : null);
   const all = (typeof CURATED_FULL !== 'undefined' ? CURATED_FULL : ['circle-dashed']);
 
-  const backdrop = document.createElement('div');
-  backdrop.className = 'picker-backdrop';
+  const search = el('input', {
+    type: 'search', class: 'picker-search',
+    placeholder: 'Поиск (по англ. имени Lucide)', autocomplete: 'off',
+  });
+  const grid = el('div', { class: 'picker-grid' });
+  const sheet = el('div', { class: 'picker-sheet' }, [
+    el('div', { class: 'sheet-handle' }),
+    search,
+    grid,
+  ]);
+  const backdrop = el('div', { class: 'picker-backdrop' }, [sheet]);
 
-  const sheet = document.createElement('div');
-  sheet.className = 'picker-sheet';
-  backdrop.appendChild(sheet);
-
-  const handle = document.createElement('div');
-  handle.className = 'sheet-handle';
-  sheet.appendChild(handle);
-
-  const search = document.createElement('input');
-  search.type = 'search';
-  search.className = 'picker-search';
-  search.placeholder = 'Поиск (по англ. имени Lucide)';
-  search.autocomplete = 'off';
-  sheet.appendChild(search);
-
-  const grid = document.createElement('div');
-  grid.className = 'picker-grid';
-  sheet.appendChild(grid);
-
-  const iconButton = (name) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'sheet-icon';
-    if (name === current) b.classList.add('selected');
-    b.appendChild(iconNode(name));
-    b.addEventListener('click', () => {
-      onSelect?.(name);
-      close();
-    });
-    return b;
+  const close = () => {
+    backdrop.classList.remove('open');
+    setTimeout(() => backdrop.remove(), 200);
   };
+
+  const iconButton = (name) => el('button', {
+    type: 'button',
+    class: 'sheet-icon' + (name === current ? ' selected' : ''),
+    onclick: () => { onSelect?.(name); close(); },
+  }, [iconNode(name)]);
 
   const renderGrid = (filter) => {
     grid.replaceChildren();
@@ -2913,31 +2526,19 @@ function openIconPicker({ current, onSelect }) {
     if (q) {
       const list = all.filter(n => n.includes(q));
       if (list.length === 0) {
-        const empty = document.createElement('div');
-        empty.className = 'picker-empty';
-        empty.textContent = 'Нет совпадений. Можно задать иконку, введя точное Lucide-имя в поиск и нажав Enter.';
-        grid.appendChild(empty);
+        grid.append(el('div', { class: 'picker-empty', text: 'Нет совпадений. Можно задать иконку, введя точное Lucide-имя в поиск и нажав Enter.' }));
       } else {
-        list.forEach(name => grid.appendChild(iconButton(name)));
+        list.forEach(name => grid.append(iconButton(name)));
       }
     } else if (groups) {
       groups.forEach((g, i) => {
-        const label = document.createElement('div');
-        label.className = 'picker-section-label';
-        if (i === 0) label.classList.add('first');
-        label.textContent = g.label;
-        grid.appendChild(label);
-        g.icons.forEach(name => grid.appendChild(iconButton(name)));
+        grid.append(el('div', { class: 'picker-section-label' + (i === 0 ? ' first' : ''), text: g.label }));
+        g.icons.forEach(name => grid.append(iconButton(name)));
       });
     } else {
-      all.forEach(name => grid.appendChild(iconButton(name)));
+      all.forEach(name => grid.append(iconButton(name)));
     }
     renderLucide();
-  };
-
-  const close = () => {
-    backdrop.classList.remove('open');
-    setTimeout(() => backdrop.remove(), 200);
   };
 
   backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
@@ -2962,31 +2563,17 @@ function openIconPicker({ current, onSelect }) {
 }
 
 function openHistorySheet() {
-  const backdrop = document.createElement('div');
-  backdrop.className = 'picker-backdrop history-backdrop';
-
-  const sheet = document.createElement('div');
-  sheet.className = 'picker-sheet history-sheet';
-  backdrop.appendChild(sheet);
-
-  const handle = document.createElement('div');
-  handle.className = 'sheet-handle';
-  sheet.appendChild(handle);
-
-  const header = document.createElement('div');
-  header.className = 'history-header';
-  const title = document.createElement('div');
-  title.className = 'history-title';
-  title.textContent = 'Весь журнал';
-  const clearAll = document.createElement('span');
-  clearAll.className = 'history-clear-all';
-  clearAll.textContent = 'Очистить всё';
-  header.append(title, clearAll);
-  sheet.appendChild(header);
-
-  const content = document.createElement('div');
-  content.className = 'history-content';
-  sheet.appendChild(content);
+  const clearAll = el('span', { class: 'history-clear-all', text: 'Очистить всё' });
+  const content = el('div', { class: 'history-content' });
+  const sheet = el('div', { class: 'picker-sheet history-sheet' }, [
+    el('div', { class: 'sheet-handle' }),
+    el('div', { class: 'history-header' }, [
+      el('div', { class: 'history-title', text: 'Весь журнал' }),
+      clearAll,
+    ]),
+    content,
+  ]);
+  const backdrop = el('div', { class: 'picker-backdrop history-backdrop' }, [sheet]);
 
   const close = () => {
     backdrop.classList.remove('open');
@@ -3000,24 +2587,14 @@ function openHistorySheet() {
     const [tasks, tracks] = await Promise.all([listAllDone(), listTracks()]);
     const tracksById = new Map(tracks.map(t => [t.id, t]));
     if (tasks.length === 0) {
-      const empty = document.createElement('div');
-      empty.className = 'history-empty';
-      empty.textContent = 'Пока пусто — ещё ничего не выполнено.';
-      content.appendChild(empty);
+      content.append(el('div', { class: 'history-empty', text: 'Пока пусто — ещё ничего не выполнено.' }));
       return;
     }
     const groups = groupByDay(tasks);
     for (const g of groups) {
-      const gWrap = document.createElement('div');
-      gWrap.className = 'history-group';
-      const lbl = document.createElement('div');
-      lbl.className = 'history-day';
-      lbl.textContent = g.label;
-      gWrap.appendChild(lbl);
-      const grid = document.createElement('div');
-      grid.className = 'grid journal-grid';
+      const grid = el('div', { class: 'grid journal-grid' });
       g.tasks.forEach(t => {
-        grid.appendChild(doneCardNode(t, tracksById, {
+        grid.append(doneCardNode(t, tracksById, {
           onTap: () => { close(); setTimeout(() => openSheet({ task: t }), 220); },
           onLongPress: async () => {
             try {
@@ -3031,8 +2608,10 @@ function openHistorySheet() {
           },
         }));
       });
-      gWrap.appendChild(grid);
-      content.appendChild(gWrap);
+      content.append(el('div', { class: 'history-group' }, [
+        el('div', { class: 'history-day', text: g.label }),
+        grid,
+      ]));
     }
     renderLucide();
   };
@@ -3230,12 +2809,8 @@ function openTrackSheet({ track }) {
   trackSheetOpen = true;
   const isEdit = !!track;
 
-  const backdrop = document.createElement('div');
-  backdrop.className = 'sheet-backdrop';
-
-  const sheet = document.createElement('div');
-  sheet.className = 'sheet';
-  backdrop.appendChild(sheet);
+  const sheet = el('div', { class: 'sheet' });
+  const backdrop = el('div', { class: 'sheet-backdrop' }, [sheet]);
 
   const draft = {
     name: track?.name || '',
@@ -3245,117 +2820,87 @@ function openTrackSheet({ track }) {
     category: (track?.category === 'inactive' ? 'personal' : (track?.category || 'personal')),
   };
 
-  const handle = document.createElement('div');
-  handle.className = 'sheet-handle';
-  sheet.appendChild(handle);
+  // handle
+  sheet.append(el('div', { class: 'sheet-handle' }));
 
-  const header = document.createElement('div');
-  header.className = 'sheet-header';
-  const title = document.createElement('div');
-  title.className = 'sheet-title';
-  title.textContent = isEdit ? 'Редактирование' : 'Новый трек';
-  const doneBtn = document.createElement('button');
-  doneBtn.type = 'button';
-  doneBtn.className = 'sheet-done';
-  doneBtn.textContent = isEdit ? 'Готово' : 'Создать';
-  header.append(title, doneBtn);
-  sheet.appendChild(header);
+  const doneBtn = el('button', { type: 'button', class: 'sheet-done', text: isEdit ? 'Готово' : 'Создать' });
+  sheet.append(el('div', { class: 'sheet-header' }, [
+    el('div', { class: 'sheet-title', text: isEdit ? 'Редактирование' : 'Новый трек' }),
+    doneBtn,
+  ]));
 
   // input row: iconbox + name input
-  const inputRow = document.createElement('div');
-  inputRow.className = 'sheet-input-row';
-
-  const iconBox = document.createElement('button');
-  iconBox.type = 'button';
-  iconBox.className = 'sheet-iconbox';
+  const iconBox = el('button', { type: 'button', class: 'sheet-iconbox' });
   const renderIconBox = () => {
     iconBox.replaceChildren(iconNode(draft.icon || DEFAULT_ICON));
     renderLucide();
   };
   renderIconBox();
 
-  const inputWrap = document.createElement('div');
-  inputWrap.className = 'sheet-input-wrap';
-  const nameInput = document.createElement('input');
-  nameInput.type = 'text';
-  nameInput.className = 'sheet-text';
-  nameInput.placeholder = 'Название трека';
-  nameInput.value = draft.name;
-  nameInput.autocomplete = 'off';
-  nameInput.setAttribute('autocorrect', 'off');
-  nameInput.spellcheck = false;
-  nameInput.autocapitalize = 'sentences';
+  const nameInput = el('input', {
+    type: 'text', class: 'sheet-text', placeholder: 'Название трека', value: draft.name,
+    autocomplete: 'off', autocorrect: 'off', spellcheck: false, autocapitalize: 'sentences',
+  });
   nameInput.addEventListener('input', () => { draft.name = nameInput.value; });
-  inputWrap.appendChild(nameInput);
 
-  inputRow.append(iconBox, inputWrap);
-  sheet.appendChild(inputRow);
+  sheet.append(el('div', { class: 'sheet-input-row' }, [
+    iconBox,
+    el('div', { class: 'sheet-input-wrap' }, [nameInput]),
+  ]));
 
   // category toggle (Работа / Личное)
-  const catSection = document.createElement('div');
-  catSection.className = 'sheet-section';
-  const catLabel = document.createElement('div');
-  catLabel.className = 'sheet-label';
-  catLabel.textContent = 'КАТЕГОРИЯ';
-  const toggle = document.createElement('div');
-  toggle.className = 'category-toggle';
+  const toggle = el('div', { class: 'category-toggle' });
   const renderToggle = () => {
     toggle.replaceChildren();
     for (const cat of ['work', 'personal']) {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'category-toggle-btn' + (draft.category === cat ? ' selected' : '');
-      b.textContent = TRACK_CATEGORY_LABELS[cat];
-      b.addEventListener('click', () => { draft.category = cat; renderToggle(); });
-      toggle.appendChild(b);
+      toggle.append(el('button', {
+        type: 'button',
+        class: 'category-toggle-btn' + (draft.category === cat ? ' selected' : ''),
+        text: TRACK_CATEGORY_LABELS[cat],
+        onclick: () => { draft.category = cat; renderToggle(); },
+      }));
     }
   };
   renderToggle();
-  catSection.append(catLabel, toggle);
-  sheet.appendChild(catSection);
+  sheet.append(el('div', { class: 'sheet-section' }, [
+    el('div', { class: 'sheet-label', text: 'КАТЕГОРИЯ' }),
+    toggle,
+  ]));
 
   // icon suggestions + Все иконки
-  const iconSection = document.createElement('div');
-  iconSection.className = 'sheet-section';
-  const iconLabel = document.createElement('div');
-  iconLabel.className = 'sheet-label';
-  iconLabel.textContent = 'ЧАСТО';
-  const iconRow = document.createElement('div');
-  iconRow.className = 'sheet-icon-row';
+  const iconRow = el('div', { class: 'sheet-icon-row' });
   const renderSuggestions = () => {
     iconRow.replaceChildren();
-    const slots = buildIconRow(draft.name, draft.icon);
-    slots.forEach(slot => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'sheet-icon';
-      if (slot.kind === 'prediction') b.classList.add('prediction');
-      b.appendChild(iconNode(slot.icon));
-      b.addEventListener('click', () => {
-        draft.icon = slot.icon;
-        pushRecentIcon(slot.icon);
-        renderIconBox();
-        renderSuggestions();
-      });
-      iconRow.appendChild(b);
+    buildIconRow(draft.name, draft.icon).forEach(slot => {
+      iconRow.append(el('button', {
+        type: 'button',
+        class: 'sheet-icon' + (slot.kind === 'prediction' ? ' prediction' : ''),
+        onclick: () => {
+          draft.icon = slot.icon;
+          pushRecentIcon(slot.icon);
+          renderIconBox();
+          renderSuggestions();
+        },
+      }, [iconNode(slot.icon)]));
     });
     renderLucide();
   };
   renderSuggestions();
 
-  const allBtn = document.createElement('button');
-  allBtn.type = 'button';
-  allBtn.className = 'sheet-icons-all';
-  allBtn.textContent = 'Все иконки';
   const openPicker = () => openIconPicker({
     current: draft.icon,
     onSelect: (name) => { draft.icon = name; pushRecentIcon(name); renderSuggestions(); renderIconBox(); },
   });
-  allBtn.addEventListener('click', openPicker);
+  const allBtn = el('button', {
+    type: 'button', class: 'sheet-icons-all', text: 'Все иконки', onclick: openPicker,
+  });
   iconBox.addEventListener('click', openPicker);
 
-  iconSection.append(iconLabel, iconRow, allBtn);
-  sheet.appendChild(iconSection);
+  sheet.append(el('div', { class: 'sheet-section' }, [
+    el('div', { class: 'sheet-label', text: 'ЧАСТО' }),
+    iconRow,
+    allBtn,
+  ]));
 
   // Re-render suggestions when name changes (debounced)
   let suggTimer = null;
@@ -3366,38 +2911,27 @@ function openTrackSheet({ track }) {
 
   // Tasks list (edit mode) — active + completed (collapsed) + БЕЗ ТРЕКА section
   if (isEdit) {
-    const tasksLabel = document.createElement('div');
-    tasksLabel.className = 'sheet-label';
-    sheet.appendChild(tasksLabel);
-
-    const tasksBlock = document.createElement('div');
-    tasksBlock.className = 'track-tasks-list';
-    sheet.appendChild(tasksBlock);
+    const tasksLabel = el('div', { class: 'sheet-label' });
+    const tasksBlock = el('div', { class: 'track-tasks-list' });
+    sheet.append(tasksLabel, tasksBlock);
 
     // Completed tasks — collapsed by default so a long history doesn't bloat
     // the sheet. Collapse state persists per track.
     const doneCollapseKey = `tasks_tracksheet_done_collapsed_${track.id}`;
     let doneCollapsed = localStorage.getItem(doneCollapseKey) !== '0';
 
-    const doneToggle = document.createElement('button');
-    doneToggle.type = 'button';
-    doneToggle.className = 'track-done-toggle';
-    sheet.appendChild(doneToggle);
-
-    const doneBlock = document.createElement('div');
-    doneBlock.className = 'track-tasks-list';
-    sheet.appendChild(doneBlock);
+    const doneToggle = el('button', { type: 'button', class: 'track-done-toggle' });
+    const doneBlock = el('div', { class: 'track-tasks-list' });
+    sheet.append(doneToggle, doneBlock);
 
     const renderDoneToggle = (count) => {
-      doneToggle.replaceChildren();
       const chev = iconNode(doneCollapsed ? 'chevron-right' : 'chevron-down');
       chev.classList.add('track-done-chevron');
-      const lbl = document.createElement('span');
-      lbl.textContent = 'ЗАВЕРШЁННЫЕ';
-      const cnt = document.createElement('span');
-      cnt.className = 'track-done-count';
-      cnt.textContent = `· ${count}`;
-      doneToggle.append(chev, lbl, cnt);
+      doneToggle.replaceChildren(
+        chev,
+        el('span', { text: 'ЗАВЕРШЁННЫЕ' }),
+        el('span', { class: 'track-done-count', text: `· ${count}` }),
+      );
       renderLucide();
     };
     doneToggle.addEventListener('click', () => {
@@ -3407,60 +2941,48 @@ function openTrackSheet({ track }) {
       renderDoneToggle(doneBlock.childElementCount);
     });
 
-    const unassignedLabel = document.createElement('div');
-    unassignedLabel.className = 'sheet-label';
-    sheet.appendChild(unassignedLabel);
-
-    const unassignedBlock = document.createElement('div');
-    unassignedBlock.className = 'track-tasks-list';
-    sheet.appendChild(unassignedBlock);
+    const unassignedLabel = el('div', { class: 'sheet-label' });
+    const unassignedBlock = el('div', { class: 'track-tasks-list' });
+    sheet.append(unassignedLabel, unassignedBlock);
 
     const makeTaskRow = (t, action) => {
-      const row = document.createElement('div');
-      row.className = 'track-task-row' + (t.done_at ? ' done' : '');
+      const main = el('button', {
+        type: 'button', class: 'track-task-main',
+        onclick: () => {
+          closeTrackSheet(backdrop, { skipCommit: true });
+          setTimeout(() => openSheet({ task: t }), 220);
+        },
+      }, [
+        el('span', { class: 'track-task-icon' }, [iconNode(t.icon || DEFAULT_ICON)]),
+        el('span', { class: 'track-task-text', text: t.text }),
+      ]);
 
-      const main = document.createElement('button');
-      main.type = 'button';
-      main.className = 'track-task-main';
-      const ib = document.createElement('span');
-      ib.className = 'track-task-icon';
-      ib.appendChild(iconNode(t.icon || DEFAULT_ICON));
-      const tx = document.createElement('span');
-      tx.className = 'track-task-text';
-      tx.textContent = t.text;
-      main.append(ib, tx);
-      main.addEventListener('click', () => {
-        closeTrackSheet(backdrop, { skipCommit: true });
-        setTimeout(() => openSheet({ task: t }), 220);
-      });
+      const actBtn = el('button', {
+        type: 'button',
+        class: 'track-task-action ' + (action === 'detach' ? 'detach' : 'attach'),
+        'aria-label': action === 'detach' ? 'Отвязать от трека' : 'Прикрепить к треку',
+        onclick: async (e) => {
+          e.stopPropagation();
+          const prevTrackId = t.track_id ?? null;
+          const nextTrackId = action === 'detach' ? null : track.id;
+          try { await db.tasks.update(t.id, { track_id: nextTrackId }); }
+          catch (err) {
+            if (isIdbDisconnectError(err)) await recoverDb();
+            else { showError(err); return; }
+          }
+          showSnackbar({
+            label: action === 'detach' ? 'Задача отвязана' : 'Прикреплено',
+            onUndo: async () => {
+              try { await db.tasks.update(t.id, { track_id: prevTrackId }); }
+              catch (err) { showError(err); }
+              await renderTrackTasksSections();
+            },
+          });
+          await renderTrackTasksSections();
+        },
+      }, [iconNode(action === 'detach' ? 'x' : 'plus')]);
 
-      const actBtn = document.createElement('button');
-      actBtn.type = 'button';
-      actBtn.className = 'track-task-action ' + (action === 'detach' ? 'detach' : 'attach');
-      actBtn.appendChild(iconNode(action === 'detach' ? 'x' : 'plus'));
-      actBtn.setAttribute('aria-label', action === 'detach' ? 'Отвязать от трека' : 'Прикрепить к треку');
-      actBtn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const prevTrackId = t.track_id ?? null;
-        const nextTrackId = action === 'detach' ? null : track.id;
-        try { await db.tasks.update(t.id, { track_id: nextTrackId }); }
-        catch (err) {
-          if (isIdbDisconnectError(err)) await recoverDb();
-          else { showError(err); return; }
-        }
-        showSnackbar({
-          label: action === 'detach' ? 'Задача отвязана' : 'Прикреплено',
-          onUndo: async () => {
-            try { await db.tasks.update(t.id, { track_id: prevTrackId }); }
-            catch (err) { showError(err); }
-            await renderTrackTasksSections();
-          },
-        });
-        await renderTrackTasksSections();
-      });
-
-      row.append(main, actBtn);
-      return row;
+      return el('div', { class: 'track-task-row' + (t.done_at ? ' done' : '') }, [main, actBtn]);
     };
 
     const renderTrackTasksSections = async () => {
@@ -3476,10 +2998,7 @@ function openTrackSheet({ track }) {
       tasksLabel.textContent = active.length ? `ЗАДАЧИ · ${active.length}` : 'ЗАДАЧИ';
       tasksBlock.replaceChildren();
       if (active.length === 0) {
-        const empty = document.createElement('div');
-        empty.className = 'track-tasks-empty';
-        empty.textContent = 'Пока нет задач в этом треке.';
-        tasksBlock.appendChild(empty);
+        tasksBlock.append(el('div', { class: 'track-tasks-empty', text: 'Пока нет задач в этом треке.' }));
       } else {
         active.forEach(t => tasksBlock.appendChild(makeTaskRow(t, 'detach')));
       }
@@ -3510,26 +3029,20 @@ function openTrackSheet({ track }) {
 
     renderTrackTasksSections().catch(showError);
 
-    const dvd = document.createElement('hr');
-    dvd.className = 'sheet-divider';
-    sheet.appendChild(dvd);
-
-    const del = document.createElement('button');
-    del.type = 'button';
-    del.className = 'sheet-delete';
-    const delIcon = iconNode('trash-2');
-    const delTxt = document.createElement('span');
-    delTxt.textContent = 'Удалить трек';
-    del.append(delIcon, delTxt);
-    del.addEventListener('click', async () => {
-      try { await deleteTrack(track.id); }
-      catch (e) {
-        if (isIdbDisconnectError(e)) await recoverDb();
-        else showError(e);
-      }
-      closeTrackSheet(backdrop, { skipCommit: true });
-    });
-    sheet.appendChild(del);
+    sheet.append(
+      el('hr', { class: 'sheet-divider' }),
+      el('button', {
+        type: 'button', class: 'sheet-delete',
+        onclick: async () => {
+          try { await deleteTrack(track.id); }
+          catch (e) {
+            if (isIdbDisconnectError(e)) await recoverDb();
+            else showError(e);
+          }
+          closeTrackSheet(backdrop, { skipCommit: true });
+        },
+      }, [iconNode('trash-2'), el('span', { text: 'Удалить трек' })]),
+    );
   }
 
   const commit = async () => {
@@ -3589,27 +3102,17 @@ function openSettings() {
   if (settingsOpen) return;
   settingsOpen = true;
 
-  const overlay = document.createElement('div');
-  overlay.className = 'settings-overlay';
+  const overlay = el('div', { class: 'settings-overlay' });
+  overlay.append(el('div', { class: 'settings-navbar' }, [
+    el('button', {
+      type: 'button', class: 'settings-back', 'aria-label': 'Назад',
+      onclick: () => closeSettings(overlay),
+    }, [iconNode('arrow-left')]),
+    el('div', { class: 'settings-title', text: 'Настройки' }),
+    el('div', { class: 'settings-back-spacer' }),
+  ]));
 
-  const navbar = document.createElement('div');
-  navbar.className = 'settings-navbar';
-  const back = document.createElement('button');
-  back.type = 'button';
-  back.className = 'settings-back';
-  back.setAttribute('aria-label', 'Назад');
-  back.appendChild(iconNode('arrow-left'));
-  back.addEventListener('click', () => closeSettings(overlay));
-  const title = document.createElement('div');
-  title.className = 'settings-title';
-  title.textContent = 'Настройки';
-  const spacer = document.createElement('div');
-  spacer.className = 'settings-back-spacer';
-  navbar.append(back, title, spacer);
-  overlay.appendChild(navbar);
-
-  const content = document.createElement('div');
-  content.className = 'settings-content';
+  const content = el('div', { class: 'settings-content' });
 
   // Section: ДАННЫЕ
   const dataSec = settingsSection('ДАННЫЕ');
@@ -3628,10 +3131,7 @@ function openSettings() {
     onClick: openImportSheet,
   }));
   dataSec.appendChild(dataCard);
-  const hint = document.createElement('div');
-  hint.className = 'settings-hint';
-  hint.textContent = 'Полная резервная копия. Перенести между устройствами или восстановить.';
-  dataSec.appendChild(hint);
+  dataSec.appendChild(el('div', { class: 'settings-hint', text: 'Полная резервная копия. Перенести между устройствами или восстановить.' }));
   content.appendChild(dataSec);
 
   // Section: WIKI
@@ -3675,10 +3175,7 @@ function openSettings() {
   });
   wikiCard.appendChild(syncRow);
   wikiSec.appendChild(wikiCard);
-  const wikiHint = document.createElement('div');
-  wikiHint.className = 'settings-hint';
-  wikiHint.textContent = 'Двусторонняя синхронизация с daily/daily-tasks.md в вики через GitHub API. Last-write-wins по updated_at.';
-  wikiSec.appendChild(wikiHint);
+  wikiSec.appendChild(el('div', { class: 'settings-hint', text: 'Двусторонняя синхронизация с daily/daily-tasks.md в вики через GitHub API. Last-write-wins по updated_at.' }));
   content.appendChild(wikiSec);
 
   // Section: ВНЕШНИЙ ВИД
@@ -3790,58 +3287,40 @@ function closeSettings(overlay) {
 }
 
 function settingsSection(label) {
-  const sec = document.createElement('div');
-  sec.className = 'settings-section';
-  const lbl = document.createElement('div');
-  lbl.className = 'settings-section-label';
-  lbl.textContent = label;
-  sec.appendChild(lbl);
-  return sec;
+  return el('div', { class: 'settings-section' }, [
+    el('div', { class: 'settings-section-label', text: label }),
+  ]);
 }
 
 function settingsCard() {
-  const card = document.createElement('div');
-  card.className = 'settings-card';
-  return card;
+  return el('div', { class: 'settings-card' });
 }
 
 function settingsDivider() {
-  const d = document.createElement('div');
-  d.className = 'settings-row-divider';
-  return d;
+  return el('div', { class: 'settings-row-divider' });
 }
 
 function settingsRow({ icon, label, rightText, chevron, onClick }) {
-  const row = document.createElement(onClick ? 'button' : 'div');
-  if (onClick) row.type = 'button';
-  row.className = 'settings-row';
-  if (onClick) row.addEventListener('click', onClick);
-
-  const left = document.createElement('div');
-  left.className = 'settings-row-left';
-  if (icon) left.appendChild(iconNode(icon));
-  const lbl = document.createElement('div');
-  lbl.className = 'settings-row-label';
-  lbl.textContent = label;
-  left.appendChild(lbl);
-  row.appendChild(left);
-
-  const right = document.createElement('div');
-  right.className = 'settings-row-right-wrap';
+  const right = el('div', { class: 'settings-row-right-wrap' });
   if (rightText !== undefined) {
-    const rt = document.createElement('span');
-    rt.className = 'settings-row-right';
-    rt.textContent = rightText;
-    right.appendChild(rt);
+    right.append(el('span', { class: 'settings-row-right', text: rightText }));
   }
   if (chevron) {
     const ch = iconNode('chevron-right');
     ch.classList.add('settings-row-chevron');
-    right.appendChild(ch);
+    right.append(ch);
   }
-  row.appendChild(right);
-
-  return row;
+  return el(onClick ? 'button' : 'div', {
+    type: onClick ? 'button' : undefined,
+    class: 'settings-row',
+    onclick: onClick || undefined,
+  }, [
+    el('div', { class: 'settings-row-left' }, [
+      icon && iconNode(icon),
+      el('div', { class: 'settings-row-label', text: label }),
+    ]),
+    right,
+  ]);
 }
 
 // ---------- export / import ----------
@@ -3932,48 +3411,24 @@ async function buildExportPayload() {
 
 async function openExportSheet() {
   if (document.querySelector('.settings-sheet-backdrop')) return;
-  const backdrop = document.createElement('div');
-  backdrop.className = 'picker-backdrop settings-sheet-backdrop';
 
-  const sheet = document.createElement('div');
-  sheet.className = 'picker-sheet settings-sheet';
-  backdrop.appendChild(sheet);
-
-  const handle = document.createElement('div');
-  handle.className = 'sheet-handle';
-  sheet.appendChild(handle);
-
-  const head = document.createElement('div');
-  head.className = 'settings-sheet-head';
-  const h = document.createElement('div');
-  h.className = 'settings-sheet-title';
-  h.textContent = 'Экспорт';
-  const sub = document.createElement('div');
-  sub.className = 'settings-sheet-sub';
-  sub.textContent = 'Полная резервная копия в JSON';
-  head.append(h, sub);
-  sheet.appendChild(head);
-
-  const counts = document.createElement('div');
-  counts.className = 'settings-counts';
-  sheet.appendChild(counts);
-
-  const fileRow = document.createElement('div');
-  fileRow.className = 'settings-file-row';
-  const fileIcon = iconNode('file-text');
-  const fileName = document.createElement('span');
-  fileName.textContent = `tasks-${todayFilenameISO()}.json`;
-  fileRow.append(fileIcon, fileName);
-  sheet.appendChild(fileRow);
-
-  const cta = document.createElement('button');
-  cta.type = 'button';
-  cta.className = 'sheet-finish';
-  cta.appendChild(iconNode('download'));
-  const ctaLabel = document.createElement('span');
-  ctaLabel.textContent = 'Скачать';
-  cta.appendChild(ctaLabel);
-  sheet.appendChild(cta);
+  const counts = el('div', { class: 'settings-counts' });
+  const cta = el('button', { type: 'button', class: 'sheet-finish' },
+    [iconNode('download'), el('span', { text: 'Скачать' })]);
+  const sheet = el('div', { class: 'picker-sheet settings-sheet' }, [
+    el('div', { class: 'sheet-handle' }),
+    el('div', { class: 'settings-sheet-head' }, [
+      el('div', { class: 'settings-sheet-title', text: 'Экспорт' }),
+      el('div', { class: 'settings-sheet-sub', text: 'Полная резервная копия в JSON' }),
+    ]),
+    counts,
+    el('div', { class: 'settings-file-row' }, [
+      iconNode('file-text'),
+      el('span', { text: `tasks-${todayFilenameISO()}.json` }),
+    ]),
+    cta,
+  ]);
+  const backdrop = el('div', { class: 'picker-backdrop settings-sheet-backdrop' }, [sheet]);
 
   const close = () => {
     backdrop.classList.remove('open');
@@ -3994,9 +3449,7 @@ async function openExportSheet() {
   cta.addEventListener('click', () => {
     const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `tasks-${todayFilenameISO()}.json`;
+    const a = el('a', { href: url, download: `tasks-${todayFilenameISO()}.json` });
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -4011,31 +3464,20 @@ async function openExportSheet() {
 }
 
 function countRow(label, value) {
-  const r = document.createElement('div');
-  r.className = 'settings-count-row';
-  const l = document.createElement('span');
-  l.textContent = label;
-  const v = document.createElement('span');
-  v.className = 'settings-count-value';
-  v.textContent = value;
-  r.append(l, v);
-  return r;
+  return el('div', { class: 'settings-count-row' }, [
+    el('span', { text: label }),
+    el('span', { class: 'settings-count-value', text: value }),
+  ]);
 }
 
 function countDivider() {
-  const d = document.createElement('div');
-  d.className = 'settings-count-divider';
-  return d;
+  return el('div', { class: 'settings-count-divider' });
 }
 
 async function openImportSheet() {
   if (document.querySelector('.settings-sheet-backdrop')) return;
-  const backdrop = document.createElement('div');
-  backdrop.className = 'picker-backdrop settings-sheet-backdrop';
-
-  const sheet = document.createElement('div');
-  sheet.className = 'picker-sheet settings-sheet';
-  backdrop.appendChild(sheet);
+  const sheet = el('div', { class: 'picker-sheet settings-sheet' });
+  const backdrop = el('div', { class: 'picker-backdrop settings-sheet-backdrop' }, [sheet]);
 
   const close = () => {
     backdrop.classList.remove('open');
@@ -4044,52 +3486,26 @@ async function openImportSheet() {
   backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
 
   const renderPick = () => {
-    sheet.replaceChildren();
+    const cta = el('button', { type: 'button', class: 'sheet-finish' },
+      [iconNode('file-up'), el('span', { text: 'Выбрать файл' })]);
+    const fileInput = el('input', {
+      type: 'file', accept: '.json,application/json', style: { display: 'none' },
+    });
 
-    const handle = document.createElement('div');
-    handle.className = 'sheet-handle';
-    sheet.appendChild(handle);
-
-    const head = document.createElement('div');
-    head.className = 'settings-sheet-head';
-    const h = document.createElement('div');
-    h.className = 'settings-sheet-title';
-    h.textContent = 'Импорт';
-    const sub = document.createElement('div');
-    sub.className = 'settings-sheet-sub';
-    sub.textContent = 'Восстановить из резервной копии JSON';
-    head.append(h, sub);
-    sheet.appendChild(head);
-
-    const warn = document.createElement('div');
-    warn.className = 'settings-warning';
-    warn.appendChild(iconNode('triangle-alert'));
-    const w = document.createElement('span');
-    w.textContent = 'Импорт заменит все текущие задачи и треки. Это действие нельзя отменить.';
-    warn.appendChild(w);
-    sheet.appendChild(warn);
-
-    const cta = document.createElement('button');
-    cta.type = 'button';
-    cta.className = 'sheet-finish';
-    cta.appendChild(iconNode('file-up'));
-    const lbl = document.createElement('span');
-    lbl.textContent = 'Выбрать файл';
-    cta.appendChild(lbl);
-    sheet.appendChild(cta);
-
-    const cancel = document.createElement('button');
-    cancel.type = 'button';
-    cancel.className = 'settings-cancel';
-    cancel.textContent = 'Отмена';
-    cancel.addEventListener('click', close);
-    sheet.appendChild(cancel);
-
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = '.json,application/json';
-    fileInput.style.display = 'none';
-    sheet.appendChild(fileInput);
+    sheet.replaceChildren(
+      el('div', { class: 'sheet-handle' }),
+      el('div', { class: 'settings-sheet-head' }, [
+        el('div', { class: 'settings-sheet-title', text: 'Импорт' }),
+        el('div', { class: 'settings-sheet-sub', text: 'Восстановить из резервной копии JSON' }),
+      ]),
+      el('div', { class: 'settings-warning' }, [
+        iconNode('triangle-alert'),
+        el('span', { text: 'Импорт заменит все текущие задачи и треки. Это действие нельзя отменить.' }),
+      ]),
+      cta,
+      el('button', { type: 'button', class: 'settings-cancel', text: 'Отмена', onclick: close }),
+      fileInput,
+    );
 
     cta.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', async () => {
@@ -4112,128 +3528,73 @@ async function openImportSheet() {
   };
 
   const renderError = (msg) => {
-    sheet.replaceChildren();
-
-    const handle = document.createElement('div');
-    handle.className = 'sheet-handle';
-    sheet.appendChild(handle);
-
-    const head = document.createElement('div');
-    head.className = 'settings-sheet-head';
-    const h = document.createElement('div');
-    h.className = 'settings-sheet-title';
-    h.textContent = 'Не получилось';
-    head.appendChild(h);
-    sheet.appendChild(head);
-
-    const warn = document.createElement('div');
-    warn.className = 'settings-warning';
-    warn.appendChild(iconNode('triangle-alert'));
-    const w = document.createElement('span');
-    w.textContent = msg;
-    warn.appendChild(w);
-    sheet.appendChild(warn);
-
-    const cta = document.createElement('button');
-    cta.type = 'button';
-    cta.className = 'sheet-finish';
-    const lbl = document.createElement('span');
-    lbl.textContent = 'Выбрать другой файл';
-    cta.appendChild(lbl);
-    cta.addEventListener('click', renderPick);
-    sheet.appendChild(cta);
-
-    const cancel = document.createElement('button');
-    cancel.type = 'button';
-    cancel.className = 'settings-cancel';
-    cancel.textContent = 'Отмена';
-    cancel.addEventListener('click', close);
-    sheet.appendChild(cancel);
-
+    sheet.replaceChildren(
+      el('div', { class: 'sheet-handle' }),
+      el('div', { class: 'settings-sheet-head' }, [
+        el('div', { class: 'settings-sheet-title', text: 'Не получилось' }),
+      ]),
+      el('div', { class: 'settings-warning' }, [
+        iconNode('triangle-alert'),
+        el('span', { text: msg }),
+      ]),
+      el('button', { type: 'button', class: 'sheet-finish', onclick: renderPick },
+        [el('span', { text: 'Выбрать другой файл' })]),
+      el('button', { type: 'button', class: 'settings-cancel', text: 'Отмена', onclick: close }),
+    );
     renderLucide();
   };
 
   const renderPreview = (file, parsed, current) => {
-    sheet.replaceChildren();
-
-    const handle = document.createElement('div');
-    handle.className = 'sheet-handle';
-    sheet.appendChild(handle);
-
-    const head = document.createElement('div');
-    head.className = 'settings-sheet-head';
-    const h = document.createElement('div');
-    h.className = 'settings-sheet-title';
-    h.textContent = 'Импорт';
-    const sub = document.createElement('div');
-    sub.className = 'settings-sheet-sub';
     const exportedAt = parsed.exported_at ? new Date(parsed.exported_at) : null;
-    sub.textContent = exportedAt
-      ? `Резервная копия от ${exportedAt.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}`
-      : 'Резервная копия';
-    head.append(h, sub);
-    sheet.appendChild(head);
-
-    const chip = document.createElement('div');
-    chip.className = 'settings-file-chip';
-    chip.appendChild(iconNode('file-text'));
-    const cn = document.createElement('span');
-    cn.textContent = file.name;
-    chip.appendChild(cn);
-    const xBtn = document.createElement('button');
-    xBtn.type = 'button';
-    xBtn.className = 'settings-file-chip-x';
-    xBtn.appendChild(iconNode('x'));
-    xBtn.addEventListener('click', renderPick);
-    chip.appendChild(xBtn);
-    sheet.appendChild(chip);
-
-    const compare = document.createElement('div');
-    compare.className = 'settings-compare';
-
     const curJournal = current.tasks.filter(t => t.done_at && t.done_at > 0).length;
     const fileJournal = parsed.tasks.filter(t => t.done_at && t.done_at > 0).length;
 
-    compare.appendChild(compareCol('СЕЙЧАС', false, [
-      `${current.tasks.length - curJournal} ${plzTask(current.tasks.length - curJournal)}`,
-      `${current.tracks.length} ${plzTrack(current.tracks.length)}`,
-      `${curJournal} в журнале`,
-    ]));
-    compare.appendChild(compareCol('В ФАЙЛЕ', true, [
-      `${parsed.tasks.length - fileJournal} ${plzTask(parsed.tasks.length - fileJournal)}`,
-      `${parsed.tracks.length} ${plzTrack(parsed.tracks.length)}`,
-      `${fileJournal} в журнале`,
-    ]));
-    sheet.appendChild(compare);
-
-    const cta = document.createElement('button');
-    cta.type = 'button';
-    cta.className = 'sheet-finish';
-    const lbl = document.createElement('span');
-    lbl.textContent = 'Заменить';
-    cta.appendChild(lbl);
-    cta.addEventListener('click', async () => {
-      try {
-        await db.transaction('rw', db.tasks, db.tracks, async () => {
-          await db.tasks.clear();
-          await db.tracks.clear();
-          if (parsed.tracks.length) await db.tracks.bulkAdd(parsed.tracks);
-          if (parsed.tasks.length) await db.tasks.bulkAdd(parsed.tasks);
-        });
-        location.reload();
-      } catch (e) {
-        renderError('Не удалось записать данные: ' + (e.message || String(e)));
-      }
-    });
-    sheet.appendChild(cta);
-
-    const cancel = document.createElement('button');
-    cancel.type = 'button';
-    cancel.className = 'settings-cancel';
-    cancel.textContent = 'Отмена';
-    cancel.addEventListener('click', close);
-    sheet.appendChild(cancel);
-
+    sheet.replaceChildren(
+      el('div', { class: 'sheet-handle' }),
+      el('div', { class: 'settings-sheet-head' }, [
+        el('div', { class: 'settings-sheet-title', text: 'Импорт' }),
+        el('div', {
+          class: 'settings-sheet-sub',
+          text: exportedAt
+            ? `Резервная копия от ${exportedAt.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}`
+            : 'Резервная копия',
+        }),
+      ]),
+      el('div', { class: 'settings-file-chip' }, [
+        iconNode('file-text'),
+        el('span', { text: file.name }),
+        el('button', { type: 'button', class: 'settings-file-chip-x', onclick: renderPick }, [iconNode('x')]),
+      ]),
+      el('div', { class: 'settings-compare' }, [
+        compareCol('СЕЙЧАС', false, [
+          `${current.tasks.length - curJournal} ${plzTask(current.tasks.length - curJournal)}`,
+          `${current.tracks.length} ${plzTrack(current.tracks.length)}`,
+          `${curJournal} в журнале`,
+        ]),
+        compareCol('В ФАЙЛЕ', true, [
+          `${parsed.tasks.length - fileJournal} ${plzTask(parsed.tasks.length - fileJournal)}`,
+          `${parsed.tracks.length} ${plzTrack(parsed.tracks.length)}`,
+          `${fileJournal} в журнале`,
+        ]),
+      ]),
+      el('button', {
+        type: 'button', class: 'sheet-finish',
+        onclick: async () => {
+          try {
+            await db.transaction('rw', db.tasks, db.tracks, async () => {
+              await db.tasks.clear();
+              await db.tracks.clear();
+              if (parsed.tracks.length) await db.tracks.bulkAdd(parsed.tracks);
+              if (parsed.tasks.length) await db.tasks.bulkAdd(parsed.tasks);
+            });
+            location.reload();
+          } catch (e) {
+            renderError('Не удалось записать данные: ' + (e.message || String(e)));
+          }
+        },
+      }, [el('span', { text: 'Заменить' })]),
+      el('button', { type: 'button', class: 'settings-cancel', text: 'Отмена', onclick: close }),
+    );
     renderLucide();
   };
 
@@ -4244,19 +3605,10 @@ async function openImportSheet() {
 }
 
 function compareCol(label, accent, lines) {
-  const col = document.createElement('div');
-  col.className = 'settings-compare-col' + (accent ? ' accent' : '');
-  const lbl = document.createElement('div');
-  lbl.className = 'settings-compare-label';
-  lbl.textContent = label;
-  col.appendChild(lbl);
-  for (const t of lines) {
-    const row = document.createElement('div');
-    row.className = 'settings-compare-row';
-    row.textContent = t;
-    col.appendChild(row);
-  }
-  return col;
+  return el('div', { class: 'settings-compare-col' + (accent ? ' accent' : '') }, [
+    el('div', { class: 'settings-compare-label', text: label }),
+    ...lines.map(t => el('div', { class: 'settings-compare-row', text: t })),
+  ]);
 }
 
 function plzTask(n) {
@@ -4288,16 +3640,6 @@ function setWikiToken(v) {
     if (v) localStorage.setItem(WIKI_TOKEN_KEY, v);
     else localStorage.removeItem(WIKI_TOKEN_KEY);
   } catch {}
-}
-
-// Track name → kebab-case slug. Mirror of slugify() in scripts/sync_wiki.py;
-// keep both in lockstep or tag↔track resolution breaks.
-function slugifyTrackName(name) {
-  let s = (name || '').trim().toLowerCase();
-  s = s.replace(/[^\p{L}\p{N}\s-]/gu, '');
-  s = s.replace(/[\s_]+/g, '-');
-  s = s.replace(/-+/g, '-').replace(/^-+|-+$/g, '');
-  return s;
 }
 
 // ms timestamp → 'YYYY-MM-DD'. Used for feed-shaped tasks (wiki cares about
@@ -4640,47 +3982,25 @@ window.addEventListener('online', () => autoSync('online'));
 
 function openWikiTokenSheet(onSaved) {
   if (document.querySelector('.settings-sheet-backdrop')) return;
-  const backdrop = document.createElement('div');
-  backdrop.className = 'picker-backdrop settings-sheet-backdrop';
-  const sheet = document.createElement('div');
-  sheet.className = 'picker-sheet settings-sheet';
-  backdrop.appendChild(sheet);
 
-  const handle = document.createElement('div');
-  handle.className = 'sheet-handle';
-  sheet.appendChild(handle);
-
-  const head = document.createElement('div');
-  head.className = 'settings-sheet-head';
-  const h = document.createElement('div');
-  h.className = 'settings-sheet-title';
-  h.textContent = 'GitHub токен';
-  const sub = document.createElement('div');
-  sub.className = 'settings-sheet-sub';
-  sub.textContent = `Personal Access Token со scope «repo» — для чтения и записи ${WIKI_FEED_PATH}.`;
-  head.append(h, sub);
-  sheet.appendChild(head);
-
-  const inputWrap = document.createElement('div');
-  inputWrap.className = 'sheet-input-wrap';
-  inputWrap.style.margin = '0 16px';
-  const input = document.createElement('input');
-  input.type = 'password';
-  input.autocomplete = 'off';
-  input.spellcheck = false;
-  input.placeholder = 'ghp_…';
-  input.value = getWikiToken();
-  input.className = 'sheet-text';
-  inputWrap.appendChild(input);
-  sheet.appendChild(inputWrap);
-
-  const cta = document.createElement('button');
-  cta.type = 'button';
-  cta.className = 'sheet-finish';
-  const label = document.createElement('span');
-  label.textContent = 'Сохранить';
-  cta.appendChild(label);
-  sheet.appendChild(cta);
+  const input = el('input', {
+    type: 'password', class: 'sheet-text', placeholder: 'ghp_…',
+    autocomplete: 'off', spellcheck: false, value: getWikiToken(),
+  });
+  const cta = el('button', { type: 'button', class: 'sheet-finish' }, [el('span', { text: 'Сохранить' })]);
+  const sheet = el('div', { class: 'picker-sheet settings-sheet' }, [
+    el('div', { class: 'sheet-handle' }),
+    el('div', { class: 'settings-sheet-head' }, [
+      el('div', { class: 'settings-sheet-title', text: 'GitHub токен' }),
+      el('div', {
+        class: 'settings-sheet-sub',
+        text: `Personal Access Token со scope «repo» — для чтения и записи ${WIKI_FEED_PATH}.`,
+      }),
+    ]),
+    el('div', { class: 'sheet-input-wrap', style: { margin: '0 16px' } }, [input]),
+    cta,
+  ]);
+  const backdrop = el('div', { class: 'picker-backdrop settings-sheet-backdrop' }, [sheet]);
 
   const close = () => {
     backdrop.classList.remove('open');
