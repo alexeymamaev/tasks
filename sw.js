@@ -1,4 +1,4 @@
-const CACHE = 'tasks-v1-123';
+const CACHE = 'tasks-v1-124';
 const ASSETS = [
   './',
   'index.html',
@@ -14,7 +14,19 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  // Fetch with cache:'reload' so the browser HTTP cache (GitHub Pages serves
+  // app.js/style.css with max-age=600) can't feed addAll a stale copy right
+  // after a deploy — otherwise a new CACHE name captures old assets and the
+  // version bumps without the content changing.
+  e.waitUntil((async () => {
+    const c = await caches.open(CACHE);
+    await Promise.all(ASSETS.map(async (url) => {
+      const res = await fetch(new Request(url, { cache: 'reload' }));
+      if (!res.ok && res.type !== 'opaque') throw new Error('install fetch failed: ' + url);
+      await c.put(url, res);
+    }));
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener('activate', (e) => {
