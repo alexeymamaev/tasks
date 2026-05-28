@@ -1372,10 +1372,10 @@
       "track_name": "Авто",
       "deadline": "2026-05-28",
       "created_at": "2026-05-28",
-      "done_at": null,
+      "done_at": "2026-05-28",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779974870046
+      "updated_at": 1779979083201
     }
   ],
   "tracks": [
