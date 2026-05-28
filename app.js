@@ -2341,11 +2341,13 @@ let sheetOpen = false;
 // focused on draft state + commit orchestration.
 
 function buildDeadlineRow(initialIso, onChange) {
-  const row = document.createElement('div');
-  row.className = 'sheet-dl-row';
+  // Stacked block matching the «ЗАМЕТКИ» section: caps label, then the
+  // control row below as a separate sheet child (inherits the .sheet 18px gap).
+  const frag = document.createDocumentFragment();
+
   const label = document.createElement('div');
-  label.className = 'label';
-  label.textContent = 'Дедлайн';
+  label.className = 'sheet-label';
+  label.textContent = 'ДЕДЛАЙН';
 
   const group = document.createElement('div');
   group.className = 'dl-seg';
@@ -2364,21 +2366,29 @@ function buildDeadlineRow(initialIso, onChange) {
   tomorrowBtn.className = 'dl-seg-btn';
   tomorrowBtn.textContent = 'Завтра';
 
+  // «Дата» is a button with the native date input overlaid transparently —
+  // tapping anywhere on the cell opens iOS's picker (more reliable than
+  // showPicker() on a hidden input). Label shows the chosen custom date.
+  const dateCell = document.createElement('div');
+  dateCell.className = 'dl-seg-btn dl-seg-date';
+  const dateLabel = document.createElement('span');
+  dateLabel.className = 'dl-date-label';
+  dateCell.appendChild(dateLabel);
   const input = document.createElement('input');
   input.type = 'date';
-  input.className = 'sheet-deadline dl-seg-date';
+  input.className = 'dl-date-input';
   input.autocomplete = 'off';
+  input.setAttribute('aria-label', 'Выбрать дату');
+  dateCell.appendChild(input);
 
-  // Reflect current deadline: highlight the matching preset, or the date
-  // input when it's a custom (non-today/tomorrow) date. Input always shows
-  // the real value so the picker opens on the current date.
   const sync = () => {
     const isToday = current === today;
     const isTomorrow = current === tomorrow;
     const isCustom = !!current && !isToday && !isTomorrow;
     todayBtn.classList.toggle('active', isToday);
     tomorrowBtn.classList.toggle('active', isTomorrow);
-    input.classList.toggle('active', isCustom);
+    dateCell.classList.toggle('active', isCustom);
+    dateLabel.textContent = isCustom ? formatDateShort(current) : 'Дата';
     input.value = current || '';
   };
 
@@ -2392,10 +2402,10 @@ function buildDeadlineRow(initialIso, onChange) {
   tomorrowBtn.addEventListener('click', () => set(tomorrow));
   input.addEventListener('change', () => set(input.value || null));
 
-  group.append(todayBtn, tomorrowBtn, input);
+  group.append(todayBtn, tomorrowBtn, dateCell);
   sync();
-  row.append(label, group);
-  return row;
+  frag.append(label, group);
+  return frag;
 }
 
 function buildEditFooter({ onFinish, onDelete }) {
