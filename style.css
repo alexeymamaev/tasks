@@ -887,6 +887,32 @@ body {
   color-scheme: dark;
   min-width: 0;
 }
+.dl-seg {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 0;
+}
+.dl-seg-btn {
+  border: 0;
+  outline: 0;
+  background: var(--sheet-control);
+  color: var(--text);
+  font: 500 14px -apple-system, system-ui, sans-serif;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 160ms ease, color 160ms ease, transform 120ms ease;
+}
+.dl-seg-btn.active,
+.sheet-deadline.dl-seg-date.active {
+  background: var(--accent);
+  color: #0D0A08;
+}
+.sheet-deadline.dl-seg-date.active { color-scheme: light; }
+.dl-seg-btn:active { transform: scale(0.96); }
 
 .sheet-divider {
   height: 1px;
@@ -1297,6 +1323,32 @@ body {
   color: var(--text-dim);
   font-size: 14px;
   padding: 8px 0;
+}
+.track-done-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 4px 0;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  -webkit-tap-highlight-color: transparent;
+}
+.track-done-chevron {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  color: var(--text-muted);
+}
+.track-done-count {
+  color: var(--text-dim);
+  letter-spacing: 0;
+  font-weight: 500;
 }
 
 /* ---------- status banner (IDB reconnect etc) ---------- */
@@ -2062,6 +2114,15 @@ body {
   color: var(--accent);
   font-weight: 600;
   padding: 5px 14px;
+}
+.today-seg-btn {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+}
+.today-seg-count {
+  opacity: 0.55;
+  font-variant-numeric: tabular-nums;
 }
 .today-seg-btn:active { transform: scale(0.96); }
 

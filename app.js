@@ -471,6 +471,15 @@ function todayISO() {
   return `${y}-${m}-${day}`;
 }
 
+function tomorrowISO() {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 const TODAY_FILTER_KEY = 'tasks.today_filter';
 function isTodayFilterOn() {
   return localStorage.getItem(TODAY_FILTER_KEY) === '1';
@@ -968,17 +977,27 @@ function tabbarNode() {
   return wrap;
 }
 
-function todaySegmentedNode() {
+function todaySegmentedNode(counts = {}) {
   const wrap = document.createElement('div');
   wrap.className = 'today-segmented';
   wrap.setAttribute('data-no-swipe', '');
   const on = isTodayFilterOn();
+  const countFor = { all: counts.all, today: counts.today };
   for (const [val, label] of [['all', 'Все'], ['today', 'Сегодня']]) {
     const btn = document.createElement('button');
     btn.type = 'button';
     const isActive = (val === 'today') === on;
     btn.className = 'today-seg-btn' + (isActive ? ' active' : '');
-    btn.textContent = label;
+    const lbl = document.createElement('span');
+    lbl.textContent = label;
+    btn.appendChild(lbl);
+    const n = countFor[val];
+    if (typeof n === 'number') {
+      const c = document.createElement('span');
+      c.className = 'today-seg-count';
+      c.textContent = String(n);
+      btn.appendChild(c);
+    }
     btn.addEventListener('click', () => {
       const want = val === 'today';
       if (want === isTodayFilterOn()) return;
@@ -1160,6 +1179,13 @@ async function renderMorning() {
   if (!page) return;
   page.replaceChildren();
 
+  const [active, journal, tracks] = await Promise.all([listActive(), listJournal(), listTracks()]);
+  const tracksById = new Map(tracks.map(t => [t.id, t]));
+
+  const todayFilter = isTodayFilterOn();
+  const todayList = filterTodayOverdue(active);
+  const visible = todayFilter ? todayList : active;
+
   const screen = document.createElement('div');
   screen.className = 'screen';
 
@@ -1183,17 +1209,11 @@ async function renderMorning() {
   gear.setAttribute('aria-label', 'Настройки');
   gear.appendChild(iconNode('settings'));
   gear.addEventListener('click', () => openSettings());
-  headerRow.appendChild(todaySegmentedNode());
+  headerRow.appendChild(todaySegmentedNode({ all: active.length, today: todayList.length }));
   headerRow.appendChild(collapseAll);
   headerRow.appendChild(gear);
   header.appendChild(headerRow);
   topRegion.appendChild(header);
-
-  const [active, journal, tracks] = await Promise.all([listActive(), listJournal(), listTracks()]);
-  const tracksById = new Map(tracks.map(t => [t.id, t]));
-
-  const todayFilter = isTodayFilterOn();
-  const visible = todayFilter ? filterTodayOverdue(active) : active;
 
   let wrap = null;
 
@@ -2326,13 +2346,55 @@ function buildDeadlineRow(initialIso, onChange) {
   const label = document.createElement('div');
   label.className = 'label';
   label.textContent = 'Дедлайн';
+
+  const group = document.createElement('div');
+  group.className = 'dl-seg';
+
+  let current = initialIso || null;
+  const today = todayISO();
+  const tomorrow = tomorrowISO();
+
+  const todayBtn = document.createElement('button');
+  todayBtn.type = 'button';
+  todayBtn.className = 'dl-seg-btn';
+  todayBtn.textContent = 'Сегодня';
+
+  const tomorrowBtn = document.createElement('button');
+  tomorrowBtn.type = 'button';
+  tomorrowBtn.className = 'dl-seg-btn';
+  tomorrowBtn.textContent = 'Завтра';
+
   const input = document.createElement('input');
   input.type = 'date';
-  input.className = 'sheet-deadline';
+  input.className = 'sheet-deadline dl-seg-date';
   input.autocomplete = 'off';
-  if (initialIso) input.value = initialIso;
-  input.addEventListener('change', () => onChange(input.value || null));
-  row.append(label, input);
+
+  // Reflect current deadline: highlight the matching preset, or the date
+  // input when it's a custom (non-today/tomorrow) date. Input always shows
+  // the real value so the picker opens on the current date.
+  const sync = () => {
+    const isToday = current === today;
+    const isTomorrow = current === tomorrow;
+    const isCustom = !!current && !isToday && !isTomorrow;
+    todayBtn.classList.toggle('active', isToday);
+    tomorrowBtn.classList.toggle('active', isTomorrow);
+    input.classList.toggle('active', isCustom);
+    input.value = current || '';
+  };
+
+  const set = (next) => {
+    current = next || null;
+    sync();
+    onChange(current);
+  };
+
+  todayBtn.addEventListener('click', () => set(today));
+  tomorrowBtn.addEventListener('click', () => set(tomorrow));
+  input.addEventListener('change', () => set(input.value || null));
+
+  group.append(todayBtn, tomorrowBtn, input);
+  sync();
+  row.append(label, group);
   return row;
 }
 
@@ -2380,7 +2442,7 @@ function openSheet({ task, presetTrackId }) {
     text: task?.text || '',
     icon: task?.icon || DEFAULT_ICON,
     notes: task?.notes || '',
-    deadline: isEdit ? (task?.deadline || null) : todayISO(),
+    deadline: isEdit ? (task?.deadline || null) : tomorrowISO(),
     track_id: task?.track_id ?? (presetTrackId ?? null),
   };
 
@@ -3265,7 +3327,7 @@ function openTrackSheet({ track }) {
     suggTimer = setTimeout(renderSuggestions, 250);
   });
 
-  // Tasks list (edit mode) — active + done-today + БЕЗ ТРЕКА section
+  // Tasks list (edit mode) — active + completed (collapsed) + БЕЗ ТРЕКА section
   if (isEdit) {
     const tasksLabel = document.createElement('div');
     tasksLabel.className = 'sheet-label';
@@ -3274,6 +3336,39 @@ function openTrackSheet({ track }) {
     const tasksBlock = document.createElement('div');
     tasksBlock.className = 'track-tasks-list';
     sheet.appendChild(tasksBlock);
+
+    // Completed tasks — collapsed by default so a long history doesn't bloat
+    // the sheet. Collapse state persists per track.
+    const doneCollapseKey = `tasks_tracksheet_done_collapsed_${track.id}`;
+    let doneCollapsed = localStorage.getItem(doneCollapseKey) !== '0';
+
+    const doneToggle = document.createElement('button');
+    doneToggle.type = 'button';
+    doneToggle.className = 'track-done-toggle';
+    sheet.appendChild(doneToggle);
+
+    const doneBlock = document.createElement('div');
+    doneBlock.className = 'track-tasks-list';
+    sheet.appendChild(doneBlock);
+
+    const renderDoneToggle = (count) => {
+      doneToggle.replaceChildren();
+      const chev = iconNode(doneCollapsed ? 'chevron-right' : 'chevron-down');
+      chev.classList.add('track-done-chevron');
+      const lbl = document.createElement('span');
+      lbl.textContent = 'ЗАВЕРШЁННЫЕ';
+      const cnt = document.createElement('span');
+      cnt.className = 'track-done-count';
+      cnt.textContent = `· ${count}`;
+      doneToggle.append(chev, lbl, cnt);
+      renderLucide();
+    };
+    doneToggle.addEventListener('click', () => {
+      doneCollapsed = !doneCollapsed;
+      localStorage.setItem(doneCollapseKey, doneCollapsed ? '1' : '0');
+      doneBlock.style.display = doneCollapsed ? 'none' : '';
+      renderDoneToggle(doneBlock.childElementCount);
+    });
 
     const unassignedLabel = document.createElement('div');
     unassignedLabel.className = 'sheet-label';
@@ -3336,19 +3431,31 @@ function openTrackSheet({ track }) {
         listTasksByTrack(track.id),
         listUnassignedActive(),
       ]);
-      const todayStart = startOfTodayMs();
-      const current = currentAll.filter(t => !t.done_at || t.done_at >= todayStart);
-      current.sort((a, b) => (a.done_at ? a.done_at : Infinity) - (b.done_at ? b.done_at : Infinity));
+      const active = currentAll.filter(t => !t.done_at)
+        .sort((a, b) => b.created_at - a.created_at);
+      const done = currentAll.filter(t => t.done_at)
+        .sort((a, b) => b.done_at - a.done_at);
 
-      tasksLabel.textContent = current.length ? `ЗАДАЧИ · ${current.length}` : 'ЗАДАЧИ';
+      tasksLabel.textContent = active.length ? `ЗАДАЧИ · ${active.length}` : 'ЗАДАЧИ';
       tasksBlock.replaceChildren();
-      if (current.length === 0) {
+      if (active.length === 0) {
         const empty = document.createElement('div');
         empty.className = 'track-tasks-empty';
         empty.textContent = 'Пока нет задач в этом треке.';
         tasksBlock.appendChild(empty);
       } else {
-        current.forEach(t => tasksBlock.appendChild(makeTaskRow(t, 'detach')));
+        active.forEach(t => tasksBlock.appendChild(makeTaskRow(t, 'detach')));
+      }
+
+      if (done.length === 0) {
+        doneToggle.style.display = 'none';
+        doneBlock.style.display = 'none';
+      } else {
+        doneToggle.style.display = '';
+        doneBlock.replaceChildren();
+        done.forEach(t => doneBlock.appendChild(makeTaskRow(t, 'detach')));
+        doneBlock.style.display = doneCollapsed ? 'none' : '';
+        renderDoneToggle(done.length);
       }
 
       if (unassigned.length === 0) {
