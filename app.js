@@ -172,27 +172,28 @@ const STUCK_HOUR = 16;
 
 // Pure: is task currently stuck given a specific moment?
 // stuck = deadline < today
-//      OR (deadline = today AND now >= 16:00 AND task NOT created today)
-// Tasks created today are always fresh on their own deadline day — they
-// haven't had a chance to buksovat yet, even if the day is winding down.
+//      OR (deadline = today AND now >= 16:00 AND not engaged today)
+// "Engaged today" (updated_at >= start of today) means the task was created,
+// edited, or had its deadline shifted onto today *today* — it just got placed
+// here, so give it grace until end of day instead of nagging it as stuck.
 function isStuckNow(task, now = new Date()) {
   if (!task.deadline) return false;
   const today = todayISO();
   if (task.deadline < today) return true;
   if (task.deadline === today && now.getHours() >= STUCK_HOUR) {
-    if (task.created_at >= startOfTodayMs()) return false;
+    if ((task.updated_at || task.created_at) >= startOfTodayMs()) return false;
     return true;
   }
   return false;
 }
 
-// fresh = deadline = today AND (now < 16:00 OR created today)
+// fresh = deadline = today AND (now < 16:00 OR engaged today)
 function isFreshForToday(task, now = new Date()) {
   if (!task.deadline) return false;
   const today = todayISO();
   if (task.deadline !== today) return false;
   if (now.getHours() < STUCK_HOUR) return true;
-  if (task.created_at >= startOfTodayMs()) return true;
+  if ((task.updated_at || task.created_at) >= startOfTodayMs()) return true;
   return false;
 }
 
