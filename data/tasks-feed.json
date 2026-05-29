@@ -1471,10 +1471,10 @@
       "track_name": "Маркетинг КПМ",
       "deadline": "2026-05-29",
       "created_at": "2026-05-29",
-      "done_at": null,
+      "done_at": "2026-05-29",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1780036693799
+      "updated_at": 1780060853771
     },
     {
       "id": "2cd7cd3cd241",
