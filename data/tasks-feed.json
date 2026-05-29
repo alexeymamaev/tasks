@@ -1516,9 +1516,9 @@
       "deadline": "2026-05-29",
       "created_at": "2026-05-26",
       "done_at": null,
-      "deleted_at": null,
+      "deleted_at": "2026-05-29",
       "notes": "",
-      "updated_at": 1780034187073
+      "updated_at": 1780034587546
     },
     {
       "id": "459b6dfed69d",
