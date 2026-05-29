@@ -1607,6 +1607,17 @@
       "deleted_at": null,
       "notes": "",
       "updated_at": 1780043917053
+    },
+    {
+      "id": "ec1868c5a7fb",
+      "text": "Тест",
+      "track_name": "Лев",
+      "deadline": "2026-05-29",
+      "created_at": "2026-05-29",
+      "done_at": null,
+      "deleted_at": "2026-05-29",
+      "notes": "",
+      "updated_at": 1780044916482
     }
   ],
   "tracks": [
@@ -1620,13 +1631,13 @@
       "name": "Уборка",
       "category": "personal",
       "icon": "home",
-      "position": 1
+      "position": 2
     },
     {
       "name": "Wiki",
       "category": "personal",
       "icon": "brain",
-      "position": 5
+      "position": 6
     },
     {
       "name": "БТМ: ИС",
@@ -1638,7 +1649,7 @@
       "name": "Оплата счетов",
       "category": "personal",
       "icon": "credit-card",
-      "position": 2
+      "position": 4
     },
     {
       "name": "Сайт АБМ",
@@ -1656,7 +1667,7 @@
       "name": "Лев",
       "category": "personal",
       "icon": "baby",
-      "position": 4
+      "position": 5
     },
     {
       "name": "Рабочий телеграм канал",
@@ -1668,7 +1679,7 @@
       "name": "Продажа Гильдеево",
       "category": "personal",
       "icon": "house",
-      "position": 1
+      "position": 3
     },
     {
       "name": "Финансы",
@@ -1686,19 +1697,19 @@
       "name": "Здоровье",
       "category": "personal",
       "icon": "stethoscope",
-      "position": 9
+      "position": 1
     },
     {
       "name": "Сад",
       "category": "personal",
       "icon": "fence",
-      "position": 10
+      "position": 9
     },
     {
       "name": "Дом Васильево",
       "category": "personal",
       "icon": "home",
-      "position": 11
+      "position": 10
     },
     {
       "name": "Бухгалтерия",
@@ -1710,7 +1721,7 @@
       "name": "Квартира",
       "category": "personal",
       "icon": "door-open",
-      "position": 13
+      "position": 11
     }
   ]
 }
