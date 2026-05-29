@@ -32,7 +32,10 @@
   --age-4: #B94C3A;
 }
 
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+/* touch-action: manipulation — убирает double-tap-to-zoom (и 300ms tap delay)
+ * по всему приложению, сохраняя pinch-зум (доступность). Явные pan-y/none на
+ * .page/.track-grip/.cal-strip-wrap имеют выше специфичность и переопределяют это. */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 html, body { margin: 0; padding: 0; }
 
 html {
