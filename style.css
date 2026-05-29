@@ -7,6 +7,7 @@
   --text-dim: #8B847B;
   --text-muted: #6A635A;
   --accent: #FF9478;
+  --fresh: #F2C14E;
   --divider: #3A2E26;
   --input-bg: #2A211C;
   --snackbar: #0F0A07;
@@ -528,6 +529,14 @@ body {
   height: 12px;
   flex: 0 0 12px;
   color: var(--text-dim);
+  transition: color 0.6s ease;
+}
+/* Свежесть: трек получил задачу < FRESH_TRACK_MS назад — иконка жёлтая.
+ * Класс на стабильном .track-subsection-name (не на svg — lucide его пересоздаёт).
+ * По снятии класса transition выше плавно гасит обратно в --text-dim. */
+.track-subsection-name.fresh svg,
+.track-subsection-name.fresh .icon {
+  color: var(--fresh);
 }
 .track-subsection-name span {
   font-size: 13px;

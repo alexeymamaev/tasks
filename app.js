@@ -658,8 +658,27 @@ function groupByTrack(list, tracksById) {
     }
     groups.push({ track, tasks, newest });
   }
-  groups.sort((a, b) => b.newest - a.newest);
+  // Порядок треков = position со страницы Треки (детерминированно, один-в-один
+  // с тем, как ты их расставил драг-дропом). «Без трека» — в конец. Свежесть
+  // больше НЕ двигает порядок — она подсвечивает иконку (см. trackSubsectionNode);
+  // newest оставлен только как стабильный тай-брейк при равных position.
+  groups.sort((a, b) => {
+    const pa = a.track ? (a.track.position ?? Infinity) : Infinity;
+    const pb = b.track ? (b.track.position ?? Infinity) : Infinity;
+    if (pa !== pb) return pa - pb;
+    return b.newest - a.newest;
+  });
   return groups;
+}
+
+// Окно подсветки иконки трека после добавления задачи. Тентативно 5 мин —
+// крутится одной константой. По истечении гаснет (таймер в trackSubsectionNode).
+const FRESH_TRACK_MS = 5 * 60 * 1000;
+
+// Порядок категорий на экране «Сегодня». View-preference в localStorage
+// (per-device, как collapse-состояния). Дефолт — Личное сверху (как было).
+function workFirst() {
+  return localStorage.getItem('tasks_work_first') === '1';
 }
 
 function trackSubsectionNode(track, tasks, tracksById) {
@@ -667,6 +686,24 @@ function trackSubsectionNode(track, tasks, tracksById) {
 
   const chev = iconNode('chevron-down');
   chev.classList.add('track-subsection-chevron');
+
+  // Свежесть: трек, в который только что (< FRESH_TRACK_MS) упала задача,
+  // временно подсвечивает иконку. Класс на стабильном span (а не на самой
+  // иконке) — lucide заменяет <i> на <svg>, ссылка бы протухла; CSS красит
+  // иконку через потомка. Таймер снимает класс на живом узле по истечении окна.
+  const nameSpan = el('span', { class: 'track-subsection-name' }, [
+    iconNode(track ? (track.icon || DEFAULT_ICON) : 'circle-dashed'),
+    el('span', { text: track ? track.name : 'Без трека' }),
+  ]);
+  if (track) {
+    let newest = 0;
+    for (const t of tasks) if (t.created_at && t.created_at > newest) newest = t.created_at;
+    const age = Date.now() - newest;
+    if (newest && age < FRESH_TRACK_MS) {
+      nameSpan.classList.add('fresh');
+      setTimeout(() => nameSpan.classList.remove('fresh'), FRESH_TRACK_MS - age);
+    }
+  }
 
   const sub = el('div', {
     class: 'track-subsection',
@@ -683,10 +720,7 @@ function trackSubsectionNode(track, tasks, tracksById) {
         },
       }, [
         chev,
-        el('span', { class: 'track-subsection-name' }, [
-          iconNode(track ? (track.icon || DEFAULT_ICON) : 'circle-dashed'),
-          el('span', { text: track ? track.name : 'Без трека' }),
-        ]),
+        nameSpan,
         el('span', { class: 'track-subsection-counter', text: String(tasks.length) }),
       ]),
       el('button', {
@@ -1200,11 +1234,10 @@ async function renderMorning() {
 
     wrap = el('div', { class: 'active-grouped' });
     const showCategoryDividers = nonEmpty.length >= 2;
-    const sections = [
-      { key: 'personal', label: 'ЛИЧНОЕ' },
-      { key: 'work', label: 'РАБОТА' },
-      { key: 'rest', label: null },
-    ];
+    const catSections = workFirst()
+      ? [{ key: 'work', label: 'РАБОТА' }, { key: 'personal', label: 'ЛИЧНОЕ' }]
+      : [{ key: 'personal', label: 'ЛИЧНОЕ' }, { key: 'work', label: 'РАБОТА' }];
+    const sections = [...catSections, { key: 'rest', label: null }];
     for (const { key, label } of sections) {
       const list = buckets[key];
       if (!list.length) continue;
@@ -3188,7 +3221,22 @@ function openSettings() {
     chevron: true,
     onClick: () => {},
   }));
+  themeCard.appendChild(settingsDivider());
+  let catOrderRow;
+  catOrderRow = settingsRow({
+    icon: 'arrow-up-down',
+    label: 'Сверху на «Сегодня»',
+    rightText: workFirst() ? 'Работа' : 'Личное',
+    onClick: () => {
+      localStorage.setItem('tasks_work_first', workFirst() ? '0' : '1');
+      const r = catOrderRow.querySelector('.settings-row-right');
+      if (r) r.textContent = workFirst() ? 'Работа' : 'Личное';
+      renderMain().catch(showError);
+    },
+  });
+  themeCard.appendChild(catOrderRow);
   themeSec.appendChild(themeCard);
+  themeSec.appendChild(el('div', { class: 'settings-hint', text: 'Какая категория показывается выше на экране «Сегодня».' }));
   content.appendChild(themeSec);
 
   // Section: О ПРИЛОЖЕНИИ
