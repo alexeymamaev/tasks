@@ -1603,10 +1603,10 @@
       "track_name": "Уборка",
       "deadline": "2026-05-29",
       "created_at": "2026-05-29",
-      "done_at": null,
+      "done_at": "2026-05-29",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1780043917053
+      "updated_at": 1780073274681
     },
     {
       "id": "ec1868c5a7fb",
