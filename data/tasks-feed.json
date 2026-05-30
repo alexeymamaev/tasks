@@ -1177,7 +1177,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1780150773949
+      "updated_at": 1780170207285
     },
     {
       "id": "9e8fa4731e72",
@@ -1185,10 +1185,10 @@
       "track_name": "Дом Васильево",
       "deadline": "2026-05-30",
       "created_at": "2026-05-26",
-      "done_at": null,
+      "done_at": "2026-05-30",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1780150778680
+      "updated_at": 1780170205725
     },
     {
       "id": "6eae6c742361",
