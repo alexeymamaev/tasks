@@ -3818,8 +3818,34 @@ async function syncWithWiki({ quiet = false } = {}) {
       db.tasks.toArray(),
       db.tracks.toArray(),
     ]);
-    const tracksByName = new Map(localTracks.map(t => [t.name, t]));
-    const tracksById = new Map(localTracks.map(t => [t.id, t]));
+    let tracksByName = new Map(localTracks.map(t => [t.name, t]));
+    let tracksById = new Map(localTracks.map(t => [t.id, t]));
+
+    // Reconcile track definitions inbound (create-missing only). The feed
+    // carries full track defs (name/category/icon/position); a track created on
+    // another device arrives here as a name we don't have locally. Create it so
+    // the task loop below can link by name instead of dropping track_id to null.
+    // Add-only: renames/icon-changes/deletes are NOT propagated (tracks have no
+    // updated_at — see wiki-sync.md "несколько устройств"). Idempotent across
+    // 409 retries: localTracks is re-read each attempt, so already-created
+    // tracks are present and skipped.
+    const missingTracks = (feed.tracks || []).filter(
+      ft => ft.name && !tracksByName.has(ft.name),
+    );
+    if (missingTracks.length) {
+      const now = Date.now();
+      await db.tracks.bulkAdd(missingTracks.map(ft => ({
+        name: ft.name,
+        icon: ft.icon || DEFAULT_ICON,
+        category: ft.category || 'personal',
+        position: ft.position || 0,
+        created_at: now,
+        last_used_at: now,
+      })));
+      const refreshed = await db.tracks.toArray();
+      tracksByName = new Map(refreshed.map(t => [t.name, t]));
+      tracksById = new Map(refreshed.map(t => [t.id, t]));
+    }
 
     // Stamp external_id on any local task missing one (legacy v3 record).
     for (const t of localTasks) {
@@ -3898,7 +3924,9 @@ async function syncWithWiki({ quiet = false } = {}) {
       schema: 1,
       generated_at: new Date().toISOString().slice(0, 10),
       tasks: feedTasksOut,
-      tracks: localTracks.map(t => ({
+      // Source from tracksById (refreshed after inbound create-missing) so a
+      // track we just adopted from the feed isn't dropped on this same PUT.
+      tracks: [...tracksById.values()].map(t => ({
         name: t.name,
         category: t.category || 'personal',
         icon: t.icon || null,
