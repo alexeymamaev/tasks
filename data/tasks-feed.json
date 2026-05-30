@@ -941,12 +941,12 @@
       "id": "ecb70b880082",
       "text": "Прикрепить стекло к варке",
       "track_name": "Дом Васильево",
-      "deadline": "2026-05-30",
+      "deadline": "2026-05-31",
       "created_at": "2026-05-19",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779349110532
+      "updated_at": 1780150490682
     },
     {
       "id": "1bb2a5f4a4d4",
@@ -1040,12 +1040,12 @@
       "id": "440baed77b73",
       "text": "Доделать стол",
       "track_name": "Дом Васильево",
-      "deadline": "2026-05-30",
+      "deadline": "2026-05-31",
       "created_at": "2026-05-20",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779349138445
+      "updated_at": 1780150483152
     },
     {
       "id": "2ce70b7b8650",
@@ -1062,12 +1062,12 @@
       "id": "025ad25e6c9a",
       "text": "Повесить зеркало",
       "track_name": "Дом Васильево",
-      "deadline": "2026-05-30",
+      "deadline": "2026-05-31",
       "created_at": "2026-05-20",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779349135350
+      "updated_at": 1780150486917
     },
     {
       "id": "52fe52ce1408",
@@ -1155,7 +1155,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779857805924
+      "updated_at": 1780150740316
     },
     {
       "id": "788076ce57ff",
@@ -1177,7 +1177,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779885685850
+      "updated_at": 1780150773949
     },
     {
       "id": "9e8fa4731e72",
@@ -1188,7 +1188,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779885681472
+      "updated_at": 1780150778680
     },
     {
       "id": "6eae6c742361",
@@ -1199,7 +1199,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779857813699
+      "updated_at": 1780150781160
     },
     {
       "id": "b8a74cc006ae",
@@ -1634,12 +1634,12 @@
       "id": "96fa4fa8db64",
       "text": "Слить грушу",
       "track_name": "Квартира",
-      "deadline": "2026-05-30",
+      "deadline": "2026-06-04",
       "created_at": "2026-05-29",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1780054530109
+      "updated_at": 1780150477797
     },
     {
       "id": "8b81d564dbb6",
