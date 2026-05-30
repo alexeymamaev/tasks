@@ -1155,7 +1155,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1780150740316
+      "updated_at": 1780170198704
     },
     {
       "id": "788076ce57ff",
@@ -1653,5 +1653,108 @@
       "updated_at": 1780073272185
     }
   ],
-  "tracks": []
+  "tracks": [
+    {
+      "name": "БТМ: Сайт",
+      "category": "work",
+      "icon": "monitor",
+      "position": 1
+    },
+    {
+      "name": "Уборка",
+      "category": "personal",
+      "icon": "home",
+      "position": 2
+    },
+    {
+      "name": "Wiki",
+      "category": "personal",
+      "icon": "brain",
+      "position": 7
+    },
+    {
+      "name": "БТМ: ИС",
+      "category": "work",
+      "icon": "keyboard",
+      "position": 3
+    },
+    {
+      "name": "Оплата счетов",
+      "category": "personal",
+      "icon": "credit-card",
+      "position": 5
+    },
+    {
+      "name": "Сайт АБМ",
+      "category": "inactive",
+      "icon": "monitor",
+      "position": 2
+    },
+    {
+      "name": "Маркетинг КПМ",
+      "category": "work",
+      "icon": "handshake",
+      "position": 6
+    },
+    {
+      "name": "Лев",
+      "category": "personal",
+      "icon": "baby",
+      "position": 6
+    },
+    {
+      "name": "Рабочий телеграм канал",
+      "category": "inactive",
+      "icon": "users",
+      "position": 1
+    },
+    {
+      "name": "Продажа Гильдеево",
+      "category": "personal",
+      "icon": "house",
+      "position": 3
+    },
+    {
+      "name": "Финансы",
+      "category": "personal",
+      "icon": "wallet",
+      "position": 8
+    },
+    {
+      "name": "Авто",
+      "category": "personal",
+      "icon": "car",
+      "position": 9
+    },
+    {
+      "name": "Здоровье",
+      "category": "personal",
+      "icon": "stethoscope",
+      "position": 1
+    },
+    {
+      "name": "Сад",
+      "category": "personal",
+      "icon": "fence",
+      "position": 10
+    },
+    {
+      "name": "Дом Васильево",
+      "category": "personal",
+      "icon": "home",
+      "position": 11
+    },
+    {
+      "name": "Бухгалтерия",
+      "category": "work",
+      "icon": "clipboard",
+      "position": 12
+    },
+    {
+      "name": "Квартира",
+      "category": "personal",
+      "icon": "door-open",
+      "position": 4
+    }
+  ]
 }
