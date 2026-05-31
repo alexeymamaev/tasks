@@ -886,10 +886,6 @@ async function commitMoveDeadline(task, next) {
 // дата, не относительный сдвиг. Семантика = `set` (плющим разные дедлайны в
 // одну дату), поэтому лейбл «Перенести на…», а не «Сдвинуть».
 
-function selectionCountLabel() {
-  return selectedIds.size ? `${selectedIds.size} выбрано` : 'Выберите задачи';
-}
-
 function resetSelectionState() {
   selectionMode = false;
   selectedIds.clear();
@@ -947,8 +943,6 @@ function removeSelectionBar() {
 }
 
 function updateSelectionBar() {
-  const hc = document.querySelector('.header-count');
-  if (hc) hc.textContent = selectionCountLabel();
   if (!selectionBarEl) return;
   const n = selectedIds.size;
   selectionBarEl._count.textContent = n ? `${n} выбрано` : 'Ничего не выбрано';
@@ -1327,41 +1321,37 @@ async function renderMorning() {
   const screen = el('div', { class: 'screen' });
   const topRegion = el('div', { class: 'top-region' });
 
-  let collapseAll = null;
-  if (selectionMode) {
-    // В режиме выбора шапка трансформируется: h1 → «N выбрано», сегмент/шестерня
-    // уступают место «Готово» (выход из режима).
-    topRegion.append(el('div', { class: 'header', 'data-no-swipe': '' }, [
-      el('div', { class: 'header-row header-row-select' }, [
-        el('h1', { class: 'header-count', text: selectionCountLabel() }),
-        el('button', {
-          type: 'button', class: 'header-done', text: 'Готово', onclick: exitSelectionMode,
-        }),
-      ]),
-    ]));
-  } else {
-    collapseAll = el('button', { type: 'button', class: 'header-collapse-all' });
-    const gear = el('button', {
-      type: 'button', class: 'header-gear', 'aria-label': 'Настройки',
-      onclick: () => openSettings(),
-    }, [iconNode('settings')]);
+  // Шапка НЕ меняется при входе в режим выбора (заголовок не мигает). В режиме
+  // лишь до-появляется «Готово» рядом с «Выбрать»; счётчик живёт в нижнем CAB.
+  const collapseAll = el('button', { type: 'button', class: 'header-collapse-all' });
+  const gear = el('button', {
+    type: 'button', class: 'header-gear', 'aria-label': 'Настройки',
+    onclick: () => openSettings(),
+  }, [iconNode('settings')]);
 
-    topRegion.append(el('div', { class: 'header', 'data-no-swipe': '' }, [
-      el('div', { class: 'header-row' }, [
-        el('h1', { text: 'Задачи' }),
-        todaySegmentedNode({ all: active.length, today: todayList.length }),
-        collapseAll,
-        gear,
-      ]),
-      // Вход в мультивыбор — тихая ссылка под заголовком (в шапке у шестерни
-      // места нет). Показываем только когда есть что выбирать.
-      (visible.length > 0) && el('div', { class: 'header-select-row' }, [
-        el('button', {
-          type: 'button', class: 'header-select-btn', onclick: enterSelectionMode,
-        }, [iconNode('list-checks'), el('span', { text: 'Выбрать' })]),
-      ]),
-    ]));
-  }
+  // Строка под шапкой: «Выбрать» (всегда, когда есть задачи) + «Готово» (только
+  // в режиме). «Выбрать» не прячется при входе — рядом просто появляется «Готово».
+  const selectRow = (visible.length > 0) ? el('div', {
+    class: 'header-select-row' + (selectionMode ? ' selecting' : ''),
+  }, [
+    el('button', {
+      type: 'button', class: 'header-select-btn',
+      onclick: () => { if (!selectionMode) enterSelectionMode(); },
+    }, [iconNode('list-checks'), el('span', { text: 'Выбрать' })]),
+    selectionMode && el('button', {
+      type: 'button', class: 'header-select-done', text: 'Готово', onclick: exitSelectionMode,
+    }),
+  ]) : null;
+
+  topRegion.append(el('div', { class: 'header', 'data-no-swipe': '' }, [
+    el('div', { class: 'header-row' }, [
+      el('h1', { text: 'Задачи' }),
+      todaySegmentedNode({ all: active.length, today: todayList.length }),
+      collapseAll,
+      gear,
+    ]),
+    selectRow,
+  ]));
 
   let wrap = null;
 
@@ -1399,7 +1389,6 @@ async function renderMorning() {
     topRegion.append(wrap);
   }
 
-  if (collapseAll) {
   const updateCollapseAllIcon = () => {
     if (!wrap) { collapseAll.style.display = 'none'; return; }
     const subs = wrap.querySelectorAll('.track-subsection');
@@ -1423,7 +1412,6 @@ async function renderMorning() {
   });
   if (wrap) wrap.addEventListener('track-collapse-changed', updateCollapseAllIcon);
   updateCollapseAllIcon();
-  }
 
   screen.appendChild(topRegion);
 

@@ -2453,12 +2453,15 @@ div.settings-row:active { background: transparent; }
 
 /* ---------- bulk selection (мультивыбор → перенос на дату) ---------- */
 
-/* Вход в режим — тихая ссылка под заголовком. */
+/* Вход в режим — тихая ссылка под заголовком. В режиме рядом до-появляется
+ * «Готово» (шапку при этом не трогаем — заголовок не мигает). */
 .header-select-row {
   display: flex;
+  align-items: center;
   justify-content: flex-start;
   padding: 10px 4px 0 4px;
 }
+.header-select-row.selecting { justify-content: space-between; }
 .header-select-btn {
   display: inline-flex;
   align-items: center;
@@ -2477,20 +2480,19 @@ div.settings-row:active { background: transparent; }
 .header-select-btn svg { width: 14px; height: 14px; }
 .header-select-btn:active { opacity: 0.6; }
 
-/* Шапка в режиме выбора: счётчик слева, «Готово» справа. */
-.header-count { flex: 1; min-width: 0; }
-.header-done {
+/* «Готово» — справа в той же строке под шапкой (только в режиме выбора). */
+.header-select-done {
   background: transparent;
   border: 0;
   color: var(--accent);
   font-family: inherit;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   padding: 4px 6px;
   -webkit-tap-highlight-color: transparent;
 }
-.header-done:active { opacity: 0.6; }
+.header-select-done:active { opacity: 0.6; }
 
 /* Карточка в режиме выбора: угловой чек (аддитивный, иконку не трогаем),
  * дедлайн уезжает из абсолютного угла под иконку, чтобы не драться с чеком. */
