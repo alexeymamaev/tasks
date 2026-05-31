@@ -774,6 +774,20 @@ function playStampImpact(cardEl, task) {
 
 function activeCardNode(task, tracksById, opts) {
   const card = cardBase(task, tracksById, opts);
+  if (selectionMode) {
+    card.classList.add('selectable');
+    if (selectedIds.has(task.id)) card.classList.add('selected');
+    // Чек аддитивный (угловой бейдж) — иконку задачи не съедаем: по ней ты и
+    // опознаёшь, что выбираешь.
+    card.append(el('div', { class: 'select-check' }, [checkBadgeSvg()]));
+    card.addEventListener('click', () => {
+      const nowSel = !selectedIds.has(task.id);
+      if (nowSel) selectedIds.add(task.id); else selectedIds.delete(task.id);
+      card.classList.toggle('selected', nowSel);
+      updateSelectionBar();
+    });
+    return card;
+  }
   attachLongPress(card, {
     onTap: () => openSheet({ task }),
     onLongPress: async () => {
@@ -798,6 +812,11 @@ function activeCardNode(task, tracksById, opts) {
 let snackbarTimer = null;
 let editingBlockerTaskId = null;
 let splittingTaskId = null;
+
+// Bulk-selection mode (мультивыбор задач на экране Задачи → перенос на дату).
+let selectionMode = false;
+const selectedIds = new Set();
+let selectionBarEl = null;
 
 function showSnackbar({ label: labelText, onUndo }) {
   if (snackbarTimer) { clearTimeout(snackbarTimer); snackbarTimer = null; }
@@ -850,6 +869,116 @@ async function commitMoveDeadline(task, next) {
       label: 'Перенесено',
       onUndo: async () => {
         await db.tasks.update(task.id, { deadline: prev });
+        await renderMain();
+      },
+    });
+    await renderMain();
+  } catch (e) {
+    if (isIdbDisconnectError(e)) { await recoverDb(); return; }
+    showError(e);
+  }
+}
+
+// ---------- bulk selection (мультивыбор → перенос на дату) ----------
+//
+// Сценарий — проактивное планирование: выбрать несколько разрозненных задач и
+// назначить им один общий дедлайн (день в клинике, чистый блок и т.п.). Точная
+// дата, не относительный сдвиг. Семантика = `set` (плющим разные дедлайны в
+// одну дату), поэтому лейбл «Перенести на…», а не «Сдвинуть».
+
+function selectionCountLabel() {
+  return selectedIds.size ? `${selectedIds.size} выбрано` : 'Выберите задачи';
+}
+
+function resetSelectionState() {
+  selectionMode = false;
+  selectedIds.clear();
+  document.body.classList.remove('selecting');
+  removeSelectionBar();
+}
+
+function enterSelectionMode() {
+  if (selectionMode) return;
+  selectionMode = true;
+  selectedIds.clear();
+  document.body.classList.add('selecting');
+  showSelectionBar();
+  renderMain().catch(showError);
+}
+
+function exitSelectionMode() {
+  resetSelectionState();
+  renderMain().catch(showError);
+}
+
+function buildSelectionBar() {
+  const count = el('span', { class: 'selbar-count' });
+  // Нативный date-input, прозрачно наложенный на кнопку — самый надёжный способ
+  // открыть iOS-пикер (showPicker() на скрытом инпуте на iOS капризничает).
+  const dateInput = el('input', {
+    type: 'date', class: 'selbar-date-input', autocomplete: 'off',
+    'aria-label': 'Дата переноса', value: tomorrowISO(),
+  });
+  dateInput.addEventListener('change', () => {
+    if (dateInput.value) applyBulkMove(dateInput.value).catch(showError);
+  });
+  const move = el('div', { class: 'selbar-move' }, [
+    iconNode('calendar'),
+    el('span', { text: 'Перенести на…' }),
+    dateInput,
+  ]);
+  const bar = el('div', { class: 'selection-bar', 'data-no-swipe': '' }, [count, move]);
+  bar._count = count;
+  bar._move = move;
+  return bar;
+}
+
+function showSelectionBar() {
+  removeSelectionBar();
+  selectionBarEl = buildSelectionBar();
+  document.getElementById('app').appendChild(selectionBarEl);
+  renderLucide();
+  requestAnimationFrame(() => { if (selectionBarEl) selectionBarEl.classList.add('open'); });
+  updateSelectionBar();
+}
+
+function removeSelectionBar() {
+  if (selectionBarEl) { selectionBarEl.remove(); selectionBarEl = null; }
+}
+
+function updateSelectionBar() {
+  const hc = document.querySelector('.header-count');
+  if (hc) hc.textContent = selectionCountLabel();
+  if (!selectionBarEl) return;
+  const n = selectedIds.size;
+  selectionBarEl._count.textContent = n ? `${n} выбрано` : 'Ничего не выбрано';
+  selectionBarEl._move.classList.toggle('disabled', n === 0);
+}
+
+// Назначить выбранным задачам один дедлайн. Откат восстанавливает у каждой её
+// *собственный* прежний дедлайн (они разные), поэтому снимаем снапшот
+// {id, deadline} ДО записи. Все апдейты — в одной транзакции; updating-хук БД
+// дебаунсит их в единый wiki-push (без N пушей).
+async function applyBulkMove(iso) {
+  const ids = [...selectedIds];
+  if (!ids.length || !iso) return;
+  try {
+    const tasks = (await db.tasks.bulkGet(ids)).filter(Boolean);
+    const changed = tasks
+      .map(t => ({ id: t.id, deadline: t.deadline || null }))
+      .filter(p => p.deadline !== iso);
+    if (!changed.length) { exitSelectionMode(); return; }
+    await db.transaction('rw', db.tasks, async () => {
+      for (const p of changed) await db.tasks.update(p.id, { deadline: iso });
+    });
+    const n = changed.length;
+    resetSelectionState();
+    showSnackbar({
+      label: `Перенесено ${n} · ${formatDateShort(iso)}`,
+      onUndo: async () => {
+        await db.transaction('rw', db.tasks, async () => {
+          for (const p of changed) await db.tasks.update(p.id, { deadline: p.deadline });
+        });
         await renderMain();
       },
     });
@@ -1198,20 +1327,41 @@ async function renderMorning() {
   const screen = el('div', { class: 'screen' });
   const topRegion = el('div', { class: 'top-region' });
 
-  const collapseAll = el('button', { type: 'button', class: 'header-collapse-all' });
-  const gear = el('button', {
-    type: 'button', class: 'header-gear', 'aria-label': 'Настройки',
-    onclick: () => openSettings(),
-  }, [iconNode('settings')]);
+  let collapseAll = null;
+  if (selectionMode) {
+    // В режиме выбора шапка трансформируется: h1 → «N выбрано», сегмент/шестерня
+    // уступают место «Готово» (выход из режима).
+    topRegion.append(el('div', { class: 'header', 'data-no-swipe': '' }, [
+      el('div', { class: 'header-row header-row-select' }, [
+        el('h1', { class: 'header-count', text: selectionCountLabel() }),
+        el('button', {
+          type: 'button', class: 'header-done', text: 'Готово', onclick: exitSelectionMode,
+        }),
+      ]),
+    ]));
+  } else {
+    collapseAll = el('button', { type: 'button', class: 'header-collapse-all' });
+    const gear = el('button', {
+      type: 'button', class: 'header-gear', 'aria-label': 'Настройки',
+      onclick: () => openSettings(),
+    }, [iconNode('settings')]);
 
-  topRegion.append(el('div', { class: 'header', 'data-no-swipe': '' }, [
-    el('div', { class: 'header-row' }, [
-      el('h1', { text: 'Задачи' }),
-      todaySegmentedNode({ all: active.length, today: todayList.length }),
-      collapseAll,
-      gear,
-    ]),
-  ]));
+    topRegion.append(el('div', { class: 'header', 'data-no-swipe': '' }, [
+      el('div', { class: 'header-row' }, [
+        el('h1', { text: 'Задачи' }),
+        todaySegmentedNode({ all: active.length, today: todayList.length }),
+        collapseAll,
+        gear,
+      ]),
+      // Вход в мультивыбор — тихая ссылка под заголовком (в шапке у шестерни
+      // места нет). Показываем только когда есть что выбирать.
+      (visible.length > 0) && el('div', { class: 'header-select-row' }, [
+        el('button', {
+          type: 'button', class: 'header-select-btn', onclick: enterSelectionMode,
+        }, [iconNode('list-checks'), el('span', { text: 'Выбрать' })]),
+      ]),
+    ]));
+  }
 
   let wrap = null;
 
@@ -1249,6 +1399,7 @@ async function renderMorning() {
     topRegion.append(wrap);
   }
 
+  if (collapseAll) {
   const updateCollapseAllIcon = () => {
     if (!wrap) { collapseAll.style.display = 'none'; return; }
     const subs = wrap.querySelectorAll('.track-subsection');
@@ -1272,6 +1423,7 @@ async function renderMorning() {
   });
   if (wrap) wrap.addEventListener('track-collapse-changed', updateCollapseAllIcon);
   updateCollapseAllIcon();
+  }
 
   screen.appendChild(topRegion);
 

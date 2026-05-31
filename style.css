@@ -2450,3 +2450,141 @@ div.settings-row:active { background: transparent; }
   -webkit-tap-highlight-color: transparent;
 }
 .settings-cancel:active { opacity: 0.6; }
+
+/* ---------- bulk selection (мультивыбор → перенос на дату) ---------- */
+
+/* Вход в режим — тихая ссылка под заголовком. */
+.header-select-row {
+  display: flex;
+  justify-content: flex-start;
+  padding: 10px 4px 0 4px;
+}
+.header-select-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: 0;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 2px;
+  -webkit-tap-highlight-color: transparent;
+}
+.header-select-btn .icon,
+.header-select-btn svg { width: 14px; height: 14px; }
+.header-select-btn:active { opacity: 0.6; }
+
+/* Шапка в режиме выбора: счётчик слева, «Готово» справа. */
+.header-count { flex: 1; min-width: 0; }
+.header-done {
+  background: transparent;
+  border: 0;
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 6px;
+  -webkit-tap-highlight-color: transparent;
+}
+.header-done:active { opacity: 0.6; }
+
+/* Карточка в режиме выбора: угловой чек (аддитивный, иконку не трогаем),
+ * дедлайн уезжает из абсолютного угла под иконку, чтобы не драться с чеком. */
+.card.selectable .deadline {
+  position: static;
+  align-self: flex-start;
+  margin-top: 3px;
+}
+.select-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1.5px solid var(--hairline);
+  background: rgba(0, 0, 0, 0.18);
+  display: grid;
+  place-items: center;
+  color: transparent;
+  pointer-events: none;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.select-check svg { width: 14px; height: 14px; }
+.card.selected {
+  background: #6A4636;
+  box-shadow: 0 0 0 2px var(--accent) inset;
+}
+.card.selected .select-check {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0D0A08;
+}
+
+/* Нижний contextual action bar — на месте таббара (его прячем). */
+body.selecting .tabbar-capsule,
+body.selecting .tabbar-plus { display: none; }
+.selection-bar {
+  position: fixed;
+  top: calc(var(--app-height, 100dvh) - 86px);
+  left: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 8px 8px 18px;
+  border-radius: 999px;
+  background: rgba(42, 32, 24, 0.55);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.20),
+    0 8px 24px rgba(0, 0, 0, 0.35);
+  z-index: 20;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+.selection-bar.open { opacity: 1; transform: translateY(0); }
+.selbar-count {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+.selbar-move {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent);
+  color: #0D0A08;
+  border-radius: 999px;
+  padding: 11px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.selbar-move .icon,
+.selbar-move svg { width: 16px; height: 16px; }
+.selbar-move:active { transform: scale(0.97); }
+.selbar-move.disabled { opacity: 0.4; pointer-events: none; }
+.selbar-date-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+}
