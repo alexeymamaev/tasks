@@ -586,6 +586,11 @@ function attachLongPress(node, { onLongPress, onTap, ms = 500 }) {
     firedLong = false;
     moved = false;
     startX = e.clientX; startY = e.clientY;
+    // Capture the pointer so this node keeps receiving move/up even if the
+    // pointer drifts off it. Touch has implicit capture; a mouse does NOT, so
+    // without this Chrome fires a spurious pointerleave right after pointerdown
+    // → the old pointerleave→bail killed every desktop tap (sheet never opened).
+    try { node.setPointerCapture(e.pointerId); } catch {}
     cancel();
     timer = setTimeout(() => {
       firedLong = true;
@@ -611,8 +616,11 @@ function attachLongPress(node, { onLongPress, onTap, ms = 500 }) {
     if (!wasLong && !wasMoved) onTap?.(e);
   });
   const bail = () => { pressed = false; cancel(); };
+  // Only pointercancel bails. NOT pointerleave: with pointer capture a real
+  // press won't leave mid-gesture, and a genuine drag-off is already handled by
+  // the pointermove distance threshold above. Bailing on pointerleave broke
+  // mouse taps (see pointerdown note).
   node.addEventListener('pointercancel', bail);
-  node.addEventListener('pointerleave', bail);
   node.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
