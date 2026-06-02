@@ -1680,10 +1680,10 @@
       "track_name": "БТМ: Сайт",
       "deadline": "2026-06-01",
       "created_at": "2026-06-01",
-      "done_at": null,
+      "done_at": "2026-06-02",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1780303423128
+      "updated_at": 1780408272647
     },
     {
       "id": "1bdd404b41b1",
