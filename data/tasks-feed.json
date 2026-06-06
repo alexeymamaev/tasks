@@ -1560,9 +1560,9 @@
       "deadline": "2026-06-05",
       "created_at": "2026-05-24",
       "done_at": null,
-      "deleted_at": null,
+      "deleted_at": "2026-06-06",
       "notes": "",
-      "updated_at": 1780289473337
+      "updated_at": 1780739058361
     },
     {
       "id": "541c85893975",
@@ -1571,9 +1571,9 @@
       "deadline": "2026-06-05",
       "created_at": "2026-05-25",
       "done_at": null,
-      "deleted_at": null,
+      "deleted_at": "2026-06-06",
       "notes": "",
-      "updated_at": 1780289473335
+      "updated_at": 1780739057494
     },
     {
       "id": "2e8692cf8ed2",
