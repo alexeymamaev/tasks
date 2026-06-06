@@ -1724,10 +1724,10 @@
       "track_name": null,
       "deadline": "2026-06-06",
       "created_at": "2026-06-06",
-      "done_at": null,
+      "done_at": "2026-06-06",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1780739137504
+      "updated_at": 1780748540577
     },
     {
       "id": "a9c7a9c52417",
@@ -1735,10 +1735,10 @@
       "track_name": null,
       "deadline": "2026-06-06",
       "created_at": "2026-06-06",
-      "done_at": null,
+      "done_at": "2026-06-06",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1780739149046
+      "updated_at": 1780748541997
     }
   ],
   "tracks": [
