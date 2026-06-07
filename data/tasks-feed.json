@@ -1739,6 +1739,17 @@
       "deleted_at": null,
       "notes": "",
       "updated_at": 1780748541997
+    },
+    {
+      "id": "9179f1945b35",
+      "text": "Съездить в Аву",
+      "track_name": null,
+      "deadline": "2026-06-07",
+      "created_at": "2026-06-07",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1780800827988
     }
   ],
   "tracks": [
