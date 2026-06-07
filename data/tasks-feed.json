@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-06-06",
+  "generated_at": "2026-06-07",
   "tasks": [
     {
       "id": "75056dca344c",
@@ -908,34 +908,34 @@
       "id": "2b61396fdd32",
       "text": "Поднять смородину",
       "track_name": "Сад",
-      "deadline": "2026-06-07",
+      "deadline": "2026-06-28",
       "created_at": "2026-05-19",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1780388784338
+      "updated_at": 1780800804498
     },
     {
       "id": "bcda7a16b417",
       "text": "Покрасить печку-прачку",
       "track_name": "Сад",
-      "deadline": "2026-06-07",
+      "deadline": "2026-06-28",
       "created_at": "2026-05-19",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1780388784337
+      "updated_at": 1780800804497
     },
     {
       "id": "faa680510fa3",
       "text": "Собрать компостер",
       "track_name": "Сад",
-      "deadline": "2026-06-07",
+      "deadline": "2026-06-28",
       "created_at": "2026-05-19",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1780388784332
+      "updated_at": 1780800804494
     },
     {
       "id": "ecb70b880082",
@@ -996,34 +996,34 @@
       "id": "7a7fd09e3715",
       "text": "Убрать кучу за домом где новый паркинг",
       "track_name": "Сад",
-      "deadline": "2026-06-07",
+      "deadline": "2026-06-28",
       "created_at": "2026-05-20",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1780388784333
+      "updated_at": 1780800804495
     },
     {
       "id": "000d2586f361",
       "text": "Убрать кирпичи",
       "track_name": "Сад",
-      "deadline": "2026-06-07",
+      "deadline": "2026-06-28",
       "created_at": "2026-05-20",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1780388784335
+      "updated_at": 1780800804496
     },
     {
       "id": "22f0fb019b91",
       "text": "Вбить колышки-держатели для шланга",
       "track_name": "Сад",
-      "deadline": "2026-06-07",
+      "deadline": "2026-06-28",
       "created_at": "2026-05-20",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1780388784330
+      "updated_at": 1780800804492
     },
     {
       "id": "e94c1df74f6d",
@@ -1073,12 +1073,12 @@
       "id": "52fe52ce1408",
       "text": "Разровнять площадку под компостер",
       "track_name": "Сад",
-      "deadline": "2026-06-07",
+      "deadline": "2026-06-28",
       "created_at": "2026-05-21",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1780388784328
+      "updated_at": 1780800804490
     },
     {
       "id": "92798c715066",
@@ -1227,12 +1227,12 @@
       "id": "5a1b5bda20ed",
       "text": "Достать землю из компостера",
       "track_name": "Сад",
-      "deadline": "2026-06-07",
+      "deadline": "2026-06-28",
       "created_at": "2026-05-26",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1780388784324
+      "updated_at": 1780800804483
     },
     {
       "id": "14bade82b80b",
