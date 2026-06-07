@@ -1746,10 +1746,10 @@
       "track_name": "Здоровье",
       "deadline": "2026-06-07",
       "created_at": "2026-06-07",
-      "done_at": null,
+      "done_at": "2026-06-07",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1780800837066
+      "updated_at": 1780849150544
     }
   ],
   "tracks": [
