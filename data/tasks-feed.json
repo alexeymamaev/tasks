@@ -1761,6 +1761,17 @@
       "deleted_at": null,
       "notes": "",
       "updated_at": 1780865446515
+    },
+    {
+      "id": "48117f1a451e",
+      "text": "Перебрать ящики с бельем",
+      "track_name": "Уборка",
+      "deadline": "2026-06-08",
+      "created_at": "2026-06-08",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1780908987023
     }
   ],
   "tracks": [
