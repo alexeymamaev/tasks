@@ -1757,10 +1757,10 @@
       "track_name": "Авто",
       "deadline": "2026-06-08",
       "created_at": "2026-06-07",
-      "done_at": null,
+      "done_at": "2026-06-09",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1780865446515
+      "updated_at": 1780978502745
     },
     {
       "id": "48117f1a451e",
