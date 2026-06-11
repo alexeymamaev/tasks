@@ -380,12 +380,12 @@
       "id": "cfbb60806a27",
       "text": "Подать сведения в РКН",
       "track_name": "Маркетинг КПМ",
-      "deadline": "2026-06-08",
+      "deadline": "2026-06-11",
       "created_at": "2026-04-30",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1780739047470
+      "updated_at": 1781154260791
     },
     {
       "id": "f75c2eea0627",
@@ -1821,12 +1821,12 @@
       "id": "3fffc968e5b2",
       "text": "ТЗ2 с пояснительной → отправить Дмитрию",
       "track_name": "БТМ: Сайт",
-      "deadline": "2026-06-10",
+      "deadline": "2026-06-11",
       "created_at": "2026-06-10",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1781078662986
+      "updated_at": 1781154256074
     }
   ],
   "tracks": [
