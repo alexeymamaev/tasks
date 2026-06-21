@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-06-20",
+  "generated_at": "2026-06-21",
   "tasks": [
     {
       "id": "75056dca344c",
@@ -1867,10 +1867,10 @@
       "track_name": "Маркетинг КПМ",
       "deadline": "2026-06-20",
       "created_at": "2026-06-18",
-      "done_at": null,
+      "done_at": "2026-06-21",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1781950210579
+      "updated_at": 1782052101285
     },
     {
       "id": "d70fab2ec277",
