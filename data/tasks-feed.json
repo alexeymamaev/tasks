@@ -1947,7 +1947,18 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1782052681304
+      "updated_at": 1782052685861
+    },
+    {
+      "id": "bc39e061a8d4",
+      "text": "Просверлить и прикрепить карниз",
+      "track_name": "Уборка",
+      "deadline": "2026-06-22",
+      "created_at": "2026-06-21",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1782052718382
     }
   ],
   "tracks": [
