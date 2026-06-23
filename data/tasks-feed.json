@@ -1955,10 +1955,10 @@
       "track_name": "Уборка",
       "deadline": "2026-06-22",
       "created_at": "2026-06-21",
-      "done_at": null,
+      "done_at": "2026-06-23",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1782052722934
+      "updated_at": 1782210433681
     },
     {
       "id": "7587eef9fdd6",
@@ -2010,10 +2010,10 @@
       "track_name": "Уборка",
       "deadline": "2026-06-23",
       "created_at": "2026-06-23",
-      "done_at": null,
+      "done_at": "2026-06-23",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1782194728085
+      "updated_at": 1782210435886
     }
   ],
   "tracks": [
