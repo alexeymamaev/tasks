@@ -1648,9 +1648,9 @@
       "deadline": "2026-05-29",
       "created_at": "2026-05-29",
       "done_at": "2026-05-29",
-      "deleted_at": null,
+      "deleted_at": "2026-06-24",
       "notes": "",
-      "updated_at": 1780073272185
+      "updated_at": 1782289466052
     },
     {
       "id": "8127b5d1576d",
@@ -2080,6 +2080,17 @@
       "deleted_at": null,
       "notes": "",
       "updated_at": 1782279440576
+    },
+    {
+      "id": "7f5ab784d898",
+      "text": "Алексей, добрый вечер!",
+      "track_name": null,
+      "deadline": null,
+      "created_at": "2026-06-24",
+      "done_at": "2026-06-24",
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1782289466052
     }
   ],
   "tracks": [
