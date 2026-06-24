@@ -2076,10 +2076,10 @@
       "track_name": null,
       "deadline": "2026-06-24",
       "created_at": "2026-06-24",
-      "done_at": null,
+      "done_at": "2026-06-24",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1782279440576
+      "updated_at": 1782323766390
     },
     {
       "id": "7f5ab784d898",
