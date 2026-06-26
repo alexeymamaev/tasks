@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-06-25",
+  "generated_at": "2026-06-26",
   "tasks": [
     {
       "id": "75056dca344c",
@@ -2102,6 +2102,17 @@
       "deleted_at": null,
       "notes": "",
       "updated_at": 1782398300163
+    },
+    {
+      "id": "94c70da5abcd",
+      "text": "Записаться на узи",
+      "track_name": null,
+      "deadline": "2026-06-27",
+      "created_at": "2026-06-26",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1782490568824
     }
   ],
   "tracks": [
