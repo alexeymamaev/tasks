@@ -1009,10 +1009,10 @@
       "track_name": "Сад",
       "deadline": "2026-06-28",
       "created_at": "2026-05-20",
-      "done_at": null,
+      "done_at": "2026-06-28",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1780800804496
+      "updated_at": 1782655801629
     },
     {
       "id": "22f0fb019b91",
