@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-06-28",
+  "generated_at": "2026-06-29",
   "tasks": [
     {
       "id": "75056dca344c",
@@ -2054,10 +2054,10 @@
       "track_name": "БТМ: Сайт",
       "deadline": "2026-06-20",
       "created_at": "2026-06-24",
-      "done_at": null,
+      "done_at": "2026-06-29",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1782279015096
+      "updated_at": 1782745833796
     },
     {
       "id": "de5fef929535",
@@ -2066,9 +2066,9 @@
       "deadline": "2026-06-20",
       "created_at": "2026-06-24",
       "done_at": null,
-      "deleted_at": null,
+      "deleted_at": "2026-06-29",
       "notes": "",
-      "updated_at": 1782279015099
+      "updated_at": 1782745835920
     },
     {
       "id": "bd1a32fe19cd",
