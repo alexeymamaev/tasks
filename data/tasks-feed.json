@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-06-29",
+  "generated_at": "2026-07-01",
   "tasks": [
     {
       "id": "75056dca344c",
@@ -635,10 +635,10 @@
       "track_name": "БТМ: Сайт",
       "deadline": "2026-08-15",
       "created_at": "2026-05-11",
-      "done_at": null,
+      "done_at": "2026-07-01",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1779187534490
+      "updated_at": 1782916389325
     },
     {
       "id": "574f9b7fc1e0",
@@ -2137,13 +2137,13 @@
       "name": "Уборка",
       "category": "personal",
       "icon": "home",
-      "position": 2
+      "position": 1
     },
     {
       "name": "Wiki",
       "category": "personal",
       "icon": "brain",
-      "position": 7
+      "position": 8
     },
     {
       "name": "БТМ: ИС",
@@ -2173,7 +2173,7 @@
       "name": "Лев",
       "category": "personal",
       "icon": "baby",
-      "position": 6
+      "position": 7
     },
     {
       "name": "Рабочий телеграм канал",
@@ -2191,25 +2191,25 @@
       "name": "Финансы",
       "category": "personal",
       "icon": "wallet",
-      "position": 8
+      "position": 9
     },
     {
       "name": "Авто",
       "category": "personal",
       "icon": "car",
-      "position": 9
+      "position": 10
     },
     {
       "name": "Здоровье",
       "category": "personal",
       "icon": "stethoscope",
-      "position": 1
+      "position": 6
     },
     {
       "name": "Сад",
       "category": "personal",
       "icon": "fence",
-      "position": 10
+      "position": 2
     },
     {
       "name": "Дом Васильево",
