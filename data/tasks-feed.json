@@ -61,12 +61,12 @@
       "id": "7cf34645fe6b",
       "text": "Расторгнуть договор по охране квартиры",
       "track_name": "Оплата счетов",
-      "deadline": "2026-06-30",
+      "deadline": "2026-07-10",
       "created_at": "2026-04-21",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1782668540552
+      "updated_at": 1782974508656
     },
     {
       "id": "408574465f4b",
@@ -1703,9 +1703,9 @@
       "deadline": "2026-07-01",
       "created_at": "2026-06-04",
       "done_at": null,
-      "deleted_at": null,
+      "deleted_at": "2026-07-02",
       "notes": "",
-      "updated_at": 1781349777247
+      "updated_at": 1782974512951
     },
     {
       "id": "a3deff00d1a8",
