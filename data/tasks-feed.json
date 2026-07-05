@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-07-03",
+  "generated_at": "2026-07-05",
   "tasks": [
     {
       "id": "75056dca344c",
@@ -2124,6 +2124,17 @@
       "deleted_at": null,
       "notes": "",
       "updated_at": 1782973169150
+    },
+    {
+      "id": "3551f9619af6",
+      "text": "Подать показания по газу",
+      "track_name": null,
+      "deadline": "2026-07-05",
+      "created_at": "2026-07-05",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1783239020688
     }
   ],
   "tracks": [
