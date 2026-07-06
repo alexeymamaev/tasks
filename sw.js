@@ -1,4 +1,4 @@
-const CACHE = 'tasks-v1-133';
+const CACHE = 'tasks-v1-134';
 const ASSETS = [
   './',
   'index.html',
@@ -9,8 +9,8 @@ const ASSETS = [
   'icons/icon-180.png',
   'icons/icon-192.png',
   'icons/icon-512.png',
-  'https://unpkg.com/dexie@4.0.8/dist/dexie.min.js',
-  'https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js',
+  'vendor/dexie-4.0.8.min.js',
+  'vendor/lucide-0.469.0.min.js',
 ];
 
 self.addEventListener('install', (e) => {
