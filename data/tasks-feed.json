@@ -2145,7 +2145,18 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1783342182857
+      "updated_at": 1783342191707
+    },
+    {
+      "id": "5c0c97f0d044",
+      "text": "Разобраться с кондиционером",
+      "track_name": null,
+      "deadline": "2026-07-06",
+      "created_at": "2026-07-06",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1783346797586
     }
   ],
   "tracks": [
