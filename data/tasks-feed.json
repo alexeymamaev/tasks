@@ -2135,6 +2135,17 @@
       "deleted_at": null,
       "notes": "",
       "updated_at": 1783239025186
+    },
+    {
+      "id": "17812df3aa21",
+      "text": "Отправить Руслану документы от Фанка на ревью",
+      "track_name": "БТМ: Сайт",
+      "deadline": "2026-07-06",
+      "created_at": "2026-07-06",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1783342182857
     }
   ],
   "tracks": [
@@ -2148,13 +2159,13 @@
       "name": "Уборка",
       "category": "personal",
       "icon": "home",
-      "position": 2
+      "position": 1
     },
     {
       "name": "Wiki",
       "category": "personal",
       "icon": "brain",
-      "position": 7
+      "position": 8
     },
     {
       "name": "БТМ: ИС",
@@ -2184,7 +2195,7 @@
       "name": "Лев",
       "category": "personal",
       "icon": "baby",
-      "position": 6
+      "position": 7
     },
     {
       "name": "Рабочий телеграм канал",
@@ -2202,25 +2213,25 @@
       "name": "Финансы",
       "category": "personal",
       "icon": "wallet",
-      "position": 8
+      "position": 9
     },
     {
       "name": "Авто",
       "category": "personal",
       "icon": "car",
-      "position": 9
+      "position": 10
     },
     {
       "name": "Здоровье",
       "category": "personal",
       "icon": "stethoscope",
-      "position": 1
+      "position": 6
     },
     {
       "name": "Сад",
       "category": "personal",
       "icon": "fence",
-      "position": 10
+      "position": 2
     },
     {
       "name": "Дом Васильево",
