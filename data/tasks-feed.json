@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-07-10",
+  "generated_at": "2026-07-12",
   "tasks": [
     {
       "id": "75056dca344c",
@@ -2131,10 +2131,10 @@
       "track_name": null,
       "deadline": "2026-07-05",
       "created_at": "2026-07-05",
-      "done_at": null,
+      "done_at": "2026-07-12",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1783239025186
+      "updated_at": 1783842976622
     },
     {
       "id": "17812df3aa21",
@@ -2153,10 +2153,10 @@
       "track_name": null,
       "deadline": "2026-07-06",
       "created_at": "2026-07-06",
-      "done_at": null,
+      "done_at": "2026-07-12",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1783371581691
+      "updated_at": 1783842980031
     },
     {
       "id": "30172e5e3b84",
