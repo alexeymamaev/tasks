@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-07-13",
+  "generated_at": "2026-07-17",
   "tasks": [
     {
       "id": "75056dca344c",
@@ -2142,10 +2142,10 @@
       "track_name": "БТМ: Сайт",
       "deadline": "2026-07-06",
       "created_at": "2026-07-06",
-      "done_at": null,
+      "done_at": "2026-07-17",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1783342191707
+      "updated_at": 1784268238562
     },
     {
       "id": "5c0c97f0d044",
