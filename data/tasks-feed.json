@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-07-20",
+  "generated_at": "2026-07-21",
   "tasks": [
     {
       "id": "75056dca344c",
@@ -2164,10 +2164,10 @@
       "track_name": "Финансы",
       "deadline": "2026-07-20",
       "created_at": "2026-07-10",
-      "done_at": null,
+      "done_at": "2026-07-21",
       "deleted_at": null,
       "notes": "Тариф ТП 7.49; см. finance/credit-card-terms.md. В приложении Т-Банк → карта *0325 → страховая защита → отключить",
-      "updated_at": 1783673082474
+      "updated_at": 1784653631069
     },
     {
       "id": "442ef963a097",
@@ -2175,10 +2175,10 @@
       "track_name": null,
       "deadline": "2026-07-19",
       "created_at": "2026-07-18",
-      "done_at": null,
+      "done_at": "2026-07-21",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1784407501928
+      "updated_at": 1784653628222
     },
     {
       "id": "19c61a0e6c43",
