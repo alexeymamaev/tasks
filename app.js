@@ -161,9 +161,22 @@ db.version(4).stores({
     if (t.deleted_at == null) t.deleted_at = 0;
   });
 });
+// v5: tracks join the sync as first-class records — external_id (stable
+// correlation key across devices, sha1(name) so pre-v5 tracks converge on
+// first sync) + updated_at (per-track last-write-wins). Before this, track
+// defs were add-only: a rename/recolor/deactivation stayed on one device.
+db.version(5).stores({
+  tasks: '++id, done_at, created_at, track_id, external_id, deleted_at',
+  tracks: '++id, category, last_used_at, external_id',
+}).upgrade(async tx => {
+  await tx.table('tracks').toCollection().modify(t => {
+    if (t.updated_at == null) t.updated_at = t.created_at || Date.now();
+  });
+});
 
-// True while syncWithWiki is applying inbound changes to db.tasks. The mutation
-// hooks check it so a sync's own writes don't schedule another push → no loop.
+// True while syncWithWiki is applying inbound changes to db.tasks / db.tracks.
+// The mutation hooks check it so a sync's own writes don't schedule another
+// push → no loop.
 let syncWriting = false;
 
 // Auto-bump updated_at on every task mutation. Sync code passes an explicit
@@ -177,6 +190,20 @@ db.tasks.hook('creating', (_primKey, obj) => {
   if (!syncWriting) scheduleSyncPush();
 });
 db.tasks.hook('updating', (mods) => {
+  if (!syncWriting) scheduleSyncPush();
+  if (!('updated_at' in mods)) {
+    return { ...mods, updated_at: Date.now() };
+  }
+  return mods;
+});
+
+// Same contract for tracks (v5). A rename / icon / category edit now has to
+// reach the feed, so track mutations schedule a push too.
+db.tracks.hook('creating', (_primKey, obj) => {
+  if (obj.updated_at == null) obj.updated_at = Date.now();
+  if (!syncWriting) scheduleSyncPush();
+});
+db.tracks.hook('updating', (mods) => {
   if (!syncWriting) scheduleSyncPush();
   if (!('updated_at' in mods)) {
     return { ...mods, updated_at: Date.now() };
@@ -393,13 +420,19 @@ async function addTrack({ name, icon, category = 'personal' }) {
   const all = await db.tracks.toArray();
   const maxPos = all.reduce((m, t) => Math.max(m, t.position ?? 0), 0);
   const now = Date.now();
+  const trimmed = name.trim();
   return db.tracks.add({
-    name: name.trim(),
+    name: trimmed,
     icon: icon || DEFAULT_ICON,
     category,
     position: maxPos + 1,
     created_at: now,
     last_used_at: now,
+    // Stable cross-device key. Derived from the name at creation time and then
+    // frozen — renames keep the same external_id, which is what lets a rename
+    // sync as an edit instead of arriving as a new track (see syncWithWiki).
+    external_id: await sha1Hex12(trimmed),
+    updated_at: now,
   });
 }
 
@@ -413,7 +446,16 @@ async function deleteTrack(id) {
 }
 
 async function updateTrack(id, patch) {
+  const prev = await db.tracks.get(id);
   await db.tracks.update(id, patch);
+  // Tasks carry the track by *name* in the feed (track_name), so a rename has
+  // to re-upload every task of this track — otherwise the feed keeps the old
+  // name, and the other device fails to re-link and drops track_id to null.
+  // Bumping updated_at is enough: the sync merge then treats them as outbound.
+  if (patch.name && prev && prev.name !== patch.name) {
+    const now = Date.now();
+    await db.tasks.where('track_id').equals(id).modify(t => { t.updated_at = now; });
+  }
 }
 
 // Progress per track = done / (done + active) over the track's lifetime.
@@ -2988,9 +3030,13 @@ function openTrackSheet({ track }) {
   const draft = {
     name: track?.name || '',
     icon: track?.icon || DEFAULT_ICON,
-    // Editing an inactive track still exposes a work/personal toggle — tapping
-    // it reactivates into that category.
-    category: (track?.category === 'inactive' ? 'personal' : (track?.category || 'personal')),
+    // For an inactive track the work/personal toggle shows where it will return
+    // to when switched back on — prev_category remembers where it came from
+    // (local-only field, not carried in the feed), falling back to personal.
+    category: (track?.category === 'inactive'
+      ? (track?.prev_category || 'personal')
+      : (track?.category || 'personal')),
+    active: track ? track.category !== 'inactive' : true,
   };
 
   // handle
@@ -3035,10 +3081,41 @@ function openTrackSheet({ track }) {
     }
   };
   renderToggle();
-  sheet.append(el('div', { class: 'sheet-section' }, [
+  const categorySection = el('div', { class: 'sheet-section' }, [
     el('div', { class: 'sheet-label', text: 'КАТЕГОРИЯ' }),
     toggle,
-  ]));
+  ]);
+  sheet.append(categorySection);
+
+  // Active / inactive switch — edit mode only (a new track is always active).
+  // "Inactive" is not a fourth state: it's category === 'inactive', so the
+  // toggle above stays visible (dimmed) as the answer to "back to where?".
+  if (isEdit) {
+    const knob = el('span', { class: 'switch-knob' });
+    const sw = el('button', {
+      type: 'button', class: 'switch', role: 'switch',
+      'aria-label': 'Трек активен',
+    }, [knob]);
+    const hint = el('div', {
+      class: 'sheet-hint',
+      text: 'Трек уйдёт в «Неактивные», задачи останутся',
+    });
+    const renderActive = () => {
+      sw.classList.toggle('on', draft.active);
+      sw.setAttribute('aria-checked', draft.active ? 'true' : 'false');
+      toggle.classList.toggle('dimmed', !draft.active);
+      hint.style.display = draft.active ? 'none' : '';
+    };
+    sw.addEventListener('click', () => { draft.active = !draft.active; renderActive(); });
+    renderActive();
+    categorySection.append(
+      el('div', { class: 'sheet-row' }, [
+        el('span', { class: 'sheet-row-label', text: 'Активен' }),
+        sw,
+      ]),
+      hint,
+    );
+  }
 
   // icon suggestions + Все иконки
   const iconRow = el('div', { class: 'sheet-icon-row' });
@@ -3223,7 +3300,16 @@ function openTrackSheet({ track }) {
     try {
       if (isEdit) {
         if (name) {
-          await updateTrack(track.id, { name, icon: draft.icon || DEFAULT_ICON, category: draft.category });
+          const patch = {
+            name,
+            icon: draft.icon || DEFAULT_ICON,
+            category: draft.active ? draft.category : 'inactive',
+          };
+          // Remember where to reactivate to. Kept local (the feed's track shape
+          // has no such field), so on another device an inactive track still
+          // falls back to personal.
+          if (!draft.active) patch.prev_category = draft.category;
+          await updateTrack(track.id, patch);
         }
       } else if (name) {
         await addTrack({ name, icon: draft.icon || DEFAULT_ICON, category: draft.category });
@@ -3908,6 +3994,43 @@ function localToFeed(lo, tracksById) {
   };
 }
 
+// Track shapes for the feed side of the sync (v5). `id` is the stable
+// external_id; `updated_at` drives per-track last-write-wins.
+function localToFeedTrack(t) {
+  return {
+    id: t.external_id,
+    name: t.name,
+    category: t.category || 'personal',
+    icon: t.icon || null,
+    position: t.position || 0,
+    updated_at: t.updated_at || t.created_at || 0,
+  };
+}
+
+function feedTrackNormalized(ft, ext) {
+  return {
+    id: ext,
+    name: ft.name,
+    category: ft.category || 'personal',
+    icon: ft.icon || null,
+    position: ft.position || 0,
+    updated_at: ft.updated_at || 0,
+  };
+}
+
+function feedToLocalTrack(ft, ext, now) {
+  return {
+    name: ft.name,
+    icon: ft.icon || DEFAULT_ICON,
+    category: ft.category || 'personal',
+    position: ft.position || 0,
+    created_at: now,
+    last_used_at: now,
+    external_id: ext,
+    updated_at: ft.updated_at || now,
+  };
+}
+
 // Stable-from-text fallback id (matches sync_wiki.py.stable_id_from_text).
 async function sha1Hex12(s) {
   const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(s));
@@ -3961,27 +4084,98 @@ async function syncWithWiki({ quiet = false } = {}) {
     let tracksByName = new Map(localTracks.map(t => [t.name, t]));
     let tracksById = new Map(localTracks.map(t => [t.id, t]));
 
-    // Reconcile track definitions inbound (create-missing only). The feed
-    // carries full track defs (name/category/icon/position); a track created on
-    // another device arrives here as a name we don't have locally. Create it so
-    // the task loop below can link by name instead of dropping track_id to null.
-    // Add-only: renames/icon-changes/deletes are NOT propagated (tracks have no
-    // updated_at — see wiki-sync.md "несколько устройств"). Idempotent across
-    // 409 retries: localTracks is re-read each attempt, so already-created
-    // tracks are present and skipped.
-    const missingTracks = (feed.tracks || []).filter(
-      ft => ft.name && !tracksByName.has(ft.name),
+    // Reconcile track definitions — per-track last-write-wins (v5). Correlation
+    // is by external_id, NOT by name: that's what makes a rename arrive as an
+    // edit instead of as "one new track + one orphaned old one". Pre-v5 records
+    // (local rows and feed entries alike) carry no id, so both sides fall back
+    // to sha1(name) — identical on every device, so the first sync after the
+    // upgrade lines the two sides up without duplicates.
+    // Idempotent across 409 retries: localTracks is re-read each attempt.
+    const backfilledTrackIds = new Set();
+    for (const t of localTracks) {
+      if (!t.external_id && t.name) {
+        t.external_id = await sha1Hex12(t.name);
+        backfilledTrackIds.add(t.id);
+      }
+    }
+    const localTrackByExt = new Map(
+      localTracks.filter(t => t.external_id).map(t => [t.external_id, t]),
     );
-    if (missingTracks.length) {
-      const now = Date.now();
-      await db.tracks.bulkAdd(missingTracks.map(ft => ({
-        name: ft.name,
-        icon: ft.icon || DEFAULT_ICON,
-        category: ft.category || 'personal',
-        position: ft.position || 0,
-        created_at: now,
-        last_used_at: now,
-      })));
+    const feedTracksOut = [];
+    const trackOps = [];
+    const seenTrackExt = new Set();
+    let tracksDown = 0, tracksUp = 0;
+    const trackNow = Date.now();
+
+    for (const ft of (feed.tracks || [])) {
+      if (!ft.name) continue;
+      const ext = ft.id || await sha1Hex12(ft.name);
+      if (seenTrackExt.has(ext)) continue;
+      seenTrackExt.add(ext);
+      const lo = localTrackByExt.get(ext);
+      if (!lo) {
+        tracksDown++;
+        trackOps.push({ kind: 'add', track: feedToLocalTrack(ft, ext, trackNow) });
+        feedTracksOut.push(feedTrackNormalized(ft, ext));
+        continue;
+      }
+      const lu = lo.updated_at || lo.created_at || 0;
+      const fu = ft.updated_at || 0;
+      if (fu > lu) {
+        tracksDown++;
+        // updated_at passed explicitly so the mutation hook doesn't re-stamp it
+        // to now — that would make the inbound copy look newer than the feed
+        // and bounce straight back out on the next sync.
+        trackOps.push({
+          kind: 'update',
+          id: lo.id,
+          patch: {
+            name: ft.name,
+            category: ft.category || 'personal',
+            icon: ft.icon || DEFAULT_ICON,
+            position: ft.position || 0,
+            external_id: ext,
+            updated_at: fu,
+          },
+        });
+        feedTracksOut.push(feedTrackNormalized(ft, ext));
+      } else {
+        if (lu > fu) tracksUp++;
+        feedTracksOut.push(localToFeedTrack(lo));
+        // Persist a freshly derived external_id (pre-v5 row) without touching
+        // updated_at, so the backfill isn't mistaken for an edit.
+        if (backfilledTrackIds.has(lo.id)) {
+          trackOps.push({
+            kind: 'update',
+            id: lo.id,
+            patch: { external_id: lo.external_id, updated_at: lu },
+          });
+        }
+      }
+    }
+
+    // Local tracks the feed doesn't know about yet → push as-is.
+    for (const lo of localTracks) {
+      if (!lo.external_id || seenTrackExt.has(lo.external_id)) continue;
+      tracksUp++;
+      feedTracksOut.push(localToFeedTrack(lo));
+    }
+
+    if (trackOps.length) {
+      syncWriting = true;
+      try {
+        await db.transaction('rw', db.tracks, async () => {
+          for (const op of trackOps) {
+            if (op.kind === 'add') await db.tracks.add(op.track);
+            else await db.tracks.update(op.id, op.patch);
+          }
+        });
+      } catch (e) {
+        if (isIdbDisconnectError(e)) { await recoverDb(); return { aborted: true }; }
+        return { error: e };
+      } finally {
+        syncWriting = false;
+      }
       const refreshed = await db.tracks.toArray();
       tracksByName = new Map(refreshed.map(t => [t.name, t]));
       tracksById = new Map(refreshed.map(t => [t.id, t]));
@@ -4064,18 +4258,14 @@ async function syncWithWiki({ quiet = false } = {}) {
       schema: 1,
       generated_at: new Date().toISOString().slice(0, 10),
       tasks: feedTasksOut,
-      // Source from tracksById (refreshed after inbound create-missing) so a
-      // track we just adopted from the feed isn't dropped on this same PUT.
-      tracks: [...tracksById.values()].map(t => ({
-        name: t.name,
-        category: t.category || 'personal',
-        icon: t.icon || null,
-        position: t.position || 0,
-      })),
+      // Built by the LWW merge above: inbound entries kept as-is, locally-newer
+      // ones replaced with the local copy, local-only ones appended. Every
+      // entry carries id + updated_at so the next merge can compare.
+      tracks: feedTracksOut,
     };
 
     // PUT updated feed (only if anything changed)
-    const changed = uploaded > 0 || added > 0 || downloaded > 0;
+    const changed = uploaded > 0 || added > 0 || downloaded > 0 || tracksUp > 0 || tracksDown > 0;
     if (changed) {
       const putBody = {
         message: 'PWA sync',
@@ -4099,7 +4289,7 @@ async function syncWithWiki({ quiet = false } = {}) {
       }
     }
 
-    return { ok: true, counts: { added, downloaded, uploaded } };
+    return { ok: true, counts: { added, downloaded, uploaded, tracksDown, tracksUp } };
   }
 
   // Retry only on 409 (stale sha): re-GET, re-merge against current DB, re-PUT.
@@ -4119,11 +4309,12 @@ async function syncWithWiki({ quiet = false } = {}) {
   }
 
   await renderMain();
-  const { added, downloaded, uploaded } = result.counts;
+  const { added, downloaded, uploaded, tracksDown, tracksUp } = result.counts;
   const parts = [];
   if (added) parts.push(`+${added}`);
   if (downloaded) parts.push(`↓${downloaded}`);
   if (uploaded) parts.push(`↑${uploaded}`);
+  if (tracksDown || tracksUp) parts.push(`треки ${tracksDown ? `↓${tracksDown}` : ''}${tracksUp ? `↑${tracksUp}` : ''}`);
   // Quiet auto-sync (cold-start): show banner only if something actually
   // changed — silent on no-op syncs to avoid a "ничего не изменилось"
   // banner on every app open.
