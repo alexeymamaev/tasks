@@ -2194,13 +2194,13 @@
     {
       "id": "6b37cfb09a9c",
       "text": "Собрать кровать",
-      "track_name": null,
+      "track_name": "Уборка",
       "deadline": "2026-07-19",
       "created_at": "2026-07-18",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1784444116245
+      "updated_at": 1785734328665
     },
     {
       "id": "55b7f23de90a",
@@ -2293,46 +2293,46 @@
     {
       "id": "40965f6771f5",
       "text": "Переустановить камеру",
-      "track_name": null,
+      "track_name": "Уборка",
       "deadline": "2026-08-02",
       "created_at": "2026-08-02",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1785661639186
+      "updated_at": 1785734322032
     },
     {
       "id": "e8aa38849bae",
       "text": "Убрать аккумулятор",
-      "track_name": null,
+      "track_name": "Уборка",
       "deadline": "2026-08-02",
       "created_at": "2026-08-02",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1785661640219
+      "updated_at": 1785734323240
     },
     {
       "id": "282ba065b592",
       "text": "Поменять Льву книжки",
-      "track_name": null,
+      "track_name": "Уборка",
       "deadline": "2026-08-02",
       "created_at": "2026-08-02",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1785661641062
+      "updated_at": 1785734324585
     },
     {
       "id": "4591ebbfaf28",
       "text": "Собрать коляску",
-      "track_name": null,
+      "track_name": "Уборка",
       "deadline": "2026-08-02",
       "created_at": "2026-08-02",
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1785661641870
+      "updated_at": 1785734325456
     },
     {
       "id": "3a8b26e126ac",
