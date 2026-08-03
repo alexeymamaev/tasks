@@ -2466,10 +2466,10 @@
     {
       "id": "afb005a97ec2",
       "name": "Продажа Гильдеево",
-      "category": "personal",
+      "category": "inactive",
       "icon": "house",
       "position": 3,
-      "updated_at": 1785750554276
+      "updated_at": 1785750570526
     },
     {
       "id": "61dcf3af42d4",
@@ -2498,10 +2498,10 @@
     {
       "id": "8cae6c4dacfe",
       "name": "Сад",
-      "category": "personal",
+      "category": "inactive",
       "icon": "fence",
       "position": 2,
-      "updated_at": 1785750554278
+      "updated_at": 1785750568208
     },
     {
       "id": "03a76f44cf2d",
