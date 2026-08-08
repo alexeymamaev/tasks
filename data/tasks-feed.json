@@ -2392,106 +2392,140 @@
   ],
   "tracks": [
     {
+      "id": "84acda037511",
       "name": "БТМ: Сайт",
       "category": "work",
       "icon": "monitor",
-      "position": 1
+      "position": 1,
+      "updated_at": 1785750554272
     },
     {
+      "id": "315bf156c98e",
       "name": "Уборка",
       "category": "personal",
       "icon": "home",
-      "position": 2
+      "position": 1,
+      "updated_at": 1785750554273
     },
     {
+      "id": "4f983a660ea1",
       "name": "Wiki",
       "category": "personal",
       "icon": "brain",
-      "position": 7
+      "position": 8,
+      "updated_at": 1785750554273
     },
     {
+      "id": "11a01894fe9e",
       "name": "БТМ: ИС",
-      "category": "work",
+      "category": "inactive",
       "icon": "keyboard",
-      "position": 3
+      "position": 2,
+      "updated_at": 1785750554274
     },
     {
+      "id": "86a8ee0bd41d",
       "name": "Оплата счетов",
       "category": "personal",
       "icon": "credit-card",
-      "position": 5
+      "position": 5,
+      "updated_at": 1785750554274
     },
     {
+      "id": "6a53102c1ac3",
       "name": "Сайт АБМ",
       "category": "inactive",
       "icon": "monitor",
-      "position": 2
+      "position": 3,
+      "updated_at": 1785750554275
     },
     {
+      "id": "fd5dbb46898e",
       "name": "Маркетинг КПМ",
-      "category": "work",
+      "category": "inactive",
       "icon": "handshake",
-      "position": 6
+      "position": 6,
+      "updated_at": 1785750588184
     },
     {
+      "id": "1c30ab74a0d2",
       "name": "Лев",
       "category": "personal",
       "icon": "baby",
-      "position": 6
+      "position": 7,
+      "updated_at": 1785750554275
     },
     {
+      "id": "7844f87d4d2b",
       "name": "Рабочий телеграм канал",
       "category": "inactive",
       "icon": "users",
-      "position": 1
+      "position": 1,
+      "updated_at": 1785750554276
     },
     {
+      "id": "afb005a97ec2",
       "name": "Продажа Гильдеево",
-      "category": "personal",
+      "category": "inactive",
       "icon": "house",
-      "position": 3
+      "position": 3,
+      "updated_at": 1785750570526
     },
     {
+      "id": "61dcf3af42d4",
       "name": "Финансы",
       "category": "personal",
       "icon": "wallet",
-      "position": 8
+      "position": 9,
+      "updated_at": 1785750554277
     },
     {
+      "id": "5695330ffb54",
       "name": "Авто",
       "category": "personal",
       "icon": "car",
-      "position": 9
+      "position": 10,
+      "updated_at": 1785750554277
     },
     {
+      "id": "08930838ebae",
       "name": "Здоровье",
       "category": "personal",
       "icon": "stethoscope",
-      "position": 1
+      "position": 6,
+      "updated_at": 1785750554277
     },
     {
+      "id": "8cae6c4dacfe",
       "name": "Сад",
-      "category": "personal",
+      "category": "inactive",
       "icon": "fence",
-      "position": 10
+      "position": 2,
+      "updated_at": 1785750568208
     },
     {
+      "id": "03a76f44cf2d",
       "name": "Дом Васильево",
       "category": "personal",
       "icon": "home",
-      "position": 11
+      "position": 12,
+      "updated_at": 1785750554279
     },
     {
+      "id": "32d121fab03e",
       "name": "Бухгалтерия",
       "category": "work",
       "icon": "clipboard",
-      "position": 12
+      "position": 12,
+      "updated_at": 1785750554279
     },
     {
+      "id": "7358adf93d5c",
       "name": "Квартира",
       "category": "personal",
       "icon": "door-open",
-      "position": 4
+      "position": 4,
+      "updated_at": 1785750554279
     }
   ]
 }
