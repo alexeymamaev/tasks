@@ -2421,6 +2421,17 @@
       "deleted_at": null,
       "notes": "",
       "updated_at": 1786181523212
+    },
+    {
+      "id": "29e7ad2aed39",
+      "text": "Вынести мусор",
+      "track_name": "Уборка",
+      "deadline": "2026-08-08",
+      "created_at": "2026-08-08",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1786181525551
     }
   ],
   "tracks": [
