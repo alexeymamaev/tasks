@@ -2395,10 +2395,10 @@
       "track_name": null,
       "deadline": "2026-08-08",
       "created_at": "2026-08-08",
-      "done_at": null,
+      "done_at": "2026-08-10",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1786181517839
+      "updated_at": 1786350560295
     },
     {
       "id": "e45f02abb1c4",
@@ -2428,10 +2428,10 @@
       "track_name": "Уборка",
       "deadline": "2026-08-08",
       "created_at": "2026-08-08",
-      "done_at": null,
+      "done_at": "2026-08-10",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1786181525551
+      "updated_at": 1786350564092
     },
     {
       "id": "516f5009f79f",
