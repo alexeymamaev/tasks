@@ -2263,10 +2263,10 @@
       "track_name": null,
       "deadline": "2026-07-31",
       "created_at": "2026-07-29",
-      "done_at": null,
+      "done_at": "2026-08-10",
       "deleted_at": null,
       "notes": "Ориентир: возврат к весу рождения 2 900 г к 10–14-му дню (31.07–04.08). Последняя точка 2 781 г от 24.07 (выписка). Напольные взрослые весы не годятся — погрешность больше недельной прибавки.",
-      "updated_at": 1785340823751
+      "updated_at": 1786350540092
     },
     {
       "id": "94aa5a5a04af",
@@ -2307,10 +2307,10 @@
       "track_name": "Уборка",
       "deadline": "2026-08-02",
       "created_at": "2026-08-02",
-      "done_at": null,
+      "done_at": "2026-08-10",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1785734323240
+      "updated_at": 1786350543665
     },
     {
       "id": "282ba065b592",
@@ -2318,10 +2318,10 @@
       "track_name": "Уборка",
       "deadline": "2026-08-02",
       "created_at": "2026-08-02",
-      "done_at": null,
+      "done_at": "2026-08-10",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1785734324585
+      "updated_at": 1786350545220
     },
     {
       "id": "4591ebbfaf28",
@@ -2329,10 +2329,10 @@
       "track_name": "Уборка",
       "deadline": "2026-08-02",
       "created_at": "2026-08-02",
-      "done_at": null,
+      "done_at": "2026-08-10",
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1785734325456
+      "updated_at": 1786350547268
     },
     {
       "id": "3a8b26e126ac",
