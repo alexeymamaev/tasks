@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-09-02",
+  "generated_at": "2026-09-05",
   "tasks": [
     {
       "id": "75056dca344c",
@@ -2663,6 +2663,226 @@
       "deleted_at": null,
       "notes": "Выплата 11 563,20 сохраняется при неполном рабочем времени (с 01.01.2024). Неясно, считается ли неполное время по каждому трудовому договору отдельно или по суммарной занятости при внутреннем совместительстве. Цена вопроса — 11 563/мес = 139 тр в год. Запрашивать письменно ДО подписания договоров. lev/education.md",
       "updated_at": 1788356131240
+    },
+    {
+      "id": "3cedf102429b",
+      "text": "Поменять местами сушку для белья и АБМ стол",
+      "track_name": "Дом Васильево",
+      "deadline": "2026-10-31",
+      "created_at": "2026-09-05",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1788598720916
+    },
+    {
+      "id": "b90f00d5c4d1",
+      "text": "Гладильную доску поставить к сушке",
+      "track_name": "Дом Васильево",
+      "deadline": "2026-10-31",
+      "created_at": "2026-09-05",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1788598724554
+    },
+    {
+      "id": "803868593784",
+      "text": "Поискать гладильную доску, складную к стене",
+      "track_name": "Дом Васильево",
+      "deadline": "2026-10-31",
+      "created_at": "2026-09-05",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1788598728098
+    },
+    {
+      "id": "129e6fc17ea3",
+      "text": "Купить 3 непромокайки для лежака Льва + 2 покрывала",
+      "track_name": "Дом Васильево",
+      "deadline": "2026-10-31",
+      "created_at": "2026-09-05",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1788598731654
+    },
+    {
+      "id": "19e71a132a84",
+      "text": "Укомплектовать шкаф с подушками",
+      "track_name": "Дом Васильево",
+      "deadline": "2026-10-31",
+      "created_at": "2026-09-05",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1788598735200
+    },
+    {
+      "id": "6993b345632e",
+      "text": "Рыжую тележку разгрузить и увезти в Казань",
+      "track_name": "Дом Васильево",
+      "deadline": "2026-10-31",
+      "created_at": "2026-09-05",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1788598738730
+    },
+    {
+      "id": "6537b61c71a5",
+      "text": "Собрать комод",
+      "track_name": "Дом Васильево",
+      "deadline": "2026-10-31",
+      "created_at": "2026-09-05",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1788598742297
+    },
+    {
+      "id": "e995d7109c1a",
+      "text": "Собрать белый стол",
+      "track_name": "Дом Васильево",
+      "deadline": "2026-10-31",
+      "created_at": "2026-09-05",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1788598745832
+    },
+    {
+      "id": "cbc60d8b6d19",
+      "text": "Сделать занавески в новой спальне",
+      "track_name": "Дом Васильево",
+      "deadline": "2026-10-31",
+      "created_at": "2026-09-05",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "Купить карнизы",
+      "updated_at": 1788598749361
+    },
+    {
+      "id": "3187893ecf63",
+      "text": "Выстирать автолюльку",
+      "track_name": "Дом Васильево",
+      "deadline": "2026-10-31",
+      "created_at": "2026-09-05",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1788598752900
+    },
+    {
+      "id": "0aca02470b5e",
+      "text": "Перебрать склад на втором этаже",
+      "track_name": "Дом Васильево",
+      "deadline": "2026-10-31",
+      "created_at": "2026-09-05",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1788598756433
+    },
+    {
+      "id": "3bf7f20941c2",
+      "text": "Перевести белое кресло в Васильево",
+      "track_name": "Дом Васильево",
+      "deadline": "2026-10-31",
+      "created_at": "2026-09-05",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1788598759968
+    },
+    {
+      "id": "8941bf63ef12",
+      "text": "Переделать шкаф у входа белый",
+      "track_name": "Дом Васильево",
+      "deadline": "2026-10-31",
+      "created_at": "2026-09-05",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1788598763507
+    },
+    {
+      "id": "c33e0f1d041e",
+      "text": "Очистить веранду",
+      "track_name": "Дом Васильево",
+      "deadline": "2026-10-31",
+      "created_at": "2026-09-05",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1788598767040
+    },
+    {
+      "id": "6f6894831e6c",
+      "text": "Придумать, куда складывать обувь Льва при входе",
+      "track_name": "Дом Васильево",
+      "deadline": "2026-10-31",
+      "created_at": "2026-09-05",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1788598770605
+    },
+    {
+      "id": "1c63bf1ab107",
+      "text": "Подготовка дома к зиме",
+      "track_name": "Дом Васильево",
+      "deadline": "2026-10-31",
+      "created_at": "2026-09-05",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "Увлажнители\nДвери\nОкна — настроить и проклеить\nЗаглушки\nСнегоуборщик\nОбслужить котёл (заменить?)",
+      "updated_at": 1788598774140
+    },
+    {
+      "id": "d71929273481",
+      "text": "Свет: проработать с Клодом",
+      "track_name": "Дом Васильево",
+      "deadline": "2026-10-31",
+      "created_at": "2026-09-05",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1788598777658
+    },
+    {
+      "id": "4b5bfa504932",
+      "text": "Электрика: розетки",
+      "track_name": "Дом Васильево",
+      "deadline": "2026-10-31",
+      "created_at": "2026-09-05",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1788598781193
+    },
+    {
+      "id": "aec78bdc549b",
+      "text": "Кухня: перебрать ящики по функциям",
+      "track_name": "Дом Васильево",
+      "deadline": "2026-10-31",
+      "created_at": "2026-09-05",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "Всё по Льву\nВсё по Варе\nПраздничное",
+      "updated_at": 1788598784723
+    },
+    {
+      "id": "8ef763e1ca78",
+      "text": "Туалет: перебрать открытые полки + добавить контейнеры",
+      "track_name": "Дом Васильево",
+      "deadline": "2026-10-31",
+      "created_at": "2026-09-05",
+      "done_at": null,
+      "deleted_at": null,
+      "notes": "",
+      "updated_at": 1788598788287
     }
   ],
   "tracks": [
