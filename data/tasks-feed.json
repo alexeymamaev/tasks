@@ -11,6 +11,7 @@
       "done_at": "2026-04-21",
       "deleted_at": null,
       "notes": "В почте наверное есть ссылка",
+      "location": null,
       "updated_at": 1776753031741
     },
     {
@@ -22,6 +23,7 @@
       "done_at": "2026-04-24",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1776753075278
     },
     {
@@ -33,6 +35,7 @@
       "done_at": "2026-04-24",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1776753683486
     },
     {
@@ -44,6 +47,7 @@
       "done_at": "2026-04-21",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1776758267513
     },
     {
@@ -55,6 +59,7 @@
       "done_at": null,
       "deleted_at": "2026-05-30",
       "notes": "Заднее сиденье",
+      "location": null,
       "updated_at": 1780122519700
     },
     {
@@ -66,6 +71,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1785830762760
     },
     {
@@ -77,6 +83,7 @@
       "done_at": "2026-04-23",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1776777328172
     },
     {
@@ -88,6 +95,7 @@
       "done_at": "2026-04-22",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1776786035388
     },
     {
@@ -99,6 +107,7 @@
       "done_at": "2026-04-27",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1776800399183
     },
     {
@@ -110,6 +119,7 @@
       "done_at": "2026-04-29",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1777461307092
     },
     {
@@ -121,6 +131,7 @@
       "done_at": "2026-04-23",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1776923428370
     },
     {
@@ -132,6 +143,7 @@
       "done_at": "2026-04-23",
       "deleted_at": null,
       "notes": "Звонок в 12",
+      "location": null,
       "updated_at": 1776931516959
     },
     {
@@ -143,6 +155,7 @@
       "done_at": "2026-04-24",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1776932272909
     },
     {
@@ -154,6 +167,7 @@
       "done_at": "2026-04-23",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1776938650502
     },
     {
@@ -165,6 +179,7 @@
       "done_at": null,
       "deleted_at": "2026-05-29",
       "notes": "",
+      "location": null,
       "updated_at": 1780034252010
     },
     {
@@ -176,6 +191,7 @@
       "done_at": "2026-04-27",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1777047696065
     },
     {
@@ -187,6 +203,7 @@
       "done_at": null,
       "deleted_at": "2026-06-10",
       "notes": "Попробовать белорусской картой",
+      "location": null,
       "updated_at": 1781078681903
     },
     {
@@ -198,6 +215,7 @@
       "done_at": "2026-04-27",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1777114762722
     },
     {
@@ -209,6 +227,7 @@
       "done_at": "2026-04-27",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1777143138536
     },
     {
@@ -220,6 +239,7 @@
       "done_at": "2026-04-29",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1777461303807
     },
     {
@@ -231,6 +251,7 @@
       "done_at": "2026-04-26",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1777144573113
     },
     {
@@ -242,6 +263,7 @@
       "done_at": "2026-04-27",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1777231144536
     },
     {
@@ -253,6 +275,7 @@
       "done_at": "2026-04-28",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1777319023967
     },
     {
@@ -264,6 +287,7 @@
       "done_at": "2026-04-30",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1777536906562
     },
     {
@@ -275,6 +299,7 @@
       "done_at": "2026-04-30",
       "deleted_at": "2026-04-30",
       "notes": "",
+      "location": null,
       "updated_at": 1777536982985
     },
     {
@@ -286,6 +311,7 @@
       "done_at": "2026-04-30",
       "deleted_at": "2026-04-30",
       "notes": "",
+      "location": null,
       "updated_at": 1777536977163
     },
     {
@@ -297,6 +323,7 @@
       "done_at": "2026-04-28",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1777353295780
     },
     {
@@ -308,6 +335,7 @@
       "done_at": "2026-04-29",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1777461308963
     },
     {
@@ -319,6 +347,7 @@
       "done_at": null,
       "deleted_at": "2026-04-29",
       "notes": "",
+      "location": null,
       "updated_at": 1777535304736
     },
     {
@@ -330,6 +359,7 @@
       "done_at": "2026-04-30",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1777536920083
     },
     {
@@ -341,6 +371,7 @@
       "done_at": "2026-04-30",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1777536918785
     },
     {
@@ -352,6 +383,7 @@
       "done_at": "2026-04-30",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1777564464942
     },
     {
@@ -363,6 +395,7 @@
       "done_at": "2026-04-30",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1777545836865
     },
     {
@@ -374,6 +407,7 @@
       "done_at": "2026-05-07",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1778153709066
     },
     {
@@ -385,6 +419,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1785686403048
     },
     {
@@ -396,6 +431,7 @@
       "done_at": "2026-05-18",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779079038627
     },
     {
@@ -407,6 +443,7 @@
       "done_at": null,
       "deleted_at": "2026-06-18",
       "notes": "",
+      "location": null,
       "updated_at": 1781794753683
     },
     {
@@ -418,6 +455,7 @@
       "done_at": null,
       "deleted_at": "2026-05-31",
       "notes": "",
+      "location": null,
       "updated_at": 1780204619486
     },
     {
@@ -429,6 +467,7 @@
       "done_at": null,
       "deleted_at": "2026-06-28",
       "notes": "",
+      "location": null,
       "updated_at": 1782655760520
     },
     {
@@ -440,6 +479,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1785686417474
     },
     {
@@ -451,6 +491,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779209902751
     },
     {
@@ -462,6 +503,7 @@
       "done_at": "2026-04-30",
       "deleted_at": null,
       "notes": "Если всё есть — написать Кириллу, чтобы комментил",
+      "location": null,
       "updated_at": 1777564462607
     },
     {
@@ -473,6 +515,7 @@
       "done_at": "2026-05-02",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780034187073
     },
     {
@@ -484,6 +527,7 @@
       "done_at": "2026-05-02",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1777699941182
     },
     {
@@ -495,6 +539,7 @@
       "done_at": "2026-05-02",
       "deleted_at": "2026-05-03",
       "notes": "",
+      "location": null,
       "updated_at": 1777791492180
     },
     {
@@ -506,6 +551,7 @@
       "done_at": null,
       "deleted_at": "2026-06-10",
       "notes": "",
+      "location": null,
       "updated_at": 1781078679050
     },
     {
@@ -517,6 +563,7 @@
       "done_at": "2026-05-04",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1777922222747
     },
     {
@@ -528,6 +575,7 @@
       "done_at": null,
       "deleted_at": "2026-06-06",
       "notes": "",
+      "location": null,
       "updated_at": 1780693821588
     },
     {
@@ -539,6 +587,7 @@
       "done_at": "2026-05-28",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779988075705
     },
     {
@@ -550,6 +599,7 @@
       "done_at": "2026-05-18",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779098219772
     },
     {
@@ -561,6 +611,7 @@
       "done_at": null,
       "deleted_at": "2026-05-27",
       "notes": "См. alexey/decisions.md 2026-05-11 + alexey/income-line.md (оглавление сессии)\nПроверить: не саботирует ли курс паттерн сравнения с партнёрами (alexey/partner-comparison.md)",
+      "location": null,
       "updated_at": 1779890804083
     },
     {
@@ -572,6 +623,7 @@
       "done_at": null,
       "deleted_at": "2026-05-18",
       "notes": "",
+      "location": null,
       "updated_at": 1779080904407
     },
     {
@@ -583,6 +635,7 @@
       "done_at": "2026-06-02",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780427916282
     },
     {
@@ -594,6 +647,7 @@
       "done_at": null,
       "deleted_at": "2026-06-18",
       "notes": "",
+      "location": null,
       "updated_at": 1781794758920
     },
     {
@@ -605,6 +659,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1785686403055
     },
     {
@@ -616,6 +671,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1785686403057
     },
     {
@@ -627,6 +683,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1785686403061
     },
     {
@@ -638,6 +695,7 @@
       "done_at": "2026-07-01",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1782916389325
     },
     {
@@ -649,6 +707,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1785686403060
     },
     {
@@ -660,6 +719,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1785686403058
     },
     {
@@ -671,6 +731,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1785686403062
     },
     {
@@ -682,6 +743,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1785686403064
     },
     {
@@ -693,6 +755,7 @@
       "done_at": "2026-05-26",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779813379831
     },
     {
@@ -704,6 +767,7 @@
       "done_at": null,
       "deleted_at": "2026-05-18",
       "notes": "Без него операционный разрыв при параллельной работе БТМ-сайт + КАМИС-ТЗ + поток",
+      "location": null,
       "updated_at": 1779136749666
     },
     {
@@ -715,6 +779,7 @@
       "done_at": "2026-05-12",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1778835404018
     },
     {
@@ -726,6 +791,7 @@
       "done_at": "2026-05-13",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1778835404018
     },
     {
@@ -737,6 +803,7 @@
       "done_at": "2026-05-14",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1778835404018
     },
     {
@@ -748,6 +815,7 @@
       "done_at": "2026-05-15",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1778835404018
     },
     {
@@ -759,6 +827,7 @@
       "done_at": null,
       "deleted_at": "2026-05-18",
       "notes": "",
+      "location": null,
       "updated_at": 1779079154877
     },
     {
@@ -770,6 +839,7 @@
       "done_at": "2026-05-18",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779079116226
     },
     {
@@ -781,6 +851,7 @@
       "done_at": "2026-05-18",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779079122498
     },
     {
@@ -792,6 +863,7 @@
       "done_at": "2026-05-18",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779079131622
     },
     {
@@ -803,6 +875,7 @@
       "done_at": "2026-05-18",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779115630867
     },
     {
@@ -814,6 +887,7 @@
       "done_at": "2026-05-19",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779208711720
     },
     {
@@ -825,6 +899,7 @@
       "done_at": "2026-05-20",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779303801821
     },
     {
@@ -836,6 +911,7 @@
       "done_at": "2026-05-22",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779435907741
     },
     {
@@ -847,6 +923,7 @@
       "done_at": "2026-05-22",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779435949854
     },
     {
@@ -858,6 +935,7 @@
       "done_at": "2026-05-22",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779435952889
     },
     {
@@ -869,6 +947,7 @@
       "done_at": "2026-05-18",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779079315201
     },
     {
@@ -880,6 +959,7 @@
       "done_at": "2026-05-18",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779208711720
     },
     {
@@ -891,6 +971,7 @@
       "done_at": "2026-05-18",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779079144183
     },
     {
@@ -902,6 +983,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1785686417471
     },
     {
@@ -913,6 +995,7 @@
       "done_at": "2026-06-28",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1782655787880
     },
     {
@@ -924,6 +1007,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1784280152468
     },
     {
@@ -935,6 +1019,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1784280156801
     },
     {
@@ -946,7 +1031,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1784280168316
+      "location": "vasilievo",
+      "updated_at": 1788621953097
     },
     {
       "id": "1bb2a5f4a4d4",
@@ -957,6 +1043,7 @@
       "done_at": "2026-05-20",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779303776009
     },
     {
@@ -968,6 +1055,7 @@
       "done_at": "2026-05-30",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780150355923
     },
     {
@@ -979,6 +1067,7 @@
       "done_at": null,
       "deleted_at": "2026-05-27",
       "notes": "",
+      "location": null,
       "updated_at": 1779890655970
     },
     {
@@ -990,6 +1079,7 @@
       "done_at": "2026-05-20",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779303783926
     },
     {
@@ -1001,6 +1091,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1784280177471
     },
     {
@@ -1012,6 +1103,7 @@
       "done_at": "2026-06-28",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1782655801629
     },
     {
@@ -1023,6 +1115,7 @@
       "done_at": null,
       "deleted_at": "2026-06-28",
       "notes": "",
+      "location": null,
       "updated_at": 1782655820941
     },
     {
@@ -1034,6 +1127,7 @@
       "done_at": "2026-06-15",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1781515940046
     },
     {
@@ -1045,7 +1139,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1784280186926
+      "location": "vasilievo",
+      "updated_at": 1788621953097
     },
     {
       "id": "2ce70b7b8650",
@@ -1056,6 +1151,7 @@
       "done_at": "2026-05-22",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779455364645
     },
     {
@@ -1067,6 +1163,7 @@
       "done_at": null,
       "deleted_at": "2026-05-31",
       "notes": "",
+      "location": null,
       "updated_at": 1780207185482
     },
     {
@@ -1078,6 +1175,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1784280196160
     },
     {
@@ -1089,6 +1187,7 @@
       "done_at": "2026-05-26",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779778975398
     },
     {
@@ -1100,6 +1199,7 @@
       "done_at": "2026-05-22",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779455302173
     },
     {
@@ -1111,6 +1211,7 @@
       "done_at": "2026-05-22",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779439046575
     },
     {
@@ -1122,6 +1223,7 @@
       "done_at": "2026-05-24",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779639648159
     },
     {
@@ -1133,6 +1235,7 @@
       "done_at": "2026-05-26",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779774978581
     },
     {
@@ -1144,6 +1247,7 @@
       "done_at": "2026-05-27",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779890478755
     },
     {
@@ -1155,6 +1259,7 @@
       "done_at": "2026-05-31",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780251736691
     },
     {
@@ -1166,6 +1271,7 @@
       "done_at": "2026-05-26",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779801671974
     },
     {
@@ -1177,6 +1283,7 @@
       "done_at": "2026-06-21",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1782052186314
     },
     {
@@ -1188,6 +1295,7 @@
       "done_at": "2026-05-31",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780207264122
     },
     {
@@ -1199,6 +1307,7 @@
       "done_at": "2026-05-31",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780213447214
     },
     {
@@ -1210,6 +1319,7 @@
       "done_at": "2026-05-26",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779801680200
     },
     {
@@ -1221,6 +1331,7 @@
       "done_at": "2026-05-28",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779951597556
     },
     {
@@ -1232,6 +1343,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1784280181909
     },
     {
@@ -1243,6 +1355,7 @@
       "done_at": "2026-05-27",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779888497405
     },
     {
@@ -1254,6 +1367,7 @@
       "done_at": null,
       "deleted_at": "2026-05-27",
       "notes": "",
+      "location": null,
       "updated_at": 1779871564774
     },
     {
@@ -1265,6 +1379,7 @@
       "done_at": "2026-05-28",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779963841338
     },
     {
@@ -1276,6 +1391,7 @@
       "done_at": "2026-05-28",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779963842932
     },
     {
@@ -1287,6 +1403,7 @@
       "done_at": "2026-05-28",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779963844203
     },
     {
@@ -1298,6 +1415,7 @@
       "done_at": "2026-05-28",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779963845683
     },
     {
@@ -1309,6 +1427,7 @@
       "done_at": "2026-05-27",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779891344229
     },
     {
@@ -1320,6 +1439,7 @@
       "done_at": "2026-05-27",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779900696301
     },
     {
@@ -1331,6 +1451,7 @@
       "done_at": "2026-06-04",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780582563550
     },
     {
@@ -1342,6 +1463,7 @@
       "done_at": "2026-05-28",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779959291589
     },
     {
@@ -1353,6 +1475,7 @@
       "done_at": "2026-05-28",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779974643248
     },
     {
@@ -1364,6 +1487,7 @@
       "done_at": "2026-06-18",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1781794744109
     },
     {
@@ -1375,6 +1499,7 @@
       "done_at": "2026-05-28",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779979083201
     },
     {
@@ -1386,6 +1511,7 @@
       "done_at": "2026-05-28",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1779996851907
     },
     {
@@ -1397,6 +1523,7 @@
       "done_at": "2026-05-29",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780057382608
     },
     {
@@ -1408,6 +1535,7 @@
       "done_at": "2026-05-29",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780057382608
     },
     {
@@ -1419,6 +1547,7 @@
       "done_at": "2026-05-29",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780057382608
     },
     {
@@ -1430,6 +1559,7 @@
       "done_at": "2026-05-29",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780057382608
     },
     {
@@ -1441,6 +1571,7 @@
       "done_at": "2026-05-29",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780057382608
     },
     {
@@ -1452,6 +1583,7 @@
       "done_at": "2026-05-29",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780057382608
     },
     {
@@ -1463,6 +1595,7 @@
       "done_at": "2026-05-29",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780057382608
     },
     {
@@ -1474,6 +1607,7 @@
       "done_at": "2026-05-29",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780060853771
     },
     {
@@ -1485,6 +1619,7 @@
       "done_at": "2026-05-29",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780034539295
     },
     {
@@ -1496,6 +1631,7 @@
       "done_at": "2026-05-29",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780034555606
     },
     {
@@ -1507,6 +1643,7 @@
       "done_at": null,
       "deleted_at": "2026-05-29",
       "notes": "",
+      "location": null,
       "updated_at": 1780035014107
     },
     {
@@ -1518,6 +1655,7 @@
       "done_at": null,
       "deleted_at": "2026-05-29",
       "notes": "",
+      "location": null,
       "updated_at": 1780034587546
     },
     {
@@ -1529,6 +1667,7 @@
       "done_at": null,
       "deleted_at": "2026-05-29",
       "notes": "",
+      "location": null,
       "updated_at": 1780035014107
     },
     {
@@ -1540,6 +1679,7 @@
       "done_at": null,
       "deleted_at": "2026-05-29",
       "notes": "",
+      "location": null,
       "updated_at": 1780035014107
     },
     {
@@ -1551,6 +1691,7 @@
       "done_at": null,
       "deleted_at": "2026-05-29",
       "notes": "",
+      "location": null,
       "updated_at": 1780035014107
     },
     {
@@ -1562,6 +1703,7 @@
       "done_at": null,
       "deleted_at": "2026-06-06",
       "notes": "",
+      "location": null,
       "updated_at": 1780739058361
     },
     {
@@ -1573,6 +1715,7 @@
       "done_at": null,
       "deleted_at": "2026-06-06",
       "notes": "",
+      "location": null,
       "updated_at": 1780739057494
     },
     {
@@ -1584,6 +1727,7 @@
       "done_at": null,
       "deleted_at": "2026-06-05",
       "notes": "",
+      "location": null,
       "updated_at": 1780634068782
     },
     {
@@ -1595,6 +1739,7 @@
       "done_at": null,
       "deleted_at": "2026-06-19",
       "notes": "",
+      "location": null,
       "updated_at": 1781854196684
     },
     {
@@ -1606,6 +1751,7 @@
       "done_at": "2026-05-29",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780073274681
     },
     {
@@ -1617,6 +1763,7 @@
       "done_at": null,
       "deleted_at": "2026-05-29",
       "notes": "",
+      "location": null,
       "updated_at": 1780044919589
     },
     {
@@ -1628,6 +1775,7 @@
       "done_at": "2026-05-30",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780147923376
     },
     {
@@ -1639,6 +1787,7 @@
       "done_at": "2026-08-27",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1787861777788
     },
     {
@@ -1650,6 +1799,7 @@
       "done_at": "2026-05-29",
       "deleted_at": "2026-06-24",
       "notes": "",
+      "location": null,
       "updated_at": 1782289466052
     },
     {
@@ -1661,6 +1811,7 @@
       "done_at": "2026-06-01",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780316530672
     },
     {
@@ -1672,6 +1823,7 @@
       "done_at": "2026-07-13",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1783947213655
     },
     {
@@ -1683,6 +1835,7 @@
       "done_at": "2026-06-02",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780408272647
     },
     {
@@ -1694,6 +1847,7 @@
       "done_at": null,
       "deleted_at": "2026-06-16",
       "notes": "",
+      "location": null,
       "updated_at": 1781627453581
     },
     {
@@ -1705,6 +1859,7 @@
       "done_at": null,
       "deleted_at": "2026-07-02",
       "notes": "",
+      "location": null,
       "updated_at": 1782974512951
     },
     {
@@ -1716,6 +1871,7 @@
       "done_at": "2026-07-03",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1783076373711
     },
     {
@@ -1727,6 +1883,7 @@
       "done_at": "2026-06-06",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780748540577
     },
     {
@@ -1738,6 +1895,7 @@
       "done_at": "2026-06-06",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780748541997
     },
     {
@@ -1749,6 +1907,7 @@
       "done_at": "2026-06-07",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780849150544
     },
     {
@@ -1760,6 +1919,7 @@
       "done_at": "2026-06-09",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780978502745
     },
     {
@@ -1771,6 +1931,7 @@
       "done_at": null,
       "deleted_at": "2026-06-10",
       "notes": "",
+      "location": null,
       "updated_at": 1781082175861
     },
     {
@@ -1782,6 +1943,7 @@
       "done_at": "2026-06-09",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1780978487704
     },
     {
@@ -1793,6 +1955,7 @@
       "done_at": null,
       "deleted_at": "2026-06-10",
       "notes": "",
+      "location": null,
       "updated_at": 1781082179849
     },
     {
@@ -1804,6 +1967,7 @@
       "done_at": null,
       "deleted_at": "2026-06-18",
       "notes": "",
+      "location": null,
       "updated_at": 1781794763138
     },
     {
@@ -1815,6 +1979,7 @@
       "done_at": "2026-06-16",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1781621842738
     },
     {
@@ -1826,6 +1991,7 @@
       "done_at": null,
       "deleted_at": "2026-06-18",
       "notes": "",
+      "location": null,
       "updated_at": 1781794773652
     },
     {
@@ -1837,6 +2003,7 @@
       "done_at": null,
       "deleted_at": "2026-06-19",
       "notes": "",
+      "location": null,
       "updated_at": 1781854184851
     },
     {
@@ -1848,6 +2015,7 @@
       "done_at": null,
       "deleted_at": "2026-06-24",
       "notes": "",
+      "location": null,
       "updated_at": 1782279009879
     },
     {
@@ -1859,6 +2027,7 @@
       "done_at": "2026-06-20",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1781937397177
     },
     {
@@ -1870,6 +2039,7 @@
       "done_at": "2026-06-21",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1782052101285
     },
     {
@@ -1881,6 +2051,7 @@
       "done_at": "2026-06-20",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1781965777736
     },
     {
@@ -1892,6 +2063,7 @@
       "done_at": "2026-06-20",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1781965776532
     },
     {
@@ -1903,6 +2075,7 @@
       "done_at": "2026-06-20",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1781965774435
     },
     {
@@ -1914,6 +2087,7 @@
       "done_at": "2026-06-22",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1782122480540
     },
     {
@@ -1925,6 +2099,7 @@
       "done_at": null,
       "deleted_at": "2026-06-23",
       "notes": "",
+      "location": null,
       "updated_at": 1782194621165
     },
     {
@@ -1936,6 +2111,7 @@
       "done_at": "2026-06-28",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1782655723598
     },
     {
@@ -1947,6 +2123,7 @@
       "done_at": "2026-06-28",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1782655768422
     },
     {
@@ -1958,6 +2135,7 @@
       "done_at": "2026-06-23",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1782210433681
     },
     {
@@ -1969,6 +2147,7 @@
       "done_at": "2026-06-24",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1782323760542
     },
     {
@@ -1980,6 +2159,7 @@
       "done_at": "2026-06-28",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1782670114900
     },
     {
@@ -1991,6 +2171,7 @@
       "done_at": "2026-06-28",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1782655772373
     },
     {
@@ -2002,6 +2183,7 @@
       "done_at": "2026-06-24",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1782277563367
     },
     {
@@ -2013,6 +2195,7 @@
       "done_at": "2026-06-23",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1782210435886
     },
     {
@@ -2024,6 +2207,7 @@
       "done_at": "2026-06-24",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1782283952858
     },
     {
@@ -2035,6 +2219,7 @@
       "done_at": null,
       "deleted_at": "2026-08-02",
       "notes": "",
+      "location": null,
       "updated_at": 1785666369626
     },
     {
@@ -2046,6 +2231,7 @@
       "done_at": null,
       "deleted_at": "2026-07-05",
       "notes": "",
+      "location": null,
       "updated_at": 1783239027101
     },
     {
@@ -2057,6 +2243,7 @@
       "done_at": "2026-06-29",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1782745833796
     },
     {
@@ -2068,6 +2255,7 @@
       "done_at": null,
       "deleted_at": "2026-06-29",
       "notes": "",
+      "location": null,
       "updated_at": 1782745835920
     },
     {
@@ -2079,6 +2267,7 @@
       "done_at": "2026-06-24",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1782323766390
     },
     {
@@ -2090,6 +2279,7 @@
       "done_at": "2026-06-24",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1782289466052
     },
     {
@@ -2101,6 +2291,7 @@
       "done_at": null,
       "deleted_at": "2026-06-28",
       "notes": "",
+      "location": null,
       "updated_at": 1782655812329
     },
     {
@@ -2112,6 +2303,7 @@
       "done_at": "2026-07-02",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1782973165083
     },
     {
@@ -2123,6 +2315,7 @@
       "done_at": "2026-07-02",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1782973169150
     },
     {
@@ -2134,6 +2327,7 @@
       "done_at": "2026-07-12",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1783842976622
     },
     {
@@ -2145,6 +2339,7 @@
       "done_at": "2026-07-17",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1784268238562
     },
     {
@@ -2156,6 +2351,7 @@
       "done_at": "2026-07-12",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1783842980031
     },
     {
@@ -2167,6 +2363,7 @@
       "done_at": "2026-07-21",
       "deleted_at": null,
       "notes": "Тариф ТП 7.49; см. finance/credit-card-terms.md. В приложении Т-Банк → карта *0325 → страховая защита → отключить",
+      "location": null,
       "updated_at": 1784653631069
     },
     {
@@ -2178,6 +2375,7 @@
       "done_at": "2026-07-21",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1784653628222
     },
     {
@@ -2189,6 +2387,7 @@
       "done_at": "2026-07-19",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1784468873128
     },
     {
@@ -2200,6 +2399,7 @@
       "done_at": "2026-08-27",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1787861779504
     },
     {
@@ -2211,6 +2411,7 @@
       "done_at": "2026-08-02",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1785666364169
     },
     {
@@ -2222,6 +2423,7 @@
       "done_at": "2026-07-19",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1784458880250
     },
     {
@@ -2233,6 +2435,7 @@
       "done_at": "2026-07-19",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1784458884439
     },
     {
@@ -2244,6 +2447,7 @@
       "done_at": "2026-07-20",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1784536886973
     },
     {
@@ -2255,6 +2459,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "Интернет-приёмная arhiv.tatarstan.ru; перед отправкой спросить отца про свидетельство о рождении деда",
+      "location": null,
       "updated_at": 1785734301346
     },
     {
@@ -2266,6 +2471,7 @@
       "done_at": "2026-08-10",
       "deleted_at": null,
       "notes": "Ориентир: возврат к весу рождения 2 900 г к 10–14-му дню (31.07–04.08). Последняя точка 2 781 г от 24.07 (выписка). Напольные взрослые весы не годятся — погрешность больше недельной прибавки.",
+      "location": null,
       "updated_at": 1786350540092
     },
     {
@@ -2277,6 +2483,7 @@
       "done_at": null,
       "deleted_at": "2026-08-06",
       "notes": "Венозная кровь, микропробирка, натощак не держать. Основание: тремор держится на 12-е сутки + многолетний дефицит вит. D у Лиды → поздняя гипокальциемия (окно 5-14 суток). Заказать выезд на дом, предупредить что новорождённая 12 дней.",
+      "location": null,
       "updated_at": 1786007875962
     },
     {
@@ -2288,6 +2495,7 @@
       "done_at": "2026-08-08",
       "deleted_at": null,
       "notes": "Не кровь — слюна/моча, можно тем же выездом на дом что и обменную панель. После ~11.08 результат уже не докажет врождённое заражение (не отличить от полученного с молоком).",
+      "location": null,
       "updated_at": 1786181673266
     },
     {
@@ -2299,6 +2507,7 @@
       "done_at": "2026-08-27",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1787861781086
     },
     {
@@ -2310,6 +2519,7 @@
       "done_at": "2026-08-10",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1786350543665
     },
     {
@@ -2321,6 +2531,7 @@
       "done_at": "2026-08-10",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1786350545220
     },
     {
@@ -2332,6 +2543,7 @@
       "done_at": "2026-08-10",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1786350547268
     },
     {
@@ -2343,6 +2555,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1785666360065
     },
     {
@@ -2354,6 +2567,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1785687657799
     },
     {
@@ -2365,6 +2579,7 @@
       "done_at": "2026-08-27",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1787861800490
     },
     {
@@ -2376,6 +2591,7 @@
       "done_at": "2026-08-27",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1787861806600
     },
     {
@@ -2387,6 +2603,7 @@
       "done_at": "2026-08-27",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1787861804211
     },
     {
@@ -2398,6 +2615,7 @@
       "done_at": "2026-08-10",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1786350560295
     },
     {
@@ -2409,6 +2627,7 @@
       "done_at": "2026-08-27",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1787861808323
     },
     {
@@ -2420,6 +2639,7 @@
       "done_at": "2026-08-08",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1786189161694
     },
     {
@@ -2431,6 +2651,7 @@
       "done_at": "2026-08-10",
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1786350564092
     },
     {
@@ -2442,6 +2663,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "B12 идёт вниз: 496 (2022) → 431 (12.05) → 293 (06.06), в норме, но на лактации тянет дальше. У грудного ребёнка запас B12 = запас матери. Совместить с забором ферритин+ОАК+железо-панель конец августа / ОГТТ ~01.09. В tests/_plan.md B12 ошибочно числится в «Закрыто» по точке 12.05 — точка 06.06 туда не попала.",
+      "location": null,
       "updated_at": 1786326959473
     },
     {
@@ -2453,6 +2675,7 @@
       "done_at": "2026-08-27",
       "deleted_at": null,
       "notes": "Заказ 1050895931, забор 06.08 07:46, Мамаева Лидия Римовна. Горит: сыворотка хранится несколько дней, сегодня 4-й. Ферритин из этого образца = чистая точка дна без терапии (добавки прекращены после КС). Если сыворотки нет — сдавать заново, до возобновления железа. Жёлчные кислоты/ГГТ/ЩФ — разбор АЛТ 64,7 + зуда.",
+      "location": null,
       "updated_at": 1787861811099
     },
     {
@@ -2464,6 +2687,7 @@
       "done_at": "2026-08-27",
       "deleted_at": null,
       "notes": "На спине, на твёрдой плоской поверхности, симметрично — ничего не подложено под бок, руки и ноги свободны, вы не держите. Раздеть до подгузника. Хлопок строго ПО ЦЕНТРУ (сверху или от ног), НЕ сбоку — иначе получите поворот на звук вместо реакции. 4–5 повторов с паузой ~30 сек. Смотреть две вещи: (1) обе руки разводятся одинаково? — симметрия Моро, висит с 08.08; (2) слабеет ли реакция к 4-му разу? — угасание, проверка версии гиперэкплексии от 09.08. Заодно закрывает «видео эпизодов», приоритет №1 с 08.08. Полный протокол съёмки и окна — health/varvara/watch/early-motor-assessment.md",
+      "location": null,
       "updated_at": 1787861814662
     },
     {
@@ -2475,6 +2699,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "Ориентир 1.6–1.8 млн. Подтвердить решение с Лидой. Продать ДО итогов конкурса (нач. октября), не как план Б",
+      "location": null,
       "updated_at": 1786946495371
     },
     {
@@ -2486,6 +2711,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "Жёсткий дедлайн 28.08 — кончается пробный период, школа встанет ровно к запуску. Платит Иван. Заодно: счёт на 40к после закрытия деталей",
+      "location": null,
       "updated_at": 1786946498117
     },
     {
@@ -2497,6 +2723,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "Согласовать с Тимуром и Олегом (Эф-эс). Каждый месяц простоя = −184 тр лично. Скидка 10–15% ставки ради скорости окупается за месяц",
+      "location": null,
       "updated_at": 1786946500618
     },
     {
@@ -2508,6 +2735,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "Договориться ДО победы. Заодно закрыть вопрос: если лот проигран — существуют ли декабрьские ~2 млн по сайту вообще",
+      "location": null,
       "updated_at": 1786946503473
     },
     {
@@ -2519,6 +2747,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "Просмотры угасли 21→7/нед — объявление утонуло в ранжировании. Переопубликовать + продвижение + ЦИАН/Домклик/Я.Недвижимость + лестница цены. Идею «можно разделить на два» продать покупателю текстом, не делать самому",
+      "location": null,
       "updated_at": 1786946506197
     },
     {
@@ -2530,6 +2759,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "60–90 мин с Claude по агенде в файле. Принести: остаток ипотеки, будущие расходы, риск-профиль, судьба Гильдеево, страхование. Результат: целевое тело числом + % аккумуляции + решения по вилкам «дом vs тело» и «РФ vs мобильность». До чекпоинта 15.10",
+      "location": null,
       "updated_at": 1786957096964
     },
     {
@@ -2541,6 +2771,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
+      "location": null,
       "updated_at": 1787130288934
     },
     {
@@ -2552,7 +2783,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "АЛТ 64,7 + зуд с 07.08, панель так и не сдана. Висело маркером в meta/_context.md с 10.08, задачей заведено не было.",
-      "updated_at": 1788255730766
+      "location": "kazan",
+      "updated_at": 1788622021255
     },
     {
       "id": "6c9eaac793b1",
@@ -2563,6 +2795,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "Окно оценки генеральных движений: 21.10–21.12 (Варя род. 21.07.2026). Специалиста надо найти ДО окна, не в нём. Асимметрия 09.08 — единственный диагностичный признак; висело в meta/_context.md с августа без задачи.",
+      "location": null,
       "updated_at": 1788255753341
     },
     {
@@ -2574,7 +2807,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "Забор 17.03, полгода без движения. Висело маркером в meta/_context.md, задачей заведено не было.",
-      "updated_at": 1788255758998
+      "location": "kazan",
+      "updated_at": 1788622021255
     },
     {
       "id": "42741e2923f2",
@@ -2585,7 +2819,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "Опорные цифры от 05.2026 устарели — к гастроэнтерологу идти после свежего забора, не до. tests/_plan.md.",
-      "updated_at": 1788255764704
+      "location": "kazan",
+      "updated_at": 1788622021255
     },
     {
       "id": "5a01f35b6604",
@@ -2596,7 +2831,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "Эпизод 02.2025 единственный, на лихорадке — ЭЭГ/терапия не показаны, но препарат на случай повтора не определён. Открыто с августа.",
-      "updated_at": 1788255770355
+      "location": "kazan",
+      "updated_at": 1788622021255
     },
     {
       "id": "23b16f028205",
@@ -2607,6 +2843,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "Жёсткий срок: заявление до 1 октября, действует с 01.01.2027 (ст. 6.3 ФЗ-178). Сейчас получает натурой все три части (лекарства, санаторий, проезд). Денежный эквивалент ~1,8 тр/мес. Считать по факту: если льготные лекарства реально выписываются — натура выгоднее.",
+      "location": null,
       "updated_at": 1788286598127
     },
     {
@@ -2618,6 +2855,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "В выгрузке ФРИ от 22.09.2023 исполнены только подгузники; остальные 24 позиции (2 коляски, опоры, ортезы, головодержатель, корсет, туторы, обувь) не значатся. Компенсация за самостоятельно купленные ТСР — ст. 11 ФЗ-181, приказ Минтруда 57н. Заодно скачать свежую ИПРА с Госуслуг. lev/documents.md",
+      "location": null,
       "updated_at": 1788286611747
     },
     {
@@ -2629,7 +2867,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "Искать лист на бланке комиссии со строкой «вариант 6.х» — в папке с ИПРА и справкой МСЭ. Строка про обучение в ИПРА заполняется самой МСЭ и не доказывает, что ПМПК была. Запись: uslugi.tatarstan.ru, район — г. Казань. Идти с описанием того, как Лёва проявляет понимание, и требовать оценки через АДК. Просить в заключении тьютора и ассистента. lev/education.md",
-      "updated_at": 1788286625228
+      "location": "kazan",
+      "updated_at": 1788622021255
     },
     {
       "id": "b5cb65cce022",
@@ -2640,6 +2879,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "ГБОУ «Казанская школа №172», ул. Бондаренко 29а, +7 (843) 562-10-56. Нужны: код ПМПК дословно, спец. условия (тьютор/ассистент), срок действия; в ИУП — часы в неделю, предметы, коррекционные курсы, кто ведёт. Заодно спросить: почему вариант 4.3 (зрение ведущее, не НОДА) и что означает «ТМНР» в заголовке при программе для лёгкой УО. Заменяет задачу 53a6c072 (ПМПК уже пройдена). lev/education.md",
+      "location": null,
       "updated_at": 1788348682144
     },
     {
@@ -2651,6 +2891,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "+7 (843) 562-10-56, ул. Бондаренко 29а, директор Е.В. Шепынёва. Четыре вопроса: (1) есть ли вакансии учителя / учителя-дефектолога, берут ли родителя обучающегося; (2) сколько часов у Лёвы в ИУП — учебных и коррекционных; (3) действующая редакция положения об оплате труда (у нас редакция 2021); (4) какой объём переподготовки принимает отдел кадров — 260 ч или от 512 ч, и от каких организаций. Четвёртый вопрос стоит 26 тр разницы. lev/education.md",
+      "location": null,
       "updated_at": 1788356124695
     },
     {
@@ -2662,6 +2903,7 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "Выплата 11 563,20 сохраняется при неполном рабочем времени (с 01.01.2024). Неясно, считается ли неполное время по каждому трудовому договору отдельно или по суммарной занятости при внутреннем совместительстве. Цена вопроса — 11 563/мес = 139 тр в год. Запрашивать письменно ДО подписания договоров. lev/education.md",
+      "location": null,
       "updated_at": 1788356131240
     },
     {
@@ -2673,7 +2915,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1788598720916
+      "location": "vasilievo",
+      "updated_at": 1788621953097
     },
     {
       "id": "b90f00d5c4d1",
@@ -2684,7 +2927,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1788598724554
+      "location": "vasilievo",
+      "updated_at": 1788621953097
     },
     {
       "id": "803868593784",
@@ -2695,7 +2939,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1788598728098
+      "location": "vasilievo",
+      "updated_at": 1788621953097
     },
     {
       "id": "129e6fc17ea3",
@@ -2706,7 +2951,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1788598731654
+      "location": "vasilievo",
+      "updated_at": 1788621953097
     },
     {
       "id": "19e71a132a84",
@@ -2717,7 +2963,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1788598735200
+      "location": "vasilievo",
+      "updated_at": 1788621953097
     },
     {
       "id": "6993b345632e",
@@ -2728,7 +2975,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1788598738730
+      "location": "vasilievo",
+      "updated_at": 1788621953097
     },
     {
       "id": "6537b61c71a5",
@@ -2739,7 +2987,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1788598742297
+      "location": "vasilievo",
+      "updated_at": 1788621953097
     },
     {
       "id": "e995d7109c1a",
@@ -2750,7 +2999,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1788598745832
+      "location": "vasilievo",
+      "updated_at": 1788621953097
     },
     {
       "id": "cbc60d8b6d19",
@@ -2761,7 +3011,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "Купить карнизы",
-      "updated_at": 1788598749361
+      "location": "vasilievo",
+      "updated_at": 1788621953097
     },
     {
       "id": "3187893ecf63",
@@ -2772,7 +3023,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1788598752900
+      "location": "vasilievo",
+      "updated_at": 1788621953097
     },
     {
       "id": "0aca02470b5e",
@@ -2783,7 +3035,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1788598756433
+      "location": "vasilievo",
+      "updated_at": 1788621953097
     },
     {
       "id": "3bf7f20941c2",
@@ -2794,7 +3047,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1788598759968
+      "location": "vasilievo",
+      "updated_at": 1788621953097
     },
     {
       "id": "8941bf63ef12",
@@ -2805,7 +3059,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1788598763507
+      "location": "vasilievo",
+      "updated_at": 1788621953097
     },
     {
       "id": "c33e0f1d041e",
@@ -2816,7 +3071,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1788598767040
+      "location": "vasilievo",
+      "updated_at": 1788621953097
     },
     {
       "id": "6f6894831e6c",
@@ -2827,7 +3083,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1788598770605
+      "location": "vasilievo",
+      "updated_at": 1788621953097
     },
     {
       "id": "1c63bf1ab107",
@@ -2838,7 +3095,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "Увлажнители\nДвери\nОкна — настроить и проклеить\nЗаглушки\nСнегоуборщик\nОбслужить котёл (заменить?)",
-      "updated_at": 1788598774140
+      "location": "vasilievo",
+      "updated_at": 1788621953097
     },
     {
       "id": "d71929273481",
@@ -2849,7 +3107,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1788598777658
+      "location": "vasilievo",
+      "updated_at": 1788621953097
     },
     {
       "id": "4b5bfa504932",
@@ -2860,7 +3119,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1788598781193
+      "location": "vasilievo",
+      "updated_at": 1788621953097
     },
     {
       "id": "aec78bdc549b",
@@ -2871,7 +3131,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "Всё по Льву\nВсё по Варе\nПраздничное",
-      "updated_at": 1788598784723
+      "location": "vasilievo",
+      "updated_at": 1788621953097
     },
     {
       "id": "8ef763e1ca78",
@@ -2882,7 +3143,8 @@
       "done_at": null,
       "deleted_at": null,
       "notes": "",
-      "updated_at": 1788598788287
+      "location": "vasilievo",
+      "updated_at": 1788621953097
     }
   ],
   "tracks": [
