@@ -2755,11 +2755,10 @@
       "track_name": null,
       "deadline": "2026-09-01",
       "created_at": "2026-08-19",
-      "done_at": null,
+      "done_at": "2026-09-06",
       "deleted_at": null,
       "notes": "",
-      "location": null,
-      "updated_at": 1787130288934
+      "updated_at": 1788704506903
     },
     {
       "id": "27854da0e58d",
