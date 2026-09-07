@@ -3408,6 +3408,44 @@ function openSettings() {
   });
   wikiCard.appendChild(tokenRow);
   wikiCard.appendChild(settingsDivider());
+  const repoRow = settingsRow({
+    icon: 'database',
+    label: 'Репозиторий',
+    rightText: getWikiRepo(),
+    chevron: true,
+    onClick: () => openWikiValueSheet({
+      title: 'Репозиторий',
+      sub: `owner/repo приватного репозитория с данными. Пусто — дефолт ${WIKI_REPO_DEFAULT}.`,
+      placeholder: WIKI_REPO_DEFAULT,
+      getValue: getWikiRepoOverride,
+      setValue: setWikiRepo,
+      onSaved: () => {
+        const r = repoRow.querySelector('.settings-row-right');
+        if (r) r.textContent = getWikiRepo();
+      },
+    }),
+  });
+  wikiCard.appendChild(repoRow);
+  wikiCard.appendChild(settingsDivider());
+  const pathRow = settingsRow({
+    icon: 'file-json',
+    label: 'Путь к файлу',
+    rightText: getWikiFeedPath(),
+    chevron: true,
+    onClick: () => openWikiValueSheet({
+      title: 'Путь к файлу',
+      sub: `Путь к JSON-фиду внутри репозитория. Пусто — дефолт ${WIKI_FEED_PATH_DEFAULT}.`,
+      placeholder: WIKI_FEED_PATH_DEFAULT,
+      getValue: getWikiFeedPathOverride,
+      setValue: setWikiFeedPath,
+      onSaved: () => {
+        const r = pathRow.querySelector('.settings-row-right');
+        if (r) r.textContent = getWikiFeedPath();
+      },
+    }),
+  });
+  wikiCard.appendChild(pathRow);
+  wikiCard.appendChild(settingsDivider());
   let syncing = false;
   let syncRow;
   const handleSyncClick = async () => {
@@ -3906,9 +3944,15 @@ function plzTrack(n) {
 // alexeymamaev/tasks (оттуда же Pages отдаёт витрину), но файл задач там лежать не может:
 // Pages публиковала его сама, и он читался кем угодно по адресу
 // alexeymamaev.github.io/tasks/data/tasks-feed.json. Разделено 07.09.2026.
-// Токену нужны права Contents R/W на alexeymamaev/tasks-data.
-const WIKI_REPO = 'alexeymamaev/tasks-data';
-const WIKI_FEED_PATH = 'data/tasks-feed.json';
+// Токену нужны права Contents R/W на репозиторий данных.
+//
+// Репозиторий и путь к фиду настраиваются в Settings → WIKI (для второй копии
+// приложения — напр. у Лиды, свой файл в том же репозитории). Пустое значение
+// в настройке = дефолт ниже, поведение по умолчанию (Алексей) не меняется.
+const WIKI_REPO_DEFAULT = 'alexeymamaev/tasks-data';
+const WIKI_FEED_PATH_DEFAULT = 'data/tasks-feed.json';
+const WIKI_REPO_KEY = 'tasks.wiki_repo';
+const WIKI_FEED_PATH_KEY = 'tasks.wiki_feed_path';
 const WIKI_TOKEN_KEY = 'tasks.wiki_pat';
 
 function getWikiToken() {
@@ -3918,6 +3962,37 @@ function setWikiToken(v) {
   try {
     if (v) localStorage.setItem(WIKI_TOKEN_KEY, v);
     else localStorage.removeItem(WIKI_TOKEN_KEY);
+  } catch {}
+}
+
+// Raw override (empty string if not set) — used to prefill the settings sheet
+// so an unset field shows blank + default placeholder, not the default value.
+function getWikiRepoOverride() {
+  try { return localStorage.getItem(WIKI_REPO_KEY) || ''; } catch { return ''; }
+}
+function getWikiFeedPathOverride() {
+  try { return localStorage.getItem(WIKI_FEED_PATH_KEY) || ''; } catch { return ''; }
+}
+// Effective value — override if set, else default. Everything that talks to
+// the GitHub API must read through these, never the *_DEFAULT constants.
+function getWikiRepo() {
+  return getWikiRepoOverride() || WIKI_REPO_DEFAULT;
+}
+function getWikiFeedPath() {
+  return getWikiFeedPathOverride() || WIKI_FEED_PATH_DEFAULT;
+}
+function setWikiRepo(v) {
+  try {
+    const t = (v || '').trim();
+    if (t) localStorage.setItem(WIKI_REPO_KEY, t);
+    else localStorage.removeItem(WIKI_REPO_KEY);
+  } catch {}
+}
+function setWikiFeedPath(v) {
+  try {
+    const t = (v || '').trim();
+    if (t) localStorage.setItem(WIKI_FEED_PATH_KEY, t);
+    else localStorage.removeItem(WIKI_FEED_PATH_KEY);
   } catch {}
 }
 
@@ -4055,7 +4130,7 @@ async function syncWithWiki({ quiet = false } = {}) {
     reportError(new Error('Сначала задай GitHub токен в Settings → WIKI'));
     return;
   }
-  const apiUrl = `https://api.github.com/repos/${WIKI_REPO}/contents/${WIKI_FEED_PATH}`;
+  const apiUrl = `https://api.github.com/repos/${getWikiRepo()}/contents/${getWikiFeedPath()}`;
   const authHeaders = {
     Authorization: `Bearer ${pat}`,
     Accept: 'application/vnd.github+json',
@@ -4398,6 +4473,48 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('pageshow', () => autoSyncPull('pageshow'));
 window.addEventListener('online', () => autoSync('online'));
 
+// Same visual pattern as openWikiTokenSheet (plain text, not password) —
+// used for the repo/path overrides. Saving an empty value clears the
+// override, so the effective value falls back to its default.
+function openWikiValueSheet({ title, sub, placeholder, getValue, setValue, onSaved }) {
+  if (document.querySelector('.settings-sheet-backdrop')) return;
+
+  const input = el('input', {
+    type: 'text', class: 'sheet-text', placeholder,
+    autocomplete: 'off', spellcheck: false, value: getValue(),
+  });
+  const cta = el('button', { type: 'button', class: 'sheet-finish' }, [el('span', { text: 'Сохранить' })]);
+  const sheet = el('div', { class: 'picker-sheet settings-sheet' }, [
+    el('div', { class: 'sheet-handle' }),
+    el('div', { class: 'settings-sheet-head' }, [
+      el('div', { class: 'settings-sheet-title', text: title }),
+      el('div', { class: 'settings-sheet-sub', text: sub }),
+    ]),
+    el('div', { class: 'sheet-input-wrap', style: { margin: '0 16px' } }, [input]),
+    cta,
+  ]);
+  const backdrop = el('div', { class: 'picker-backdrop settings-sheet-backdrop' }, [sheet]);
+
+  const close = () => {
+    backdrop.classList.remove('open');
+    setTimeout(() => backdrop.remove(), 200);
+  };
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
+  cta.addEventListener('click', () => {
+    setValue(input.value.trim());
+    if (typeof onSaved === 'function') onSaved();
+    close();
+  });
+
+  document.body.appendChild(backdrop);
+  attachSheetSwipeDown(sheet, close);
+  renderLucide();
+  requestAnimationFrame(() => {
+    backdrop.classList.add('open');
+    input.focus();
+  });
+}
+
 function openWikiTokenSheet(onSaved) {
   if (document.querySelector('.settings-sheet-backdrop')) return;
 
@@ -4412,7 +4529,7 @@ function openWikiTokenSheet(onSaved) {
       el('div', { class: 'settings-sheet-title', text: 'GitHub токен' }),
       el('div', {
         class: 'settings-sheet-sub',
-        text: `Personal Access Token со scope «repo» — для чтения и записи ${WIKI_FEED_PATH}.`,
+        text: `Personal Access Token со scope «repo» — для чтения и записи ${getWikiFeedPath()}.`,
       }),
     ]),
     el('div', { class: 'sheet-input-wrap', style: { margin: '0 16px' } }, [input]),
