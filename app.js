@@ -3902,7 +3902,12 @@ function plzTrack(n) {
 
 // ---------- wiki sync ----------
 
-const WIKI_REPO = 'alexeymamaev/tasks';
+// Данные — в ОТДЕЛЬНОМ ПРИВАТНОМ репозитории. Код приложения остаётся в публичном
+// alexeymamaev/tasks (оттуда же Pages отдаёт витрину), но файл задач там лежать не может:
+// Pages публиковала его сама, и он читался кем угодно по адресу
+// alexeymamaev.github.io/tasks/data/tasks-feed.json. Разделено 07.09.2026.
+// Токену нужны права Contents R/W на alexeymamaev/tasks-data.
+const WIKI_REPO = 'alexeymamaev/tasks-data';
 const WIKI_FEED_PATH = 'data/tasks-feed.json';
 const WIKI_TOKEN_KEY = 'tasks.wiki_pat';
 
@@ -3958,6 +3963,10 @@ function feedToLocal(fe, trackByName) {
     done_at: isoDateToMs(fe.done_at) || 0,
     deleted_at: isoDateToMs(fe.deleted_at) || 0,
     blocker: null,
+    // Локация (vasilievo/kazan/null) — ставится с вики-стороны, приложение
+    // её пока не редактирует, но обязано пронести без потерь через sync
+    // (см. localToFeed ниже), иначе следующий пуш с телефона её стирает.
+    location: fe.location || null,
     external_id: fe.id,
     updated_at: fe.updated_at || Date.now(),
   };
@@ -3973,6 +3982,7 @@ function feedToLocalPatch(fe, trackByName) {
     track_id: track ? track.id : null,
     done_at: isoDateToMs(fe.done_at) || 0,
     deleted_at: isoDateToMs(fe.deleted_at) || 0,
+    location: fe.location || null,
     external_id: fe.id,
     updated_at: fe.updated_at || Date.now(),
   };
@@ -3986,6 +3996,7 @@ function localToFeed(lo, tracksById) {
     text: lo.text,
     track_name: track ? track.name : null,
     deadline: lo.deadline || null,
+    location: lo.location || null,
     created_at: msToIsoDate(lo.created_at) || msToIsoDate(Date.now()),
     done_at: msToIsoDate(lo.done_at) || null,
     deleted_at: msToIsoDate(lo.deleted_at) || null,
